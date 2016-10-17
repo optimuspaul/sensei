@@ -3,7 +3,7 @@ from flask import Flask, request, session, g, redirect, url_for, abort, render_t
 from flask_sqlalchemy import SQLAlchemy
 from flask import render_template
 import re
-from parse_data_to_db import *
+#from parse_data_to_db import *
 
 app = Flask(__name__)
 
