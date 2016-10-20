@@ -69,11 +69,11 @@ def view_data():
     teachers = Teacher.query.order_by(Teacher.school_id)
     to_view = to_view + ",\n Teachers: "
     for teacher in teachers:
-        to_view = to_view + "\n" + teacher.name 
+        to_view = to_view + "\n" + teacher.name
     students = Student.query.order_by(Student.sensor_id)
     to_view = to_view + ",\n Students: "
     for student in students:
-        to_view = to_view + "\n" + student.name 
+        to_view = to_view + "\n" + student.name
     return to_view
 
 @app.route('/view_sp_data')
@@ -155,11 +155,3 @@ def notes():
 @app.route('/students_total')
 def students_total():
     return render_template('students_total.html')
-
-
-
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    print port
-    app.run(host='0.0.0.0', port=port, debug=True)
