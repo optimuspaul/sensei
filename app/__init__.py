@@ -1,10 +1,12 @@
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask import render_template
+from flask_bootstrap import Bootstrap
 import re
 #from parse_data_to_db import *
 
 app = Flask(__name__)
+Bootstrap(app)
 
 # TODO: select config based on environment
 app.config.from_object('config.BaseConfig')
