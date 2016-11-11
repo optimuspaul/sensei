@@ -17,76 +17,23 @@ db = SQLAlchemy(app)
 
 from models import *
 
-# DB METHODS #
+# API #
 
-@app.route('/create_school')
-def create_school():
-    school_name = "Wildflower"
-    school = School(school_name)
-    db.session.add(school)
+@app.route('/api/v1/sensor_proximity_events', methods=['POST'])
+def post_sensor_proximity_events():
+    # TODO: auth
+    event_data = request.get_json()
+    if not isinstance(event_data, list):
+        event_data = [event_data]
+    for event in event_data:
+        db.session.add(SensorProximityEvent(
+            event.get('school_id'),
+            event.get('local_id'),
+            event.get('remote_id'),
+            event.get('observed_at'),
+            event.get('rssi')))
     db.session.commit()
-    return 'Created school with id=%s!' % school.id
-
-@app.route('/create_new_teacher')
-def create_new_teacher():
-    teacher_name = "mary"
-    school_name = "Wildflower"
-    teacher_obj = Teacher(teacher_name)
-    db.session.add(teacher_obj)
-    school_obj = School.query.filter_by(school=school_name)[0]
-    school_obj.teachers.append(teacher_obj)
-    db.session.commit()
-    return 'Created teacher with name=%s' % teacher_name
-
-@app.route('/create_new_user')
-def create_new_user():
-    username = "mary"
-    password = "mary"
-    if Teacher.query.filter_by(name=username).first() is not None:
-        user_obj = User(username, password)
-        db.session.add(user_obj)
-        db.session.commit()
-    else:
-        return "Not a valid teacher name"
-    return 'Created user with name=%s!' % user_obj.username
-
-@app.route('/create_new_students')
-def create_new_students():
-    school_name = "Wildflower"
-    student_obj = Student("Uriah", 0)
-    db.session.add(student_obj)
-    school_obj = School.query.filter_by(school=school_name).first()
-    school_obj.students.append(student_obj)
-    db.session.commit()
-    return 'Created student with name=%s!' % student_obj.name
-
-@app.route('/view_data')
-def view_data():
-    to_view = ""
-    schools= School.query.order_by(School.id)
-    to_view = to_view + "\n Schools: "
-    for school in schools:
-        to_view = to_view + "\n" + school.school
-    teachers = Teacher.query.order_by(Teacher.school_id)
-    to_view = to_view + ",\n Teachers: "
-    for teacher in teachers:
-        to_view = to_view + "\n" + teacher.name
-    students = Student.query.order_by(Student.sensor_id)
-    to_view = to_view + ",\n Students: "
-    for student in students:
-        to_view = to_view + "\n" + student.name
-    return to_view
-
-@app.route('/view_sp_data')
-def view_sp_data():
-    data = SocialProximity.query.all()
-    return render_template('data.html', data=data)
-
-@app.route('/parse_data')
-def parse_data_inputs():
-    parse_data('Wildflower', '03-28-16')
-    data = SocialProximity.query.all()
-    return render_template('data.html', data=data)
+    return "%d" % len(event_data)
 
 # TEMPLATES #
 
@@ -119,8 +66,8 @@ def logout():
 
 @app.route("/home")
 def home():
-    school_id = Teacher.query.filter_by(name=session['username']).first().school_id
-    school_name = School.query.filter_by(id=school_id).first().school
+    school_id = 1
+    school_name = "Wildflower"
     return render_template('home.html', school=school_name)
 
 @app.route("/customize_updates")
