@@ -6,6 +6,7 @@
 
 html {
   font-size: 100%;
+  letter-spacing: 2.1px;
 }
 
 body {
@@ -17,6 +18,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 p, div {
     font-family: 'kim';
+}
+
+.error {
+  margin-top: 22px;
+  margin-bottom: 22px;
 }
 
 .navbar {
@@ -43,4 +49,13 @@ p, div {
 .navbar-default
 .navbar-nav>li>a:hover {
   color: #f77e85;
+}
+
+input[type="password"] {
+  font-family: sans-serif;
+}
+
+.login {
+  font-size: 20px;
+  color: #636;
 }
