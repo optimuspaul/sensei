@@ -1,65 +1,32 @@
 
 
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Wildflower Teacher Portal</title>
-        <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/style.min.css') }}" />
-        <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/icon.png') }}">
-        <link href="http://wildflower-teacher-portal.herokuapp.com" rel="canonical">
+{% extends "layout.html" %}
+{% block title %}Hello world!{% endblock %}
+{% block body %}
+{{ super() }}
+<div class="container">
 
-    </head>
+  <img id="homeImg" src="{{ url_for('static', filename='img/flower_logo.gif') }}" style="width:80%">
+  <div class="text-body text-body--purple text-body--spacer">
+      <form action="" method="post">
+        <input type="text" name="username" placeholder="username" value="{{
+    request.form.username }}" style="padding:10px; width:25%"><br>
+        <input type="password" name="password" placeholder="password" value="{{
+    request.form.password }}" style="padding:10px; width:25%"><br>
+        <input type="submit" value="login" style="
+              width: 26%;
+              margin-top: 10px;
+              background-color: whitesmoke;
+              border-color: whitesmoke;
+          ">
+      </form>
+      {% if error %}
+        <p class="error"><strong>Error:</strong> {{ error }}
+      {% endif %}
+      <br>
+      <br>
+      <a href="#">Create New Account</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#">Forgot?</a>
+  </div>
 
-    
-    <body class="home" id="home">
-    
-        
-        <div class="container">
-            <!-- .main-header -->
-
-<div class="l-content l-content--centered">
-    <div class="text-centered text-centered--wide">
-        <div class="wrapper main-header--wrapper">
-            <button class="menu-button" id="menuButton">&#x2261;</button>
-            <a href="/" class="undecorated">
-                <h1 class="logo" id="logo"><span>w</span><span>i</span><span>l</span><span>d</span><span>f</span><span>l</span><span>o</span><span>w</span><span>e</span><span>r</span><span> </span><span>m</span><span>o</span><span>n</span><span>t</span><span>e</span><span>s</span><span>s</span><span>o</span><span>r</span><span>i</span>
-                </h1>
-            </a>
-        </div>
-        <img id="homeImg" src="{{ url_for('static', filename='img/flower_logo.gif') }}" style="width:80%">
-        <div class="text-body text-body--purple text-body--spacer">
-            <form action="" method="post">
-              <input type="text" name="username" placeholder="username" value="{{
-          request.form.username }}" style="padding:10px; width:25%"><br>
-              <input type="password" name="password" placeholder="password" value="{{
-          request.form.password }}" style="padding:10px; width:25%"><br>
-              <input type="submit" value="login" style="
-                    width: 26%;
-                    margin-top: 10px;
-                    background-color: whitesmoke;
-                    border-color: whitesmoke;
-                ">
-            </form>
-              {% if error %}
-                <p class="error"><strong>Error:</strong> {{ error }}
-              {% endif %}
-            <br>
-            <br>
-            <a href="#">Create New Account</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#">Forgot?</a>
-        </div>
-    </div>    
 </div>
-</div>
-        <!-- .container -->
-        <a href="#" class="arrow" id="arrow" data-start="opacity: 0;" data-100="opacity: 1;"></a>
-        <script type="text/javascript" src="{{url_for('static', filename='js/scripts.min.js')}}"></script>
-    </body>
-</html>
-
-
-
-
-
-
+{% endblock %}
