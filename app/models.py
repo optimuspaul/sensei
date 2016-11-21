@@ -1,5 +1,6 @@
 from app import db
 import dateutil.parser
+import enum
 
 # User table to handle login
 class User(db.Model):
@@ -19,26 +20,32 @@ class User(db.Model):
 # Raw proximity event
 class SensorProximityEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    school_id = db.Column(db.Integer)
+    classroom_id = db.Column(db.Integer)
     local_id = db.Column(db.Integer)
     remote_id = db.Column(db.Integer)
     observed_at = db.Column(db.DateTime)
     rssi = db.Column(db.Float)
 
-    def __init__(self, school_id, local_id, remote_id, observed_at, rssi):
-        self.school_id = school_id
+    def __init__(self, classroom_id, local_id, remote_id, observed_at, rssi):
+        self.classroom_id = classroom_id
         self.local_id = local_id
         self.remote_id = remote_id
         self.observed_at = dateutil.parser.parse(observed_at)
         self.rssi = rssi
 
 # Sensor mapping
-class SensorAssociation(db.Model):
+class SensorType(enum.Enum):
+    child = "child"
+    teacher = "teacher"
+    area = "area"
+    material = "material"
+
+class SensorMapping(db.Model):
     __tablename__ = 'sensor_mappings'
     id = db.Column(db.Integer, primary_key=True)
-    school_id = db.Column(db.Integer)
+    classroom_id = db.Column(db.Integer)
     start_time = db.Column(db.DateTime)
-    rel_type = db.Column(db.Integer)
+    rel_type = db.Column(db.Enum(SensorType))
     rel_id = db.Column(db.Integer)
 
 db.create_all()

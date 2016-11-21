@@ -10,7 +10,6 @@ from transitions import Machine
 import time
 from datetime import datetime, timedelta
 
-
 class SensorProximityEvent(object):
 
     class RSSI(float):
