@@ -20,10 +20,10 @@ class User(db.Model):
 # Raw proximity event
 class SensorProximityEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    classroom_id = db.Column(db.Integer)
-    local_id = db.Column(db.Integer)
-    remote_id = db.Column(db.Integer)
-    observed_at = db.Column(db.DateTime)
+    classroom_id = db.Column(db.Integer, nullable=False)
+    local_id = db.Column(db.Integer, nullable=False)
+    remote_id = db.Column(db.Integer, nullable=False)
+    observed_at = db.Column(db.DateTime, nullable=False)
     rssi = db.Column(db.Float)
 
     def __init__(self, classroom_id, local_id, remote_id, observed_at, rssi):
@@ -43,9 +43,11 @@ class SensorType(enum.Enum):
 class SensorMapping(db.Model):
     __tablename__ = 'sensor_mappings'
     id = db.Column(db.Integer, primary_key=True)
-    classroom_id = db.Column(db.Integer)
-    start_time = db.Column(db.DateTime)
-    rel_type = db.Column(db.Enum(SensorType))
-    rel_id = db.Column(db.Integer)
+    classroom_id = db.Column(db.Integer, nullable=False)
+    start_time = db.Column(db.DateTime, nullable=False)
+    end_time = db.Column(db.DateTime)
+    sensor_id = db.Column(db.Integer, nullable=False)
+    sensor_type = db.Column(db.Enum(SensorType), nullable=False)
+    target_id = db.Column(db.Integer, nullable=False)
 
 db.create_all()
