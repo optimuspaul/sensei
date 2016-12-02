@@ -10,16 +10,14 @@ Getting started:
 
 1. clone the repo and cd to it
 
-1. run virtualenv venv && source venv/bin/activate if you want
+1. run `virtualenv venv && source venv/bin/activate` if you want
 
-1. run pip install -r requirements.txt
+1. `pip install -r requirements.txt`
 
-1. Ask Pete to be added to the Heroku app as a collaborator
-
-1. Download the Heroku toolbelt and run heroku login
-
-1. `export DATABASE_URL=$(heroku config:get DATABASE_URL -a sensei-server)`
+1. `npm install`
 
 1. `python run.py`
+
+1. `webpack --watch`
 
 1. Go to http://localhost:5000/

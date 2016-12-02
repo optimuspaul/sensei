@@ -1,2 +1,4 @@
 *.pyc
 venv
+bundle.js
+node_modules
