@@ -1,7 +1,7 @@
 import React from 'react';
 import SensorMappingEntry from './SensorMappingEntry';
 
-var SensorMappingInterface = React.createClass({
+class SensorMappingInterface extends React.Component {
   handleMappingChange(event) {
     //this.setState({value: event.target.value});
     console.log("Entry changed: " + event.target.value);
@@ -21,7 +21,6 @@ var SensorMappingInterface = React.createClass({
       </div>
     )
   }
-
-});
+}
 
 export default SensorMappingInterface;

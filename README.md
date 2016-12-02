@@ -16,6 +16,8 @@ Getting started:
 
 1. `npm install`
 
+1. `npm install webpack -g`
+
 1. `python run.py`
 
 1. `webpack --watch`

@@ -13,12 +13,18 @@ class SensorMappingEntry extends React.Component {
     this.setState({value: evt.target.value});
   }
 
-  return (
-    <div className="sensor-mapping-entry">
-      <span>{props.label}</span>
-      <input type="text" value={this.state.value} onChange={this.handleChange} />
-    </div>
-  );
+  handleSubmit(evt) {
+    this.setState({value: evt.target.value});
+  }
+
+  render() {
+    return (
+      <div className="sensor-mapping-entry">
+        <span>{this.props.label}</span>
+        <input type="text" value={this.state.value} onChange={this.handleChange} />
+      </div>
+    );
+  }
 }
 
 export default SensorMappingEntry;
