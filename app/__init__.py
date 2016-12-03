@@ -3,7 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask import render_template
 from flask_bootstrap import Bootstrap
 import re
-#from parse_data_to_db import *
+from api_auth_wrapper import APIAuthWrapper
+from tc_auth_service import TCAuthService
 
 app = Flask(__name__)
 Bootstrap(app)
@@ -12,14 +13,18 @@ Bootstrap(app)
 app.config.from_object('config.BaseConfig')
 app.config['DEBUG'] = True
 
+# Configure API Authorization
+auth_svc = TCAuthService('http://localhost:3000/api/v1/authenticate.json')
+api_auth = APIAuthWrapper(auth_svc)
+
 # Define the database object to be imported by models and controllers
 db = SQLAlchemy(app)
 
 from models import *
 
 # API #
-
 @app.route('/api/v1/sensor_proximity_events', methods=['POST'])
+@api_auth.requires_auth
 def post_sensor_proximity_events():
     # TODO: auth
     event_data = request.get_json()

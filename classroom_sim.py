@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import json
-import urllib2
+import urllib2, base64
 import math
 import numpy as np
 from numpy.linalg import norm
@@ -254,7 +254,10 @@ SCHOOL_ID = 1
 
 # Example upload of sensor ob
 def upload_obs(obs):
+
     req = urllib2.Request('http://localhost:5000/api/v1/sensor_proximity_events')
+    base64string = base64.b64encode('%s:%s' % ('super@example.com', 'password'))
+    req.add_header("Authorization", "Basic %s" % base64string)
     req.add_header('Content-Type', 'application/json')
     response = urllib2.urlopen(req, json.dumps(obs))
     print response.read()
