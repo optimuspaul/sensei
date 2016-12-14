@@ -8,3 +8,6 @@ Bootstrap(app)
 
 # Define the database object to be imported by models and controllers
 db = SQLAlchemy(app)
+
+# Set up views and endpoints
+import api
