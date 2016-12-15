@@ -1,17 +1,18 @@
 from functools import wraps
-from flask import request, Response
+from flask import request, Response, g
+from app import app
 
 class APIAuthWrapper():
-    def __init__(self, auth_service):
-        self.auth_service = auth_service
+    def auth_service(self):
+        return app.config["API_AUTH_SERVICE"]
 
     def check_auth(self, username, password):
         """This function is called to check if a username /
         password combination is valid.
         """
-        res = self.auth_service.check_auth(username, password)
-        if res.error:
-            print "Error checking auth: %s" % res.error
+        res = self.auth_service().check_auth(username, password)
+        #if res.error:
+        #    print "Error checking auth: %s" % res.error
         return res.authenticated
 
     def authenticate(self):

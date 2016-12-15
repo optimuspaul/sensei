@@ -254,7 +254,7 @@ SCHOOL_ID = 1
 
 # Example upload of sensor ob
 def upload_obs(obs):
-
+    print "Uploading simulated events."
     req = urllib2.Request('http://localhost:5000/api/v1/sensor_proximity_events')
     base64string = base64.b64encode('%s:%s' % ('super@example.com', 'password'))
     req.add_header("Authorization", "Basic %s" % base64string)
