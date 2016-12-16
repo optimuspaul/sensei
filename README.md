@@ -1,5 +1,7 @@
 # Sensei: Sensing Educational Interaction
 
+[![Build Status](https://travis-ci.org/WildflowerSchools/sensei.svg?branch=master)](https://travis-ci.org/WildflowerSchools/sensei)
+
 ## Web Application
 
 If you're new to Flask and SQLAlchemy:
