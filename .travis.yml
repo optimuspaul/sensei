@@ -3,5 +3,9 @@ python:
     - "2.7"
 before_install:
     - pip install pytest pytest-cov
+before_script:
+    - psql -c 'create database sensei_test;' -U postgres
 script:
     - py.test
+services:
+    - postgresql
