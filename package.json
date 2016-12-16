@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack",
-    "start": "python run.py"
+    "start": "python run.py",
+    "heroku-postbuild": "webpack -p --config ./webpack.config.js --progress"
   },
   "author": "",
   "license": "MIT",
