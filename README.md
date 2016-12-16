@@ -10,7 +10,7 @@ Getting started:
 
 1. clone the repo and cd to it
 
-1. run `virtualenv venv && source venv/bin/activate` if you want
+1. run `virtualenv venv && source venv/bin/activate` (You will need to source the activate script for other new shells as well)
 
 1. `pip install -r requirements.txt`
 
