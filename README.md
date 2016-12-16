@@ -31,3 +31,12 @@ Getting started:
 Or to just run tests that match a string:
 
 `pytest -k somestring`
+
+## Deploying to heroku
+
+We use two buildpacks; one for python, one for nodejs
+
+```
+heroku buildpacks:add --index 1 heroku/python
+heroku buildpacks:add --index 2 heroku/nodejs
+```
