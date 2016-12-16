@@ -1,9 +1,10 @@
 Flask==0.11.1
 Flask-SQLAlchemy==2.1
-psycopg2==2.6.1
+psycopg2==2.6.2
 SQLAlchemy==1.1.4
-Werkzeug==0.11.5
+Werkzeug==0.11.11
 transitions
 python-dateutil
 enum34==1.1.6
 Flask-DotEnv
+pytest

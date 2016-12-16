@@ -23,3 +23,11 @@ Getting started:
 1. `webpack --watch`
 
 1. Go to http://localhost:5000/
+
+## Running tests
+
+`pytest`
+
+Or to just run tests that match a string:
+
+`pytest -k somestring`

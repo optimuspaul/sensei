@@ -25,7 +25,7 @@ proximity_event = data=dict(
 class ApiTestCase(unittest.TestCase):
     def setUp(self):
         # creates a test client
-        app = create_app('config.TestConfig')
+        app = create_app('app.config.TestConfig')
         self.app = app.test_client()
         # propagate the exceptions to the test client
         self.app.testing = True
