@@ -17,6 +17,9 @@
     "babel-preset-react": "^6.11.1",
     "webpack": "^1.13.1"
   },
+  "engines": {
+    "node": "5.2.0"
+  },
   "dependencies": {
     "react": "^0.14.8",
     "react-dom": "^0.14.8"
