@@ -10,7 +10,7 @@ Getting started:
 
 1. clone the repo and cd to it
 
-1. run `virtualenv venv && source venv/bin/activate` if you want
+1. run `virtualenv venv && source venv/bin/activate` (You will need to source the activate script for other new shells as well)
 
 1. `pip install -r requirements.txt`
 
@@ -23,3 +23,20 @@ Getting started:
 1. `webpack --watch`
 
 1. Go to http://localhost:5000/
+
+## Running tests
+
+`pytest`
+
+Or to just run tests that match a string:
+
+`pytest -k somestring`
+
+## Deploying to heroku
+
+We use two buildpacks; one for python, one for nodejs
+
+```
+heroku buildpacks:add --index 1 heroku/python
+heroku buildpacks:add --index 2 heroku/nodejs
+```

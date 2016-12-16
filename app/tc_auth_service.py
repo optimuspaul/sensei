@@ -1,13 +1,6 @@
-
-
 import json
 import urllib2, base64
-
-class AuthCheckResult():
-    def __init__(self, authenticated, error = None, userinfo = None):
-        self.authenticated = authenticated
-        self.error = error
-
+from auth_service import AuthCheckResult
 
 # https://www.transparentclassroom.com/api/v1/authenticate.json
 class TCAuthService():

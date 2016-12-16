@@ -4,21 +4,11 @@ import os
 # CONFIG PARAMS
 ######################################################
 
-
-class BaseConfig:
-
-    #########################
-    # SENSEI
-    #########################
-
-
-
-    #########################
-    # Backend
-    #########################
-
+class Base(object):
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', '')
     if SQLALCHEMY_DATABASE_URI == '':
         SQLALCHEMY_DATABASE_URI = "postgresql://localhost/sensei"
-    SECRET_KEY = 'development key'
 
+class TestConfig(Base):
+    SQLALCHEMY_DATABASE_URI = "postgresql://localhost/sensei_test"
