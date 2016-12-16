@@ -1,6 +1,8 @@
-from app import db
 import dateutil.parser
 import enum
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
 
 # User table to handle login
 class User(db.Model):
@@ -49,5 +51,3 @@ class SensorMapping(db.Model):
     sensor_id = db.Column(db.Integer, nullable=False)
     sensor_type = db.Column(db.Enum(SensorType), nullable=False)
     target_id = db.Column(db.Integer, nullable=False)
-
-db.create_all()

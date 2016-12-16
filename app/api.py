@@ -1,14 +1,15 @@
-from app import app
 import re
-from flask import request, g
+from flask import request, g, current_app, Blueprint
 from api_auth_wrapper import APIAuthWrapper
 from models import *
 
-# Configure API Authorization
+api = Blueprint('api', __name__)
+
+# Get decorator for basic auth
 api_auth = APIAuthWrapper()
 
 # Sensor Proximity Events upload API #
-@app.route('/api/v1/sensor_proximity_events', methods=['POST'])
+@api.route('/api/v1/sensor_proximity_events', methods=['POST'])
 @api_auth.requires_auth
 def post_sensor_proximity_events():
     # TODO: auth

@@ -1,10 +1,10 @@
 import os
 import api
-from app import app
 import unittest
 import tempfile
 import datetime
 import json
+from main import create_app
 from base64 import b64encode
 from auth_service import AuthCheckResult
 
@@ -25,6 +25,7 @@ proximity_event = data=dict(
 class ApiTestCase(unittest.TestCase):
     def setUp(self):
         # creates a test client
+        app = create_app('config.TestConfig')
         self.app = app.test_client()
         # propagate the exceptions to the test client
         self.app.testing = True
