@@ -1,5 +1,4 @@
-# this is an example of the Uber API
-# as a demonstration of an API spec in YAML
+# this is the sensei API
 swagger: '2.0'
 info:
   title: Sensei API
@@ -44,10 +43,56 @@ paths:
           description: Upload accepted
         401:
           description: Unauthorized
+  /sensor_mappings:
+    post:
+      summary: Update mapping of sensor ids to students, teachers, materials, and classroom areas
+      description: |
+        This endpoint is used to specify a new mapping of a sensor. Any existing mapping of this sensor will be marked as ended.
+      consumes:
+        - application/json
+      parameters:
+        - name: mapping
+          in: body
+          description: Sensor mapping.
+          required: true
+          schema:
+            $ref: '#/definitions/SensorMapping'
+      tags:
+        - Sensors
+      security:
+        - basicAuth: []
+      responses:
+        200:
+          description: Sensor mapping update accepted
+        401:
+          description: Unauthorized
 definitions:
+  SensorMapping:
+    type: object
+    description: SensorMapping objects describe which sensors are mapped to which things, over a specific period of time..
+    properties:
+      classroom_id:
+        type: integer
+        description: Unique identifier for the classroom that the sensors involved belong to.
+      sensor_id:
+        type: integer
+        description: Classroom specific sensor id of the sensor that is being mapped (0-255).
+      start_time:
+        type: string
+        description: The starting time of the mapping, in iso8601 format. Example '2002-12-25T12:15:05'. If not set during a create, the current time will be used.
+      end_time:
+        type: string
+        description: The ending time of the mapping, in iso8601 format. Example '2002-12-25T12:15:05'.  If not set, this indicates the current mapping.
+      mapping_type:
+        type: string
+        enum: [ "student", "teacher", "material", "area"]
+        description: The type of mapping
+      target:id:
+        type: integer
+        description: The foreign key to
   ProximityEvent:
     type: object
-    description: Proximity events occur when when sensor receives a radio packet from another sensor. The receiver records the observed RSSI of the packet, along with the sender's id and a timestamp. 
+    description: Proximity events occur when when sensor receives a radio packet from another sensor. The receiver records the observed RSSI of the packet, along with the sender's id and a timestamp.
     properties:
       classroom_id:
         type: integer

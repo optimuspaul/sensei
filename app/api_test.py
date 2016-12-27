@@ -71,8 +71,8 @@ class ApiTestCase(unittest.TestCase):
         mapping_item = dict(
             classroom_id=1,
             sensor_id=1,
-            sensor_type='child',
-            target_id=5, # child_id
+            sensor_type='student',
+            target_id=5, # student_id
         )
         result = self.app.post('/api/v1/sensor_mappings',
             data=json.dumps(mapping_item), follow_redirects=True,
