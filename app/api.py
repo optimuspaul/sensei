@@ -19,7 +19,7 @@ def post_sensor_proximity_events():
         event_data = [event_data]
     for event in event_data:
         db.session.add(SensorProximityEvent(
-            event.get('school_id'),
+            event.get('classroom_id'),
             event.get('local_id'),
             event.get('remote_id'),
             event.get('observed_at'),

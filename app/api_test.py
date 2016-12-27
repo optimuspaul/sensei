@@ -35,7 +35,7 @@ class ApiTestCase(unittest.TestCase):
     def test_upload_without_auth(self):
 
         proximity_event = data=dict(
-            school_id=1,
+            classroom_id=1,
             local_id=1,
             remote_id=2,
             observed_at=datetime.datetime.now().isoformat(),
@@ -48,7 +48,7 @@ class ApiTestCase(unittest.TestCase):
 
     def test_upload_with_auth(self):
         proximity_event = data=dict(
-            school_id=1,
+            classroom_id=1,
             local_id=1,
             remote_id=2,
             observed_at=datetime.datetime.now().isoformat(),
@@ -63,9 +63,6 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(result.status_code, 200)
         events = SensorProximityEvent.query.all()
         self.assertEqual(len(events), 1)
-
-    def test_mapping_create(self):
-        
 
 if __name__ == '__main__':
     unittest.main()

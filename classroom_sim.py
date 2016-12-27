@@ -16,8 +16,8 @@ class SensorProximityEvent(object):
         def __repr__(self):
             return '%.02f' % self
 
-    def __init__(self, school_id, local_id, remote_id, observed_at, rssi):
-        self.school_id = school_id
+    def __init__(self, classroom_id, local_id, remote_id, observed_at, rssi):
+        self.classroom_id = classroom_id
         self.local_id = local_id
         self.remote_id = remote_id
         self.observed_at = observed_at
@@ -250,7 +250,7 @@ sensors = students + teachers + trays + materials
 sim_time = datetime.now() - timedelta(days=1)
 sim_time = sim_time.replace(hour=8, minute=0, second=0)
 end_time = sim_time + timedelta(hours=8)
-SCHOOL_ID = 1
+CLASSROOM_ID = 1
 
 # Example upload of sensor ob
 def upload_obs(obs):
@@ -280,7 +280,7 @@ while sim_time < end_time:
                 continue
             rssi = sensor.sim_ping(other)
             if rssi is not None:
-                event = SensorProximityEvent(SCHOOL_ID, sensor.sensor_id,
+                event = SensorProximityEvent(CLASSROOM_ID, sensor.sensor_id,
                             other.sensor_id, sim_time.isoformat(), rssi)
                 obs.append(event)
     print "%d obs" % len(obs)
