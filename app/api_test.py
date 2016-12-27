@@ -110,5 +110,9 @@ class ApiTestCase(unittest.TestCase):
         mappings = SensorMapping.query.all()
         self.assertEqual(len(mappings), 2)
 
+    def test_get_mappings(self):
+        self.app.get('/api/v1/sensor_mappings')
+
+
 if __name__ == '__main__':
     unittest.main()

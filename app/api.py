@@ -1,5 +1,5 @@
 import re
-from flask import request, g, current_app, Blueprint
+from flask import request, g, current_app, Blueprint, jsonify
 from api_auth_wrapper import APIAuthWrapper
 from models import *
 import datetime
@@ -52,3 +52,7 @@ def create_sensor_mapping():
     db.session.add(new_mapping)
     db.session.commit()
     return "OK", 200
+
+@api.route('/api/v1/sensor_mappings', methods = ['GET'])
+def index():
+    return jsonify(SensorMapping.query.filter_by(end_time=None).all())
