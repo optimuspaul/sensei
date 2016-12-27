@@ -2,6 +2,7 @@ import re
 from flask import request, g, current_app, Blueprint
 from api_auth_wrapper import APIAuthWrapper
 from models import *
+import datetime
 
 api = Blueprint('api', __name__)
 
@@ -34,7 +35,20 @@ def create_sensor_mapping():
     map_data = request.get_json()
     if not map_data:
         abort(401)
-    db.session.add(SensorMapping(
-        map_data.get('classroom_id')))
+    sensor_id = map_data.get('sensor_id')
+    now = datetime.datetime.now()
+    existing = SensorMapping.query.filter_by(sensor_id=sensor_id,end_time=None).first()
+    if existing:
+        existing.end_time = now
+
+    new_mapping = SensorMapping(
+        map_data.get('classroom_id'),
+        sensor_id,
+        now,
+        None,
+        map_data.get('mapping_type'),
+        map_data.get('target_id'),
+        )
+    db.session.add(new_mapping)
     db.session.commit()
-    return jsonify( { 'developer': dev } ), 201
+    return "OK", 200

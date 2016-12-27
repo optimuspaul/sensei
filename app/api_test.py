@@ -38,6 +38,17 @@ class ApiTestCase(unittest.TestCase):
         db.session.remove()
         db.drop_all()
 
+    def api_post_json(self, path, data, auth=False):
+        if auth:
+            headers = self.authorized_headers
+        else:
+            headers = None
+
+        return self.app.post('/api/v1/' + path,
+            data=data, follow_redirects=True,
+            content_type='application/json',
+            headers = headers)
+
     def test_upload_without_auth(self):
 
         proximity_event = dict(
@@ -48,8 +59,7 @@ class ApiTestCase(unittest.TestCase):
         )
 
         event_data = json.dumps([proximity_event])
-        result = self.app.post('/api/v1/proximity_events',
-            data=event_data, follow_redirects=True, content_type='application/json')
+        result = self.api_post_json('proximity_events', event_data)
         self.assertEqual(result.status_code, 401)
 
     def test_upload_with_auth(self):
@@ -60,9 +70,7 @@ class ApiTestCase(unittest.TestCase):
             observed_at=datetime.datetime.now().isoformat(),
         )
         event_data = json.dumps([proximity_event])
-        result = self.app.post('/api/v1/proximity_events',
-            data=event_data, follow_redirects=True,
-            content_type='application/json', headers=self.authorized_headers)
+        result = self.api_post_json('proximity_events', event_data, True)
         self.assertEqual(result.status_code, 200)
         events = ProximityEvent.query.all()
         self.assertEqual(len(events), 1)
@@ -71,16 +79,36 @@ class ApiTestCase(unittest.TestCase):
         mapping_item = dict(
             classroom_id=1,
             sensor_id=1,
-            sensor_type='student',
+            mapping_type='student',
             target_id=5, # student_id
         )
-        result = self.app.post('/api/v1/sensor_mappings',
-            data=json.dumps(mapping_item), follow_redirects=True,
-            content_type='application/json', headers=self.authorized_headers)
+        result = self.api_post_json('sensor_mappings', json.dumps(mapping_item), True)
         self.assertEqual(result.status_code, 200)
         mappings = SensorMapping.query.all()
         self.assertEqual(len(mappings), 1)
 
+    def test_mapping_update(self):
+        mapping1 = dict(
+            classroom_id=1,
+            sensor_id=1,
+            mapping_type='student',
+            target_id=5, # student_id
+        )
+        result = self.api_post_json('sensor_mappings', json.dumps(mapping1), True)
+        self.assertEqual(result.status_code, 200)
+        mappings = SensorMapping.query.all()
+        self.assertEqual(len(mappings), 1)
+
+        mapping2 = dict(
+            classroom_id=1,
+            sensor_id=1,
+            mapping_type='student',
+            target_id=5, # student_id
+        )
+        result = self.api_post_json('sensor_mappings', json.dumps(mapping2), True)
+        self.assertEqual(result.status_code, 200)
+        mappings = SensorMapping.query.all()
+        self.assertEqual(len(mappings), 2)
 
 if __name__ == '__main__':
     unittest.main()

@@ -36,7 +36,7 @@ class ProximityEvent(db.Model):
         self.rssi = rssi
 
 # Sensor mapping
-class SensorType(enum.Enum):
+class MappingType(enum.Enum):
     student = "student"
     teacher = "teacher"
     area = "area"
@@ -49,13 +49,13 @@ class SensorMapping(db.Model):
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime)
     sensor_id = db.Column(db.Integer, nullable=False)
-    mapping_type = db.Column(db.Enum(SensorType), nullable=False)
+    mapping_type = db.Column(db.Enum(MappingType), nullable=False)
     target_id = db.Column(db.Integer, nullable=False)
 
-    def __init__(self, classroom_id, start_time, end_time, sensor_id, sensor_type, target_id):
+    def __init__(self, classroom_id, sensor_id, start_time, end_time, mapping_type, target_id):
         self.classroom_id = classroom_id
+        self.sensor_id = sensor_id
         self.start_time = start_time
         self.end_time = end_time
-        self.sensor_id = sensor_id
         self.mapping_type = mapping_type
         self.target_id = target_id
