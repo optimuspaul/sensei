@@ -16,10 +16,11 @@ class MockAuthService():
             return AuthCheckResult(False)
 
 proximity_event = data=dict(
-    school_id=1,
+    classroom_id=1,
     local_id=1,
     remote_id=2,
     observed_at=datetime.datetime.now().isoformat(),
+    rssi=-64
 )
 
 class ApiTestCase(unittest.TestCase):
