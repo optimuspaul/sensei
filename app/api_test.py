@@ -24,6 +24,12 @@ class ApiTestCase(unittest.TestCase):
         self.app.testing = True
         app.config['DEBUG'] = True
 
+        # Authorization header to use when authorized
+        self.authorized_headers = {
+            'Authorization': 'Basic ' + b64encode("testuser:testpass")
+        }
+
+
         # Use mock auth service
         app.config["API_AUTH_SERVICE"] = MockAuthService()
         db.create_all()
@@ -34,7 +40,7 @@ class ApiTestCase(unittest.TestCase):
 
     def test_upload_without_auth(self):
 
-        proximity_event = data=dict(
+        proximity_event = dict(
             classroom_id=1,
             local_id=1,
             remote_id=2,
@@ -42,27 +48,39 @@ class ApiTestCase(unittest.TestCase):
         )
 
         event_data = json.dumps([proximity_event])
-        result = self.app.post('/api/v1/sensor_proximity_events',
+        result = self.app.post('/api/v1/proximity_events',
             data=event_data, follow_redirects=True, content_type='application/json')
         self.assertEqual(result.status_code, 401)
 
     def test_upload_with_auth(self):
-        proximity_event = data=dict(
+        proximity_event = dict(
             classroom_id=1,
             local_id=1,
             remote_id=2,
             observed_at=datetime.datetime.now().isoformat(),
         )
-        headers = {
-            'Authorization': 'Basic ' + b64encode("testuser:testpass")
-        }
         event_data = json.dumps([proximity_event])
-        result = self.app.post('/api/v1/sensor_proximity_events',
+        result = self.app.post('/api/v1/proximity_events',
             data=event_data, follow_redirects=True,
-            content_type='application/json', headers=headers)
+            content_type='application/json', headers=self.authorized_headers)
         self.assertEqual(result.status_code, 200)
-        events = SensorProximityEvent.query.all()
+        events = ProximityEvent.query.all()
         self.assertEqual(len(events), 1)
+
+    def test_mapping_create(self):
+        mapping_item = dict(
+            classroom_id=1,
+            sensor_id=1,
+            sensor_type='child',
+            target_id=5, # child_id
+        )
+        result = self.app.post('/api/v1/sensor_mappings',
+            data=json.dumps(mapping_item), follow_redirects=True,
+            content_type='application/json', headers=self.authorized_headers)
+        self.assertEqual(result.status_code, 200)
+        mappings = SensorMapping.query.all()
+        self.assertEqual(len(mappings), 1)
+
 
 if __name__ == '__main__':
     unittest.main()

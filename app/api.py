@@ -9,16 +9,16 @@ api = Blueprint('api', __name__)
 api_auth = APIAuthWrapper()
 
 # Sensor Proximity Events upload API #
-@api.route('/api/v1/sensor_proximity_events', methods=['POST'])
+@api.route('/api/v1/proximity_events', methods=['POST'])
 @api_auth.requires_auth
-def post_sensor_proximity_events():
+def post_proximity_events():
     event_data = request.get_json()
     if not event_data:
         abort(400)
     if not isinstance(event_data, list):
         event_data = [event_data]
     for event in event_data:
-        db.session.add(SensorProximityEvent(
+        db.session.add(ProximityEvent(
             event.get('classroom_id'),
             event.get('local_id'),
             event.get('remote_id'),
@@ -33,8 +33,8 @@ def post_sensor_proximity_events():
 def create_sensor_mapping():
     map_data = request.get_json()
     if not map_data:
-        abort(400)
-    dev = SensorMapping(map_data.classroom_id, )
-    db.session.add(dev)
+        abort(401)
+    db.session.add(SensorMapping(
+        map_data.get('classroom_id')))
     db.session.commit()
     return jsonify( { 'developer': dev } ), 201

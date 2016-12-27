@@ -20,7 +20,7 @@ class User(db.Model):
         return self.username
 
 # Raw proximity event
-class SensorProximityEvent(db.Model):
+class ProximityEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     classroom_id = db.Column(db.Integer, nullable=False)
     local_id = db.Column(db.Integer, nullable=False)
@@ -51,3 +51,11 @@ class SensorMapping(db.Model):
     sensor_id = db.Column(db.Integer, nullable=False)
     sensor_type = db.Column(db.Enum(SensorType), nullable=False)
     target_id = db.Column(db.Integer, nullable=False)
+
+    def __init__(self, classroom_id, start_time, end_time, sensor_id, sensor_type, target_id):
+        self.classroom_id = classroom_id
+        self.start_time = start_time
+        self.end_time = end_time
+        self.sensor_id = sensor_id
+        self.sensor_type = sensor_type
+        self.target_id = target_id
