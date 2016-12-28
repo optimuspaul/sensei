@@ -70,7 +70,7 @@ class ApiTestCase(unittest.TestCase):
         )
         event_data = json.dumps([proximity_event])
         result = self.api_post_json('proximity_events', event_data, True)
-        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result.status_code, 201)
         events = ProximityEvent.query.all()
         self.assertEqual(len(events), 1)
 

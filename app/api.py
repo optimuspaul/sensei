@@ -32,7 +32,7 @@ def post_proximity_events():
             event.get('observed_at'),
             event.get('rssi')))
     db.session.commit()
-    return "%d" % len(event_data)
+    return "OK", 201
 
 # Sensor Mapping API - index #
 @api.route('/api/v1/sensor_mappings', methods = ['GET'])
