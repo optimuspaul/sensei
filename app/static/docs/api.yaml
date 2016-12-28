@@ -181,7 +181,7 @@ paths:
 definitions:
   SensorMapping:
     type: object
-    description: SensorMapping objects describe which sensors are mapped to which things, over a specific period of time..
+    description: SensorMapping objects describe which sensors are mapped to which things, over a specific period of time.
     properties:
       classroom_id:
         type: integer
