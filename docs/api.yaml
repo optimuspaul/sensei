@@ -66,6 +66,27 @@ paths:
           description: Sensor mapping update accepted
         401:
           description: Unauthorized
+    get:
+      description: Returns the current sensor mappings for the specified classroom.
+      produces:
+        - application/json
+      parameters:
+        - name: classroom_id
+          in: query
+          description: The id of the classroom to retrieve sensor mappings for.
+          required: true
+          type: integer
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: mappings
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/SensorMapping'
+        401:
+          description: Unauthorized
 definitions:
   SensorMapping:
     type: object

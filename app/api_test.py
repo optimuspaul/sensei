@@ -118,6 +118,5 @@ class ApiTestCase(unittest.TestCase):
         mappings = json.loads(result.data)
         self.assertEqual(len(mappings), 1)
 
-
 if __name__ == '__main__':
     unittest.main()
