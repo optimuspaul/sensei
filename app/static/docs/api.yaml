@@ -1,0 +1,134 @@
+# this is the sensei API
+swagger: '2.0'
+info:
+  title: Sensei API
+  description: Augmenting Classroom Observation
+  version: "1.0.0"
+# the domain of the service
+host: sensei-server.herokuapp.com
+# array of all schemes that your API supports
+schemes:
+  - https
+# will be prefixed to all paths
+basePath: /api/v1
+produces:
+  - application/json
+securityDefinitions:
+  basicAuth:
+    type: basic
+    description: HTTP Basic Authentication. Requires `HTTPS`
+paths:
+  /proximity_events:
+    post:
+      summary: Upload proximity events.
+      description: |
+        The Proximity Events endpoint provides a way to upload proximity observations from sensors to the sensei platform.
+      consumes:
+        - application/json
+      parameters:
+        - name: events
+          in: body
+          description: List of proximity events.
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ProximityEvent'
+      tags:
+        - Proximity
+      security:
+        - basicAuth: []
+      responses:
+        200:
+          description: Upload accepted
+        401:
+          description: Unauthorized
+  /sensor_mappings:
+    post:
+      summary: Update mapping of sensor ids to students, teachers, materials, and classroom areas
+      description: |
+        This endpoint is used to specify a new mapping of a sensor. Any existing mapping of this sensor will be marked as ended.
+      consumes:
+        - application/json
+      parameters:
+        - name: mapping
+          in: body
+          description: Sensor mapping.
+          required: true
+          schema:
+            $ref: '#/definitions/SensorMapping'
+      tags:
+        - SensorMapping
+      security:
+        - basicAuth: []
+      responses:
+        200:
+          description: Sensor mapping update accepted
+        401:
+          description: Unauthorized
+    get:
+      summary: Returns the current sensor mappings for the specified classroom.
+      produces:
+        - application/json
+      parameters:
+        - name: classroom_id
+          in: query
+          description: The id of the classroom to retrieve sensor mappings for.
+          required: true
+          type: integer
+      tags:
+        - SensorMapping
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: mappings
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/SensorMapping'
+        401:
+          description: Unauthorized
+definitions:
+  SensorMapping:
+    type: object
+    description: SensorMapping objects describe which sensors are mapped to which things, over a specific period of time..
+    properties:
+      classroom_id:
+        type: integer
+        description: Unique identifier for the classroom that the sensors involved belong to.
+      sensor_id:
+        type: integer
+        description: Classroom specific sensor id of the sensor that is being mapped (0-255).
+      start_time:
+        type: string
+        description: The starting time of the mapping, in iso8601 format. Example '2002-12-25T12:15:05'. If not set during a create, the current time will be used.
+      end_time:
+        type: string
+        description: The ending time of the mapping, in iso8601 format. Example '2002-12-25T12:15:05'.  If not set, this indicates the current mapping.
+      mapping_type:
+        type: string
+        enum: [ "student", "teacher", "material", "area"]
+        description: The type of mapping
+      target:id:
+        type: integer
+        description: The foreign key to
+  ProximityEvent:
+    type: object
+    description: Proximity events occur when when sensor receives a radio packet from another sensor. The receiver records the observed RSSI of the packet, along with the sender's id and a timestamp.
+    properties:
+      classroom_id:
+        type: integer
+        description: Unique identifier for the classroom that the sensors involved belong to.
+      local_id:
+        type: integer
+        description: Classroom specific sensor id of the sensor that recorded the proximity event (0-255).
+      remote_id:
+        type: integer
+        description: The id of the sensor that sent the triggering packet (0-255).
+      observed_at:
+        type: string
+        description: The timestamp of the event, in iso8601 format. Example '2002-12-25T12:15:05'
+      rssi:
+        type: number
+        description: The signal strength, represented as a negative number of decibels.
