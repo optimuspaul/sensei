@@ -20,7 +20,7 @@ securityDefinitions:
 paths:
   /proximity_events:
     post:
-      summary: Proximity Events
+      summary: Upload proximity events.
       description: |
         The Proximity Events endpoint provides a way to upload proximity observations from sensors to the sensei platform.
       consumes:
@@ -35,7 +35,7 @@ paths:
             items:
               $ref: '#/definitions/ProximityEvent'
       tags:
-        - Sensors
+        - Proximity
       security:
         - basicAuth: []
       responses:
@@ -58,7 +58,7 @@ paths:
           schema:
             $ref: '#/definitions/SensorMapping'
       tags:
-        - Sensors
+        - SensorMapping
       security:
         - basicAuth: []
       responses:
@@ -67,7 +67,7 @@ paths:
         401:
           description: Unauthorized
     get:
-      description: Returns the current sensor mappings for the specified classroom.
+      summary: Returns the current sensor mappings for the specified classroom.
       produces:
         - application/json
       parameters:
@@ -76,6 +76,8 @@ paths:
           description: The id of the classroom to retrieve sensor mappings for.
           required: true
           type: integer
+      tags:
+        - SensorMapping
       security:
         - basicAuth: []
       responses:
