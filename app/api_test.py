@@ -82,7 +82,7 @@ class ApiTestCase(unittest.TestCase):
             target_id=5, # student_id
         )
         result = self.api_post_json('sensor_mappings', json.dumps(mapping_item), True)
-        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result.status_code, 201)
         mappings = SensorMapping.query.all()
         self.assertEqual(len(mappings), 1)
 
@@ -94,7 +94,7 @@ class ApiTestCase(unittest.TestCase):
             target_id=5, # student_id
         )
         result = self.api_post_json('sensor_mappings', json.dumps(mapping1), True)
-        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result.status_code, 201)
         mappings = SensorMapping.query.all()
         self.assertEqual(len(mappings), 1)
 
@@ -105,7 +105,7 @@ class ApiTestCase(unittest.TestCase):
             target_id=5, # student_id
         )
         result = self.api_post_json('sensor_mappings', json.dumps(mapping2), True)
-        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result.status_code, 201)
         mappings = SensorMapping.query.all()
         self.assertEqual(len(mappings), 2)
 
