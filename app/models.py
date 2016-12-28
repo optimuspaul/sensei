@@ -59,3 +59,12 @@ class SensorMapping(db.Model):
         self.end_time = end_time
         self.mapping_type = mapping_type
         self.target_id = target_id
+
+    def as_dict(self):
+       return dict(
+         classroom_id=self.classroom_id,
+         sensor_id=self.sensor_id,
+         start_time=self.start_time,
+         end_time=self.end_time,
+         mapping_type=self.mapping_type.name,
+         target_id=self.target_id)

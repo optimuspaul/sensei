@@ -29,7 +29,6 @@ class ApiTestCase(unittest.TestCase):
             'Authorization': 'Basic ' + b64encode("testuser:testpass")
         }
 
-
         # Use mock auth service
         app.config["API_AUTH_SERVICE"] = MockAuthService()
         db.create_all()
@@ -111,7 +110,13 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(len(mappings), 2)
 
     def test_get_mappings(self):
-        self.app.get('/api/v1/sensor_mappings')
+        m = SensorMapping(1, 1, datetime.datetime.now(), None, 'student', 1)
+        db.session.add(m)
+        db.session.commit()
+        result = self.app.get('/api/v1/sensor_mappings?classroom_id=1', headers=self.authorized_headers)
+        self.assertEqual(result.status_code, 200)
+        mappings = json.loads(result.data)
+        self.assertEqual(len(mappings), 1)
 
 
 if __name__ == '__main__':

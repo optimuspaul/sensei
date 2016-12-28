@@ -1,5 +1,5 @@
 import re
-from flask import request, g, current_app, Blueprint, jsonify
+from flask import request, g, current_app, Blueprint, jsonify, abort
 from api_auth_wrapper import APIAuthWrapper
 from models import *
 import datetime
@@ -28,13 +28,13 @@ def post_proximity_events():
     db.session.commit()
     return "%d" % len(event_data)
 
-# Sensor Mapping API #
+# Sensor Mapping API - create/update #
 @api.route('/api/v1/sensor_mappings', methods=['POST'])
 @api_auth.requires_auth
 def create_sensor_mapping():
     map_data = request.get_json()
     if not map_data:
-        abort(401)
+        abort(400)
     sensor_id = map_data.get('sensor_id')
     now = datetime.datetime.now()
     existing = SensorMapping.query.filter_by(sensor_id=sensor_id,end_time=None).first()
@@ -53,6 +53,11 @@ def create_sensor_mapping():
     db.session.commit()
     return "OK", 200
 
+# Sensor Mapping API - index #
 @api.route('/api/v1/sensor_mappings', methods = ['GET'])
 def index():
-    return jsonify(SensorMapping.query.filter_by(end_time=None).all())
+    classroom_id = request.args.get('classroom_id')
+    if not classroom_id:
+        abort(400)
+    mappings = SensorMapping.query.filter_by(classroom_id=classroom_id, end_time=None).all()
+    return jsonify([m.as_dict() for m in mappings])
