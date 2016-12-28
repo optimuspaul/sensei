@@ -39,7 +39,7 @@ paths:
       security:
         - basicAuth: []
       responses:
-        200:
+        201:
           description: Upload accepted
         401:
           description: Unauthorized
@@ -62,7 +62,7 @@ paths:
       security:
         - basicAuth: []
       responses:
-        200:
+        201:
           description: Sensor mapping update accepted
         401:
           description: Unauthorized
@@ -89,10 +89,99 @@ paths:
               $ref: '#/definitions/SensorMapping'
         401:
           description: Unauthorized
+  /areas:
+    post:
+      summary: Create new area
+      consumes:
+        - application/json
+      parameters:
+        - name: area
+          in: body
+          description: Classroom Area.
+          required: true
+          schema:
+            $ref: '#/definitions/Area'
+      tags:
+        - Area
+      security:
+        - basicAuth: []
+      responses:
+        201:
+          description: Area created
+        401:
+          description: Unauthorized
+    get:
+      summary: Returns the areas defined for the specified classroom.
+      produces:
+        - application/json
+      parameters:
+        - name: classroom_id
+          in: query
+          description: The id of the classroom to retrieve areas for.
+          required: true
+          type: integer
+      tags:
+        - Area
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Areas
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Area'
+        401:
+          description: Unauthorized
+  /areas/{id}:
+    put:
+      summary: Update an area's name.
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: The id of the area to update.
+          required: true
+          type: integer
+        - name: mapping
+          in: body
+          description: Area.
+          required: true
+          schema:
+            $ref: '#/definitions/Area'
+      tags:
+        - Area
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Area updated
+          schema:
+            $ref: '#/definitions/Area'
+        401:
+          description: Unauthorized
+    delete:
+      summary: Delete an area.
+      parameters:
+        - name: id
+          in: path
+          description: The id of the area to delete.
+          required: true
+          type: integer
+      tags:
+        - Area
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Area deleted
+        401:
+          description: Unauthorized
 definitions:
   SensorMapping:
     type: object
-    description: SensorMapping objects describe which sensors are mapped to which things, over a specific period of time..
+    description: SensorMapping objects describe which sensors are mapped to which things, over a specific period of time.
     properties:
       classroom_id:
         type: integer
@@ -132,3 +221,13 @@ definitions:
       rssi:
         type: number
         description: The signal strength, represented as a negative number of decibels.
+  Area:
+    type: object
+    description: Describes an area of the classroom.
+    properties:
+      classroom_id:
+        type: integer
+        description: Unique identifier for the classroom that the area describes.
+      name:
+        type: string
+        description: Name of the area.

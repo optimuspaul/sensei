@@ -4,21 +4,6 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
-# User table to handle login
-class User(db.Model):
-    __tablename__ = "users"
-
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.Text)
-    password = db.Column(db.Text)
-
-    def __init__(self, username, password):
-        self.username = username
-        self.password = password
-
-    def __repr__(self):
-        return self.username
-
 # Raw proximity event
 class ProximityEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -68,3 +53,19 @@ class SensorMapping(db.Model):
          end_time=self.end_time,
          mapping_type=self.mapping_type.name,
          target_id=self.target_id)
+
+# Classroom areas
+class Area(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    classroom_id = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.String, nullable=False)
+
+    def __init__(self, classroom_id, name):
+        self.classroom_id = classroom_id
+        self.name = name
+
+    def as_dict(self):
+       return dict(
+         classroom_id=self.classroom_id,
+         id=self.id,
+         name=self.name)

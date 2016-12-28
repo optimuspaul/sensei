@@ -32,7 +32,17 @@ def post_proximity_events():
             event.get('observed_at'),
             event.get('rssi')))
     db.session.commit()
-    return "%d" % len(event_data)
+    return "OK", 201
+
+# Sensor Mapping API - index #
+@api.route('/api/v1/sensor_mappings', methods = ['GET'])
+@api_auth.requires_auth
+def sensor_mappings_index():
+    classroom_id = request.args.get('classroom_id')
+    if not classroom_id:
+        abort(400, "Missing classroom_id parameter")
+    mappings = SensorMapping.query.filter_by(classroom_id=classroom_id, end_time=None).all()
+    return jsonify([m.as_dict() for m in mappings])
 
 # Sensor Mapping API - create/update #
 @api.route('/api/v1/sensor_mappings', methods=['POST'])
@@ -40,7 +50,7 @@ def post_proximity_events():
 def create_sensor_mapping():
     map_data = request.get_json()
     if not map_data:
-        abort(400)
+        abort(400, "Expected SensorMapping object in body")
     sensor_id = map_data.get('sensor_id')
     now = datetime.datetime.now()
     existing = SensorMapping.query.filter_by(sensor_id=sensor_id,end_time=None).first()
@@ -57,13 +67,42 @@ def create_sensor_mapping():
         )
     db.session.add(new_mapping)
     db.session.commit()
-    return "OK", 200
+    return "OK", 201
 
-# Sensor Mapping API - index #
-@api.route('/api/v1/sensor_mappings', methods = ['GET'])
-def index():
+# Sensor Areas API - index #
+@api.route('/api/v1/areas', methods = ['GET'])
+@api_auth.requires_auth
+def areas_index():
     classroom_id = request.args.get('classroom_id')
     if not classroom_id:
+        abort(400, "Missing classroom_id parameter")
+    areas = Area.query.filter_by(classroom_id=classroom_id).all()
+    return jsonify([a.as_dict() for a in areas])
+
+# Sensor Areas API - create #
+@api.route('/api/v1/areas', methods = ['POST'])
+@api_auth.requires_auth
+def create_area():
+    if not request.json or not 'name' in request.json or not 'classroom_id' in request.json:
         abort(400)
-    mappings = SensorMapping.query.filter_by(classroom_id=classroom_id, end_time=None).all()
-    return jsonify([m.as_dict() for m in mappings])
+    area = Area(request.json.classroom_id, request.json.name)
+    db.session.add(area)
+    db.session.commit()
+    return jsonify( area ), 201
+
+# Sensor Areas API - delete #
+@api.route('/api/v1/areas/<int:id>', methods = ['DELETE'])
+@api_auth.requires_auth
+def delete_area(id):
+    db.session.delete(Area.query.get(id))
+    db.session.commit()
+    return jsonify( { 'result': True } )
+
+# Sensor Areas API - update #
+@api.route('/api/v1/areas/<int:id>', methods = ['PUT'])
+@api_auth.requires_auth
+def update_area(id):
+    area = Area.query.get(id)
+    area.name = request.json.get('name', dev.name)
+    db.session.commit()
+    return jsonify( area )
