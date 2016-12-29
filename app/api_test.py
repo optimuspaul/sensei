@@ -118,5 +118,16 @@ class ApiTestCase(unittest.TestCase):
         mappings = json.loads(result.data)
         self.assertEqual(len(mappings), 1)
 
+    def test_area_create(self):
+        area = dict(
+            classroom_id=1,
+            name='test',
+        )
+        result = self.api_post_json('areas', json.dumps(area), True)
+        self.assertEqual(result.status_code, 201)
+        areas = Area.query.all()
+        self.assertEqual(len(areas), 1)
+        self.assertEqual(areas[0].name, "test")
+
 if __name__ == '__main__':
     unittest.main()

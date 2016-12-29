@@ -85,10 +85,10 @@ def areas_index():
 def create_area():
     if not request.json or not 'name' in request.json or not 'classroom_id' in request.json:
         abort(400)
-    area = Area(request.json.classroom_id, request.json.name)
+    area = Area(request.json.get('classroom_id'), request.json.get('name'))
     db.session.add(area)
     db.session.commit()
-    return jsonify( area ), 201
+    return jsonify( area.as_dict() ), 201
 
 # Sensor Areas API - delete #
 @api.route('/api/v1/areas/<int:id>', methods = ['DELETE'])
@@ -103,6 +103,6 @@ def delete_area(id):
 @api_auth.requires_auth
 def update_area(id):
     area = Area.query.get(id)
-    area.name = request.json.get('name', dev.name)
+    area.name = request.json.get('name', area.name)
     db.session.commit()
-    return jsonify( area )
+    return jsonify( area.as_dict() )

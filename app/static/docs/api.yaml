@@ -101,6 +101,11 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/Area'
+        - name: classroom_id
+          in: query
+          description: The id of the classroom this area is in.
+          required: true
+          type: integer
       tags:
         - Area
       security:
