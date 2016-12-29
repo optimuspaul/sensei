@@ -8,8 +8,7 @@ from api_json import APIJSONEncoder
 def create_app(config_obj):
     app = Flask(__name__)
     app.config.from_object(config_obj)
-    tc_url = app.config["TC_URL"]
-    app.config["API_AUTH_SERVICE"] = TCAuthService(tc_url + '/api/v1/authenticate.json')
+    app.config["API_AUTH_SERVICE"] = TCAuthService(app.config["TC_URL"])
     app.json_encoder = APIJSONEncoder
     db.init_app(app)
     app.register_blueprint(api)
