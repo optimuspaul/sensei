@@ -4,6 +4,7 @@ from models import db
 from api import api
 from api_json import APIJSONEncoder
 
+
 def create_app(config_obj):
     app = Flask(__name__)
     app.config.from_object(config_obj)

@@ -11,10 +11,6 @@ CORS(api)
 # Get decorator for basic auth
 api_auth = APIAuthWrapper()
 
-@api.route('/api/v1/docs/api.yaml', methods=['GET'])
-def docs():
-    return send_file('static/docs/api.yaml')
-
 # Sensor Proximity Events upload API #
 @api.route('/api/v1/proximity_events', methods=['POST'])
 @api_auth.requires_auth
