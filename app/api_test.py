@@ -3,15 +3,7 @@ import datetime
 import json
 from main import create_app
 from base64 import b64encode
-from auth_service import AuthCheckResult
 from models import *
-
-class MockAuthService():
-    def check_auth(self, username, password):
-        if username == 'testuser' and password == 'testpass':
-            return AuthCheckResult(True)
-        else:
-            return AuthCheckResult(False)
 
 class ApiTestCase(unittest.TestCase):
     def setUp(self):
@@ -30,7 +22,6 @@ class ApiTestCase(unittest.TestCase):
         }
 
         # Use mock auth service
-        app.config["API_AUTH_SERVICE"] = MockAuthService()
         db.create_all()
 
     def tearDown(self):
@@ -128,6 +119,14 @@ class ApiTestCase(unittest.TestCase):
         areas = Area.query.all()
         self.assertEqual(len(areas), 1)
         self.assertEqual(areas[0].name, "test")
+
+    def test_classrooms_index(self):
+        result = self.app.get('/api/v1/classrooms', headers=self.authorized_headers)
+        self.assertEqual(result.status_code, 200)
+        classrooms = json.loads(result.data)
+        self.assertEqual(len(classrooms), 1)
+        self.assertEqual(classrooms[0].get('name'), "test classroom")
+
 
 if __name__ == '__main__':
     unittest.main()

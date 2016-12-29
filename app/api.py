@@ -11,7 +11,7 @@ CORS(api)
 # Get decorator for basic auth
 api_auth = APIAuthWrapper()
 
-# Sensor Proximity Events upload API #
+# Sensor Proximity Events upload #
 @api.route('/api/v1/proximity_events', methods=['POST'])
 @api_auth.requires_auth
 def post_proximity_events():
@@ -30,7 +30,7 @@ def post_proximity_events():
     db.session.commit()
     return "OK", 201
 
-# Sensor Mapping API - index #
+# Sensor Mapping - index #
 @api.route('/api/v1/sensor_mappings', methods = ['GET'])
 @api_auth.requires_auth
 def sensor_mappings_index():
@@ -40,7 +40,7 @@ def sensor_mappings_index():
     mappings = SensorMapping.query.filter_by(classroom_id=classroom_id, end_time=None).all()
     return jsonify([m.as_dict() for m in mappings])
 
-# Sensor Mapping API - create/update #
+# Sensor Mapping - create/update #
 @api.route('/api/v1/sensor_mappings', methods=['POST'])
 @api_auth.requires_auth
 def create_sensor_mapping():
@@ -65,7 +65,7 @@ def create_sensor_mapping():
     db.session.commit()
     return "OK", 201
 
-# Sensor Areas API - index #
+# Areas - index #
 @api.route('/api/v1/areas', methods = ['GET'])
 @api_auth.requires_auth
 def areas_index():
@@ -75,7 +75,7 @@ def areas_index():
     areas = Area.query.filter_by(classroom_id=classroom_id).all()
     return jsonify([a.as_dict() for a in areas])
 
-# Sensor Areas API - create #
+# Areas - create #
 @api.route('/api/v1/areas', methods = ['POST'])
 @api_auth.requires_auth
 def create_area():
@@ -86,7 +86,7 @@ def create_area():
     db.session.commit()
     return jsonify( area.as_dict() ), 201
 
-# Sensor Areas API - delete #
+# Areas - delete #
 @api.route('/api/v1/areas/<int:id>', methods = ['DELETE'])
 @api_auth.requires_auth
 def delete_area(id):
@@ -94,7 +94,7 @@ def delete_area(id):
     db.session.commit()
     return jsonify( { 'result': True } )
 
-# Sensor Areas API - update #
+# Areas - update #
 @api.route('/api/v1/areas/<int:id>', methods = ['PUT'])
 @api_auth.requires_auth
 def update_area(id):
@@ -102,3 +102,10 @@ def update_area(id):
     area.name = request.json.get('name', area.name)
     db.session.commit()
     return jsonify( area.as_dict() )
+
+# Classrooms - index #
+@api.route('/api/v1/classrooms', methods = ['GET'])
+@api_auth.requires_auth
+def classrooms_index():
+    classrooms = Classroom.get_for_user(current_app.config.get("TC_SERVICE"), g.user)
+    return jsonify([c.as_dict() for c in classrooms])

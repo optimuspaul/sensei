@@ -1,5 +1,6 @@
 from functools import wraps
 from flask import request, Response, g, current_app
+from models import User
 
 class APIAuthWrapper():
     def auth_service(self):
@@ -42,6 +43,7 @@ class APIAuthWrapper():
                 return self.error_response(res.error)
 
             if res.authenticated:
+                g.user = User(res.userinfo)
                 return f(*args, **kwargs)
 
             return Response("Unauthorized", 401)

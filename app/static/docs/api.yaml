@@ -181,6 +181,25 @@ paths:
           description: Area deleted
         401:
           description: Unauthorized
+  /classrooms:
+    get:
+      summary: Returns the classrooms accessible to this user.
+      produces:
+        - application/json
+      tags:
+        - Classroom
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Classrooms
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Classroom'
+        401:
+          description: Unauthorized
+
 definitions:
   SensorMapping:
     type: object
@@ -234,3 +253,16 @@ definitions:
       name:
         type: string
         description: Name of the area.
+  Classroom:
+    type: object
+    description: Describes a classroom.
+    properties:
+      id:
+        type: integer
+        description: Unique identifier for the classroom.
+      name:
+        type: string
+        description: Name of the classroom.
+      lesson_set_id:
+        type: integer
+        description: Unique identifier for this class' lesson set.

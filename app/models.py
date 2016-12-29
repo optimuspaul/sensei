@@ -1,8 +1,29 @@
 import dateutil.parser
-import enum
+import enum, json
 from flask_sqlalchemy import SQLAlchemy
+from tc_service import TCService
 
 db = SQLAlchemy()
+
+# User
+class User(object):
+    def __init__(self, userinfo):
+        self.id = userinfo['id']
+        self.first_name = userinfo['first_name']
+        self.last_name = userinfo['last_name']
+        self.email = userinfo['email']
+        self.api_token = userinfo['api_token']
+        self.school_id = userinfo['school_id']
+
+    def as_dict(self):
+       return dict(
+         id=self.id,
+         first_name=self.first_name,
+         last_name=self.last_name,
+         email=self.email,
+         api_token=self.api_token,
+         school_id=self.school_id)
+
 
 # Raw proximity event
 class ProximityEvent(db.Model):
@@ -69,3 +90,22 @@ class Area(db.Model):
          classroom_id=self.classroom_id,
          id=self.id,
          name=self.name)
+
+# classrooms
+class Classroom(object):
+
+    def __init__(self, attrs):
+        self.id = attrs.get('id')
+        self.name = attrs.get('name')
+        self.lesson_set_id = attrs.get('lesson_set_id')
+
+    @staticmethod
+    def get_for_user(tc_svc, user):
+        body = tc_svc.request('classrooms', user=user)
+        return [Classroom(c) for c in json.loads(body)]
+
+    def as_dict(self):
+        return dict(
+            id=self.id,
+            name=self.name,
+            lesson_set_id=self.lesson_set_id)
