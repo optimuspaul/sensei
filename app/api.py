@@ -46,22 +46,26 @@ def sensor_mappings_index():
 def create_sensor_mapping():
     map_data = request.get_json()
     if not map_data:
-        abort(400, "Expected SensorMapping object in body")
-    sensor_id = map_data.get('sensor_id')
-    now = datetime.datetime.now()
-    existing = SensorMapping.query.filter_by(sensor_id=sensor_id,end_time=None).first()
-    if existing:
-        existing.end_time = now
+        abort(400, "Expected array of SensorMapping objects in body")
 
-    new_mapping = SensorMapping(
-        map_data.get('classroom_id'),
-        sensor_id,
-        now,
-        None,
-        map_data.get('mapping_type'),
-        map_data.get('target_id'),
-        )
-    db.session.add(new_mapping)
+    for mapping in map_data:
+        sensor_id = mapping.get('sensor_id')
+        now = datetime.datetime.now()
+        existing = SensorMapping.query.filter_by(sensor_id=sensor_id,end_time=None).first()
+        if existing:
+            existing.end_time = now
+
+        if mapping.get('entity_type') and mapping.get('entity_id'):
+            new_mapping = SensorMapping(
+                mapping.get('classroom_id'),
+                sensor_id,
+                now,
+                None,
+                mapping.get('entity_type'),
+                mapping.get('entity_id'),
+                )
+            db.session.add(new_mapping)
+
     db.session.commit()
     return "OK", 201
 

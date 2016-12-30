@@ -69,33 +69,27 @@ class ApiTestCase(unittest.TestCase):
         mapping_item = dict(
             classroom_id=1,
             sensor_id=1,
-            mapping_type='student',
-            target_id=5, # student_id
+            entity_type='student',
+            entity_id=5, # student_id
         )
-        result = self.api_post_json('sensor_mappings', json.dumps(mapping_item), True)
+        result = self.api_post_json('sensor_mappings', json.dumps([mapping_item]), True)
         self.assertEqual(result.status_code, 201)
         mappings = SensorMapping.query.all()
         self.assertEqual(len(mappings), 1)
 
     def test_mapping_update(self):
-        mapping1 = dict(
-            classroom_id=1,
-            sensor_id=1,
-            mapping_type='student',
-            target_id=5, # student_id
-        )
-        result = self.api_post_json('sensor_mappings', json.dumps(mapping1), True)
-        self.assertEqual(result.status_code, 201)
-        mappings = SensorMapping.query.all()
-        self.assertEqual(len(mappings), 1)
-
-        mapping2 = dict(
-            classroom_id=1,
-            sensor_id=1,
-            mapping_type='student',
-            target_id=5, # student_id
-        )
-        result = self.api_post_json('sensor_mappings', json.dumps(mapping2), True)
+        mappings = [
+            dict(
+                classroom_id=1,
+                sensor_id=1,
+                entity_type='student',
+                entity_id=5),
+            dict(
+                classroom_id=1,
+                sensor_id=1,
+                entity_type='student',
+                entity_id=5)]
+        result = self.api_post_json('sensor_mappings', json.dumps(mappings), True)
         self.assertEqual(result.status_code, 201)
         mappings = SensorMapping.query.all()
         self.assertEqual(len(mappings), 2)

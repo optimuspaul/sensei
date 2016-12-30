@@ -50,7 +50,7 @@ paths:
     post:
       summary: Update mapping of sensor ids to students, teachers, materials, and classroom areas
       description: |
-        This endpoint is used to specify a new mapping of a sensor. Any existing mapping of this sensor will be marked as ended.
+        This endpoint is used to create and update mappings of sensors to physical entities, such as students, teachers, materials, or areas. To associate a sensor with a new entity, start_time and end_time should not be specified. The server will end any existing mapping of this sensor. To mark a sensor as not associated with any entity, the entity type and entity id fields should be left blank.
       consumes:
         - application/json
       parameters:
@@ -59,7 +59,9 @@ paths:
           description: Sensor mapping.
           required: true
           schema:
-            $ref: '#/definitions/SensorMapping'
+            type: array
+            items:
+              $ref: '#/definitions/SensorMapping'
       tags:
         - SensorMapping
       security:
@@ -70,7 +72,7 @@ paths:
         401:
           description: Unauthorized
     get:
-      summary: Returns the current sensor mappings for the specified classroom.
+      summary: Returns the current sensor mappings for the specified classroom.  Only active mappings will be returned.
       produces:
         - application/json
       parameters:
@@ -217,11 +219,11 @@ definitions:
       end_time:
         type: string
         description: The ending time of the mapping, in iso8601 format. Example '2002-12-25T12:15:05'.  If not set, this indicates the current mapping.
-      mapping_type:
+      entity_type:
         type: string
         enum: [ "student", "teacher", "material", "area"]
         description: The type of mapping
-      target:id:
+      entity_id:
         type: integer
         description: The foreign key to
   ProximityEvent:
