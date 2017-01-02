@@ -114,6 +114,18 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(len(areas), 1)
         self.assertEqual(areas[0].name, "test")
 
+    def test_material_create(self):
+        material = dict(
+            classroom_id=1,
+            name='red rods',
+            lesson_id=5
+        )
+        result = self.api_post_json('materials', json.dumps(material), True)
+        self.assertEqual(result.status_code, 201)
+        materials = Material.query.all()
+        self.assertEqual(len(materials), 1)
+        self.assertEqual(materials[0].name, "red rods")
+
     def test_classrooms_index(self):
         result = self.app.get('/api/v1/classrooms', headers=self.authorized_headers)
         self.assertEqual(result.status_code, 200)

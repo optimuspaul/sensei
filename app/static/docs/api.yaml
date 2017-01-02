@@ -56,7 +56,6 @@ paths:
       parameters:
         - name: mapping
           in: body
-          description: Sensor mapping.
           required: true
           schema:
             type: array
@@ -102,7 +101,6 @@ paths:
       parameters:
         - name: area
           in: body
-          description: Classroom Area.
           required: true
           schema:
             $ref: '#/definitions/Area'
@@ -183,6 +181,93 @@ paths:
           description: Area deleted
         401:
           description: Unauthorized
+  /materials:
+    post:
+      summary: Create new material record
+      consumes:
+        - application/json
+      parameters:
+        - name: material
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Material'
+      tags:
+        - Material
+      security:
+        - basicAuth: []
+      responses:
+        201:
+          description: Material created
+        401:
+          description: Unauthorized
+    get:
+      summary: Returns the materials defined for the specified classroom.
+      produces:
+        - application/json
+      parameters:
+        - name: classroom_id
+          in: query
+          description: The id of the classroom to retrieve materials for.
+          required: true
+          type: integer
+      tags:
+        - Material
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Materials
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Material'
+        401:
+          description: Unauthorized
+  /materials/{id}:
+    put:
+      summary: Update a material's name.
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: The id of the material to update.
+          required: true
+          type: integer
+        - name: mapping
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Material'
+      tags:
+        - Material
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Material updated
+          schema:
+            $ref: '#/definitions/Material'
+        401:
+          description: Unauthorized
+    delete:
+      summary: Delete a material.
+      parameters:
+        - name: id
+          in: path
+          description: The id of the material to delete.
+          required: true
+          type: integer
+      tags:
+        - Material
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Material deleted
+        401:
+          description: Unauthorized
   /classrooms:
     get:
       summary: Returns the classrooms accessible to this user.
@@ -255,9 +340,22 @@ definitions:
       name:
         type: string
         description: Name of the area.
+  Material:
+    type: object
+    description: Classroom materials that students use for engaging in lessons.
+    properties:
+      classroom_id:
+        type: integer
+        description: Unique identifier for the classroom that the material is in.
+      name:
+        type: string
+        description: Name of the material.
+      lesson_id:
+        type: integer
+        description: Reference linking this material to a lesson in Transparent Classroom.
   Classroom:
     type: object
-    description: Describes a classroom.
+    description: Describes a classroom. This endpoint is currently backed by Transparent Classroom.
     properties:
       id:
         type: integer
