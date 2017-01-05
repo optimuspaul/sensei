@@ -1,7 +1,6 @@
 class AuthCheckResult():
-    def __init__(self, authenticated, error = None, userinfo = None):
+    def __init__(self, authenticated, userinfo = None):
         self.authenticated = authenticated
-        self.error = error
         self.userinfo = userinfo
 
 class AuthService:

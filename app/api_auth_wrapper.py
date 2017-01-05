@@ -39,9 +39,6 @@ class APIAuthWrapper():
                     return self.need_authentication_response()
                 res = self.check_auth(auth.username, auth.password)
 
-            if res.error:
-                return self.error_response(res.error)
-
             if res.authenticated:
                 g.user = User(res.userinfo)
                 return f(*args, **kwargs)

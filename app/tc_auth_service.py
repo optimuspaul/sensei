@@ -15,14 +15,11 @@ class TCAuthService():
             if e.code == 401:
                 return AuthCheckResult(False)
             else:
-                error = "Unexpected response from auth server: %s" % e
-                return AuthCheckResult(False, error)
-        except urllib2.URLError as e:
-            return AuthCheckResult(False, e)
+                raise error
         else:
             body = response.read()
             userinfo = json.loads(body)
-            return AuthCheckResult(True, None, userinfo)
+            return AuthCheckResult(True, userinfo)
 
     def check_auth(self, username, password):
         req = urllib2.Request(self.endpoint)

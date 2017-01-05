@@ -11,7 +11,7 @@ class MockAuthService():
                 email="user@example.com",
                 api_token="exampletoken",
                 school_id=1)
-            return AuthCheckResult(True, None, testuser)
+            return AuthCheckResult(True, testuser)
         else:
             return AuthCheckResult(False)
 
