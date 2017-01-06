@@ -3,3 +3,8 @@ venv
 bundle.js
 node_modules
 .cache
+sensei/bin
+sensei/lib
+sensei/pip-selfcheck.json
+sensei/include/*
+sensei/.Python
