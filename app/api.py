@@ -50,10 +50,13 @@ def create_sensor_mapping():
 
     for mapping in map_data:
         sensor_id = mapping.get('sensor_id')
+        entity_type = mapping.get('entity_type')
+        entity_id = mapping.get('entity_id')
         now = datetime.datetime.now()
-        existing = SensorMapping.query.filter_by(sensor_id=sensor_id,end_time=None).first()
-        if existing:
-            existing.end_time = now
+        mappings_to_end = SensorMapping.query.filter_by(sensor_id=sensor_id,end_time=None).all()
+        mappings_to_end.extend(SensorMapping.query.filter_by(entity_id=entity_id,entity_type=entity_type,end_time=None))
+        for m in mappings_to_end:
+            m.end_time = now
 
         if mapping.get('entity_type') and mapping.get('entity_id'):
             new_mapping = SensorMapping(

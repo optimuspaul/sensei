@@ -77,7 +77,9 @@ class ApiTestCase(unittest.TestCase):
         mappings = SensorMapping.query.all()
         self.assertEqual(len(mappings), 1)
 
-    def test_mapping_update(self):
+    def test_mapping_update_same_sensor_id(self):
+        # When updating the mapping of a sensor, existing mappings to that
+        # sensor should be ended
         mappings = [
             dict(
                 classroom_id=1,
@@ -88,11 +90,39 @@ class ApiTestCase(unittest.TestCase):
                 classroom_id=1,
                 sensor_id=1,
                 entity_type='student',
+                entity_id=6)]
+        result = self.api_post_json('sensor_mappings', json.dumps(mappings), True)
+        self.assertEqual(result.status_code, 201)
+        mappings = SensorMapping.query.all()
+        self.assertEqual(len(mappings), 2)
+
+        mappings = SensorMapping.query.filter_by(end_time=None).all()
+        self.assertEqual(len(mappings), 1)
+        self.assertEqual(mappings[0].entity_id, 6)
+
+    def test_mapping_update_same_entity(self):
+        # When updating a mapping to an entity, existing mappings to that
+        # entity should be ended
+        mappings = [
+            dict(
+                classroom_id=1,
+                sensor_id=1,
+                entity_type='student',
+                entity_id=5),
+            dict(
+                classroom_id=1,
+                sensor_id=2,
+                entity_type='student',
                 entity_id=5)]
         result = self.api_post_json('sensor_mappings', json.dumps(mappings), True)
         self.assertEqual(result.status_code, 201)
         mappings = SensorMapping.query.all()
         self.assertEqual(len(mappings), 2)
+
+        mappings = SensorMapping.query.filter_by(end_time=None).all()
+        self.assertEqual(len(mappings), 1)
+        self.assertEqual(mappings[0].sensor_id, 2)
+
 
     def test_get_mappings(self):
         m = SensorMapping(1, 1, datetime.datetime.now(), None, 'student', 1)
