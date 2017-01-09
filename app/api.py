@@ -11,17 +11,18 @@ CORS(api)
 # Get decorator for basic auth
 api_auth = APIAuthWrapper()
 
-# Sensor Proximity Events upload #
-@api.route('/api/v1/proximity_events', methods=['POST'])
+# Radio Observations upload #
+@api.route('/api/v1/radio_observations', methods=['POST'])
 @api_auth.requires_auth
-def post_proximity_events():
+def post_radio_observations():
     event_data = request.get_json()
     if not event_data:
         abort(400)
     if not isinstance(event_data, list):
         event_data = [event_data]
+
     for event in event_data:
-        db.session.add(ProximityEvent(
+        db.session.add(RadioObservation(
             event.get('classroom_id'),
             event.get('local_id'),
             event.get('remote_id'),

@@ -25,8 +25,8 @@ class User(object):
          school_id=self.school_id)
 
 
-# Raw proximity event
-class ProximityEvent(db.Model):
+# Raw radio observation
+class RadioObservation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     classroom_id = db.Column(db.Integer, nullable=False)
     local_id = db.Column(db.Integer, nullable=False)

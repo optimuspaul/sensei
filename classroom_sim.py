@@ -27,7 +27,7 @@ def api_req(endpoint, params=None):
     req.add_header('Content-Type', 'application/json')
     return req
 
-class SensorProximityEvent(object):
+class RadioObservation(object):
 
     class RSSI(float):
         def __repr__(self):
@@ -38,7 +38,7 @@ class SensorProximityEvent(object):
         self.local_id = local_id
         self.remote_id = remote_id
         self.observed_at = observed_at
-        self.rssi = SensorProximityEvent.RSSI(rssi)
+        self.rssi = RadioObservation.RSSI(rssi)
 
 def trial(prob):
     return random.random() < prob
@@ -245,8 +245,8 @@ end_time = sim_time + timedelta(hours=8)
 
 # Example upload of sensor ob
 def upload_obs(obs):
-    print "Uploading simulated events."
-    req = api_req('proximity_events')
+    print "Uploading simulated radio observations."
+    req = api_req('radio_observations')
     response = urllib2.urlopen(req, json.dumps(obs))
     print response.read()
 
@@ -268,7 +268,7 @@ while sim_time < end_time:
                 continue
             rssi = sensor.sim_ping(other)
             if rssi is not None:
-                event = SensorProximityEvent(CLASSROOM_ID, sensor.sensor_id,
+                event = RadioObservation(CLASSROOM_ID, sensor.sensor_id,
                             other.sensor_id, sim_time.isoformat(), rssi)
                 obs.append(event)
     print "%d obs" % len(obs)

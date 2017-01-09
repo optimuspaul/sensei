@@ -41,28 +41,28 @@ class ApiTestCase(unittest.TestCase):
 
     def test_upload_without_auth(self):
 
-        proximity_event = dict(
+        radio_ob = dict(
             classroom_id=1,
             local_id=1,
             remote_id=2,
             observed_at=datetime.datetime.now().isoformat(),
         )
 
-        event_data = json.dumps([proximity_event])
-        result = self.api_post_json('proximity_events', event_data)
+        event_data = json.dumps([radio_ob])
+        result = self.api_post_json('radio_observations', event_data)
         self.assertEqual(result.status_code, 401)
 
     def test_upload_with_auth(self):
-        proximity_event = dict(
+        radio_ob = dict(
             classroom_id=1,
             local_id=1,
             remote_id=2,
             observed_at=datetime.datetime.now().isoformat(),
         )
-        event_data = json.dumps([proximity_event])
-        result = self.api_post_json('proximity_events', event_data, True)
+        event_data = json.dumps([radio_ob])
+        result = self.api_post_json('radio_observations', event_data, True)
         self.assertEqual(result.status_code, 201)
-        events = ProximityEvent.query.all()
+        events = RadioObservation.query.all()
         self.assertEqual(len(events), 1)
 
     def test_mapping_create(self):

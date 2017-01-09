@@ -20,24 +20,24 @@ securityDefinitions:
     name: X-SenseiToken
     in: header
 paths:
-  /proximity_events:
+  /radio_observations:
     post:
-      summary: Upload proximity events.
+      summary: Upload radio observations.
       description: |
-        The Proximity Events endpoint provides a way to upload proximity observations from sensors to the sensei platform.
+        The Radio Observations endpoint provides a way to upload radio observations from sensors to the sensei platform.
       consumes:
         - application/json
       parameters:
         - name: events
           in: body
-          description: List of proximity events.
+          description: List of radio observations.
           required: true
           schema:
             type: array
             items:
-              $ref: '#/definitions/ProximityEvent'
+              $ref: '#/definitions/RadioObservation'
       tags:
-        - Proximity
+        - RadioObservation
       security:
         - basicAuth: []
         - apiKeyAuth: []
@@ -311,16 +311,16 @@ definitions:
       entity_id:
         type: integer
         description: The foreign key to
-  ProximityEvent:
+  RadioObservation:
     type: object
-    description: Proximity events occur when when sensor receives a radio packet from another sensor. The receiver records the observed RSSI of the packet, along with the sender's id and a timestamp.
+    description: Radio observations occur when when sensor receives a radio packet from another sensor. The receiver records the observed RSSI of the packet, along with the sender's id and a timestamp.
     properties:
       classroom_id:
         type: integer
         description: Unique identifier for the classroom that the sensors involved belong to.
       local_id:
         type: integer
-        description: Classroom specific sensor id of the sensor that recorded the proximity event (0-255).
+        description: Classroom specific sensor id of the sensor that received and recorded the triggering packet (0-255).
       remote_id:
         type: integer
         description: The id of the sensor that sent the triggering packet (0-255).
