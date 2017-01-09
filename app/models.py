@@ -34,6 +34,9 @@ class ProximityEvent(db.Model):
     observed_at = db.Column(db.DateTime, nullable=False)
     rssi = db.Column(db.Float)
 
+    db.Index("local_idx_by_time", "observed_at", "local_id")
+    db.Index("remote_idx_by_time", "observed_at", "local_id")
+
     def __init__(self, classroom_id, local_id, remote_id, observed_at, rssi):
         self.classroom_id = classroom_id
         self.local_id = local_id

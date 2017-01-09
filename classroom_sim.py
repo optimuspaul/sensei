@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import json
-import urllib2, base64
+import urllib, urllib2, base64
 import math
 import numpy as np
 from numpy.linalg import norm
@@ -9,6 +9,23 @@ import random
 from transitions import Machine
 import time
 from datetime import datetime, timedelta
+
+SENSEI_SERVER = 'http://localhost:5000/'
+SENSEI_API = SENSEI_SERVER + 'api/v1/'
+SENSEI_USER = 'super@example.com'
+SENSEI_PASSWORD = 'password'
+CLASSROOM_ID = 1
+
+def api_req(endpoint, params=None):
+    url = SENSEI_API + endpoint
+    if params:
+        url += '?' + urllib.urlencode(params)
+    req = urllib2.Request(url)
+    print "calling req: %s" % url
+    base64string = base64.b64encode('%s:%s' % (SENSEI_USER, SENSEI_PASSWORD))
+    req.add_header("Authorization", "Basic %s" % base64string)
+    req.add_header('Content-Type', 'application/json')
+    return req
 
 class SensorProximityEvent(object):
 
@@ -67,10 +84,10 @@ class Sensor(object):
         return rssi - abs(np.random.normal(0, 10))
 
 class Teacher(Sensor):
-    def __init__(self, room, name, sensor_id):
+    def __init__(self, room, user_id, sensor_id):
         self.room = room
         self.pos = room.random_pos()
-        self.name = name
+        self.user_id = user_id
         self.sensor_id = sensor_id
 
 class Student(Sensor):
@@ -86,10 +103,10 @@ class Student(Sensor):
     states = ['observing', 'fetching material', 'moving to workplace',
               'working', 'returning material']
 
-    def __init__(self, room, name, sensor_id):
+    def __init__(self, room, student_id, sensor_id):
         self.room = room
         self.pos = room.random_pos()
-        self.name = name
+        self.student_id = student_id
         self.sensor_id = sensor_id
 
         self.material = None # Material that student wants or is using
@@ -111,7 +128,7 @@ class Student(Sensor):
             dest='observing', before='return_material')
 
     def __str__(self):
-        rval = "%d %s - %s, (%.02f,%.02f)" % (self.sensor_id, self.name, self.state, self.pos[0], self.pos[1])
+        rval = "%d %d - %s, (%.02f,%.02f)" % (self.sensor_id, self.student_id, self.state, self.pos[0], self.pos[1])
         if self.material is not None:
             rval += " - %s" % self.material.name
         return rval
@@ -183,10 +200,10 @@ class MaterialTray(Sensor):
         self.materials.remove(material)
 
 class Material(Sensor):
-    def __init__(self, tray, name, sensor_id):
+    def __init__(self, tray, material_id, sensor_id):
         self.home_tray = tray
         self.pos = tray.pos
-        self.name = name
+        self.material_id = material_id
         self.sensor_id = sensor_id
         tray.add_material(self)
         self.available = True
@@ -199,49 +216,24 @@ class Material(Sensor):
 
 
 r = Room(7,18)
-students = [
-    Student(r, "theo", 1),
-    Student(r, "merri", 2),
-    Student(r, "soren", 3),
-    Student(r, "johana", 4),
-    Student(r, "alex", 5),
-    Student(r, "elizabeth", 6),
-    Student(r, "lily", 7),
-    Student(r, "noah", 8),
-    Student(r, "aria", 9),
-    Student(r, "carter", 10),
-    Student(r, "amelia", 11),
-    Student(r, "logan", 12),
-    Student(r, "elias", 13),
-    Student(r, "madison", 14)]
+
+def get_sensor_mappings():
+    req = api_req('sensor_mappings', {'classroom_id': CLASSROOM_ID})
+    response = urllib2.urlopen(req)
+    return json.loads(response.read())
+
+sensors = get_sensor_mappings()
+
+students = [Student(r, s['entity_id'], s['sensor_id']) for s in sensors if s['entity_type'] == 'student']
 
 tray0 = MaterialTray(r, 20)
 tray1 = MaterialTray(r, 21)
 tray2 = MaterialTray(r, 23)
-
 trays = [tray0, tray1, tray2]
 
-materials = [
-    Material(tray0, 'Lacing Frame', 30),
-    Material(tray0, 'Hook and Eye Frame', 31),
-    Material(tray0, 'Zipping Frame', 32),
-    Material(tray0, 'Long Red Rods', 39),
-    Material(tray0, 'Rough and Smooth Boards', 40),
-    Material(tray0, 'Color Tablets', 41),
-    Material(tray1, 'Sandpaper Letters', 42),
-    Material(tray1, 'Movable Alphabet', 43),
-    Material(tray1, 'Metal Insets', 44),
-    Material(tray1, 'Printed Alphabet', 45),
-    Material(tray1, 'Solid Grammar Symbols', 48),
-    Material(tray2, 'Printed Numerals', 49),
-    Material(tray2, 'Sandpaper Numerals', 50),
-    Material(tray2, 'Spindles', 51),
-    Material(tray2, 'Multiplication Bead Board', 52),
-    Material(tray2, 'Wooden Fraction Circles', 53)]
+materials = [Material(trays[idx%len(trays)], m['entity_id'], m['sensor_id']) for idx,m in enumerate(sensors) if m['entity_type'] == 'material']
 
-corinna = Teacher(r, "Corinna", 100)
-clair = Teacher(r, "Clair", 101)
-teachers = [corinna, clair]
+teachers = [Teacher(r, t['entity_id'], t['sensor_id']) for t in sensors if t['entity_type'] == 'teacher']
 
 sensors = students + teachers + trays + materials
 
@@ -250,15 +242,11 @@ sensors = students + teachers + trays + materials
 sim_time = datetime.now() - timedelta(days=1)
 sim_time = sim_time.replace(hour=8, minute=0, second=0)
 end_time = sim_time + timedelta(hours=8)
-CLASSROOM_ID = 1
 
 # Example upload of sensor ob
 def upload_obs(obs):
     print "Uploading simulated events."
-    req = urllib2.Request('http://localhost:5000/api/v1/proximity_events')
-    base64string = base64.b64encode('%s:%s' % ('super@example.com', 'password'))
-    req.add_header("Authorization", "Basic %s" % base64string)
-    req.add_header('Content-Type', 'application/json')
+    req = api_req('proximity_events')
     response = urllib2.urlopen(req, json.dumps(obs))
     print response.read()
 
@@ -289,5 +277,5 @@ while sim_time < end_time:
     obs = map(lambda x: x.__dict__, obs)
     upload_obs(obs)
 
-    time.sleep(1)
+    #time.sleep(1)
     sim_time = sim_time + timedelta(seconds=10)
