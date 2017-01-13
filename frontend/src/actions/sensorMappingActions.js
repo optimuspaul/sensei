@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import {getSenseiToken, getClassroomId} from './../constants';
-import Case from 'case';
+import {changeCases} from './../utils';
 
 const ADD_MAPPINGS = 'ADD_MAPPINGS';
 export const addMappings = (mappings) => {
@@ -28,7 +28,6 @@ export const handleCommitMappingsSuccess = (mapping) => {
 export const commitMappings = (mappings) => {
   return (dispatch, getState) => {
     let mappings = getBulkMappings(getState().sensorMappings)
-    debugger
     fetch('http://0.0.0.0:5000/api/v1/sensor_mappings', {
       headers: {
         'X-SenseiToken': getSenseiToken(),
@@ -65,7 +64,7 @@ export const fetchMappings = (schoolId, classroomId) => {
       return response.text()
     }).then((body) => {
       let mappings = JSON.parse(body);
-      dispatch(addMappings(changeCase(mappings)));
+      dispatch(addMappings(changeCases(mappings)));
     })
   }
 }
@@ -74,7 +73,7 @@ export const fetchMappings = (schoolId, classroomId) => {
 function getBulkMappings(sensorMappings) {
   return _.reduce(sensorMappings, (current, grouping) => {
     if (_.isObject(grouping)) {
-      current = _.concat(current, _.map(changeCase(grouping, 'snake'), (mapping) => {
+      current = _.concat(current, _.map(changeCases(grouping, 'snake'), (mapping) => {
         return _.merge(mapping, {classroom_id: getClassroomId()});
       }));
     }
@@ -82,11 +81,4 @@ function getBulkMappings(sensorMappings) {
   }, [])
 }
 
-function changeCase(data, toCase = 'camel') {
-  return _.map(data, (x) => {
-    return _.reduce(x, (current, val, key) => {
-      current[Case[toCase](key)] = val;
-      return current;
-    }, {});
-  });
-}
+

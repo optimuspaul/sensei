@@ -5,7 +5,8 @@ import SensorMappingInterface from './../components/SensorMappingInterface';
 
 const SensorMappingInterfaceContainer = connect((state) => ({
   mappings: state.sensorMappings,
-  entities: state.entities
+  entities: state.entities,
+  requests: state.requests
 }),
 (dispatch) => ({
   dispatch,

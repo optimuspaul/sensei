@@ -27,7 +27,7 @@ class SensorMappingInterface extends React.Component {
 
     const entityTables = _.map(['student', 'teacher', 'material', 'area'], (entityType) => {
       const rows = _.map(this.props.entities[`${entityType}s`], (entity) => {
-        const mapping = this.props.mappings[entityType][entity.id] || {
+        const mapping = (this.props.mappings[entityType] && this.props.mappings[entityType][entity.id]) || {
           entityId: entity.id,
           entityType,
           sensorId: null
@@ -41,7 +41,7 @@ class SensorMappingInterface extends React.Component {
               <thead>
                 <tr>
                   <th>{entityType} name</th>
-                  <th>sensor number</th>
+                  <th style={{textAlign: 'right'}}>sensor number</th>
                 </tr>
               </thead>
               <tbody>
@@ -53,10 +53,33 @@ class SensorMappingInterface extends React.Component {
       }
     })
 
-    return (<div>
-            {entityTables}
-            <button className="btn btn-primary" onClick={this.handleSave}>Save</button>
-            </div>)
+    return (
+      <div className="row">
+        <div className="col-md-8">
+          <div className="row">
+            <div className="col-md-6">
+              {entityTables[0]}
+            </div>
+            <div className="col-md-6">
+              {entityTables[1]}
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-md-6">
+              {entityTables[2]}
+            </div>
+            <div className="col-md-6">
+              {entityTables[3]}
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-md-6">
+              <button className="btn btn-primary" onClick={this.handleSave}>Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 }
 

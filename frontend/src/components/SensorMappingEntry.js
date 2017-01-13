@@ -43,6 +43,7 @@ class SensorMappingEntry extends React.Component {
         <td>
           <input type="text"
                  style={{width: 50}}
+                 className="pull-right"
                  key={`sensorId-${this.props.mapping.sensorId}`}
                  defaultValue={this.props.mapping.sensorId}
                  onBlur={this.handleBlur}

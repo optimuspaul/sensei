@@ -4,6 +4,7 @@ const initialState = {
   students: {},
   teachers: {},
   materials: {},
+  areas: {},
   loading: false
 };
 
@@ -16,6 +17,11 @@ export default function sensorMappings(state = initialState, action) {
           current[entity.id] = entity
           return current;
         }, {}))
+      }
+    case 'HANDLE_SAVE_ENTITY_SUCCESS':
+      return {
+        ...state,
+        [action.entityType]: _.merge(state[action.entityType], {[action.entity.id]: action.entity})
       }
     default:
       return state

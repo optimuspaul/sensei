@@ -1,5 +1,7 @@
 import _ from 'lodash';
 import {getCrsfToken} from './../constants';
+import {getSenseiToken, getClassroomId} from './../constants';
+import {changeCase} from './../utils';
 
 const ADD_ENTITIES = 'ADD_ENTITIES';
 export const addEntities = (entityType, entities) => {
@@ -7,6 +9,25 @@ export const addEntities = (entityType, entities) => {
     type: ADD_ENTITIES,
     entityType,
     entities
+  }
+}
+
+const HANDLE_SAVE_ENTITY_SUCCESS = 'HANDLE_SAVE_ENTITY_SUCCESS';
+export const handleSaveEntitySuccess = (entityType, entity) => {
+  return {
+    type: HANDLE_SAVE_ENTITY_SUCCESS,
+    entityType,
+    entity
+  }
+}
+
+const HANDLE_REQUEST = 'HANDLE_REQUEST';
+export const handleRequest = (requestType, requestStatus, payload) => {
+  return {
+    type: HANDLE_REQUEST,
+    requestType,
+    requestStatus,
+    payload
   }
 }
 
@@ -48,6 +69,67 @@ export const fetchTeachers = () => {
   }
 }
 
+export const fetchEntities = (entityType) => {
+  return (dispatch) => {
+    fetch(`http://0.0.0.0:5000/api/v1/${entityType}?classroom_id=${getClassroomId()}`, {
+      headers: {
+        'X-SenseiToken': getSenseiToken(),
+        'Content-Type': 'application/json'
+      }
+    }).then(function(response) {
+      return response.text()
+    }).then((body) => {
+      let entities = JSON.parse(body);
+      const decoratedEntities = entities.map((entity) => {
+        return _.merge(changeCase(entity, 'camel'), {displayName: entity.name});
+      });
+      dispatch(addEntities(entityType, decoratedEntities));
+    })
+  }
+}
 
+export const saveEntity = (entityType, entity) => {
+  return (dispatch, getState) => {
+    dispatch(handleRequest('saveEntity', 'pending', entity));
+    let saveableEntity = _.merge(changeCase(entity, 'snake'), {classroom_id: getClassroomId()});
+    fetch(`http://0.0.0.0:5000/api/v1/${entityType}`, {
+      headers: {
+        'X-SenseiToken': getSenseiToken(),
+        'Content-Type': 'application/json'
+      },
+      method: 'POST',
+      body: JSON.stringify(saveableEntity)
+    }).then(function(response) {
+      return response.text();
+    }).then((body) => {
+      let savedEntity = JSON.parse(body);
+      dispatch(handleSaveEntitySuccess(entityType, _.merge(changeCase(savedEntity, 'camel'), {displayName: savedEntity.name})));
+      dispatch(handleRequest('saveEntity', 'success', savedEntity));
+    }).catch((error) => {
+      dispatch(handleRequest('saveEntity', 'error', error));
+    })
+  }
+}
 
-
+export const updateEntity = (entityType, entity) => {
+  return (dispatch, getState) => {
+    dispatch(handleRequest('saveEntity', 'pending', entity));
+    let saveableEntity = _.merge(changeCase(entity, 'snake'), {classroom_id: getClassroomId()});
+    fetch(`http://0.0.0.0:5000/api/v1/${entityType}/${entity.id}`, {
+      headers: {
+        'X-SenseiToken': getSenseiToken(),
+        'Content-Type': 'application/json'
+      },
+      method: 'PUT',
+      body: JSON.stringify(saveableEntity)
+    }).then(function(response) {
+      return response.text();
+    }).then((body) => {
+      let savedEntity = JSON.parse(body);
+      dispatch(handleSaveEntitySuccess(entityType, _.merge(changeCase(savedEntity, 'camel'), {displayName: savedEntity.name})));
+      dispatch(handleRequest('saveEntity', 'success', savedEntity));
+    }).catch((error) => {
+      dispatch(handleRequest('saveEntity', 'error', error));
+    })
+  }
+}

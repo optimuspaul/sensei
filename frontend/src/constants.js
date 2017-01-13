@@ -3,7 +3,8 @@
 export const entityEnum = {
   'students': 'student',
   'teachers': 'teacher',
-  'materials': 'material'
+  'materials': 'material',
+  'areas': 'area'
 }
 
 export const getCrsfToken = () => {
@@ -13,7 +14,7 @@ export const getCrsfToken = () => {
 }
 
 export const getSenseiToken = () => {
-  return window.TCPlugins.userApiToken;
+  return (window.TCPlugins && window.TCPlugins.userApiToken) || (window.tc && window.tc.env.userApiToken);
 }
 
 export const getClassroomId = () => {

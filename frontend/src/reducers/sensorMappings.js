@@ -4,6 +4,7 @@ const initialState = {
   student: {},
   teacher: {},
   material: {},
+  area: {},
   loading: false
 };
 
@@ -15,7 +16,7 @@ export default function sensorMappings(state = initialState, action) {
           return current;
         }, state));
     case 'UPDATE_MAPPING':
-      return Object.assign({}, _.reduce(['student', 'teacher', 'material'], (current, entityType) => {
+      return Object.assign({}, _.reduce(['student', 'teacher', 'material', 'area'], (current, entityType) => {
         current[entityType] = _.pickBy(current[entityType], (s) => {
           return s.sensorId !== action.mapping.sensorId || action.mapping.entityId === null;
         });

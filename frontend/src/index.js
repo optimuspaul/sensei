@@ -7,7 +7,7 @@ import ReactDOM from 'react-dom';
 import store from './store/configureStore';
 import { Provider } from 'react-redux';
 import {fetchMappings} from './actions/sensorMappingActions';
-import {fetchStudents, fetchTeachers} from './actions/entityActions';
+import {fetchStudents, fetchTeachers, fetchEntities} from './actions/entityActions';
 
 
 
@@ -39,6 +39,8 @@ setTimeout(function(){
 
     store.dispatch(fetchStudents());
     store.dispatch(fetchTeachers());
+    store.dispatch(fetchEntities('areas'));
+    store.dispatch(fetchEntities('materials'));
     store.dispatch(fetchMappings());
 
   }
@@ -52,6 +54,9 @@ setTimeout(function(){
       </Provider>,
       document.getElementById('foundation')
     );
+
+    store.dispatch(fetchEntities('areas'));
+    store.dispatch(fetchEntities('materials'));
 
   }
 }, 200);
