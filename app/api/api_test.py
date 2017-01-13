@@ -1,9 +1,9 @@
 import unittest
 import datetime
 import json
-from main import create_app
+from ..main import create_app
 from base64 import b64encode
-from models import *
+from ..models import *
 
 class ApiTestCase(unittest.TestCase):
     def setUp(self):
@@ -53,6 +53,11 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(result.status_code, 401)
 
     def test_upload_with_auth(self):
+        m = SensorMapping(1, 1, datetime.datetime.now(), None, MappingType.child, 1)
+        db.session.add(m)
+        m = SensorMapping(1, 2, datetime.datetime.now(), None, MappingType.child, 2)
+        db.session.add(m)
+        db.session.commit()
         radio_ob = dict(
             classroom_id=1,
             local_id=1,
@@ -69,8 +74,8 @@ class ApiTestCase(unittest.TestCase):
         mapping_item = dict(
             classroom_id=1,
             sensor_id=1,
-            entity_type='student',
-            entity_id=5, # student_id
+            entity_type='child',
+            entity_id=5, # child_id
         )
         result = self.api_post_json('sensor_mappings', json.dumps([mapping_item]), True)
         self.assertEqual(result.status_code, 201)
@@ -84,12 +89,12 @@ class ApiTestCase(unittest.TestCase):
             dict(
                 classroom_id=1,
                 sensor_id=1,
-                entity_type='student',
+                entity_type='child',
                 entity_id=5),
             dict(
                 classroom_id=1,
                 sensor_id=1,
-                entity_type='student',
+                entity_type='child',
                 entity_id=6)]
         result = self.api_post_json('sensor_mappings', json.dumps(mappings), True)
         self.assertEqual(result.status_code, 201)
@@ -107,12 +112,12 @@ class ApiTestCase(unittest.TestCase):
             dict(
                 classroom_id=1,
                 sensor_id=1,
-                entity_type='student',
+                entity_type='child',
                 entity_id=5),
             dict(
                 classroom_id=1,
                 sensor_id=2,
-                entity_type='student',
+                entity_type='child',
                 entity_id=5)]
         result = self.api_post_json('sensor_mappings', json.dumps(mappings), True)
         self.assertEqual(result.status_code, 201)
@@ -125,7 +130,7 @@ class ApiTestCase(unittest.TestCase):
 
 
     def test_get_mappings(self):
-        m = SensorMapping(1, 1, datetime.datetime.now(), None, 'student', 1)
+        m = SensorMapping(1, 1, datetime.datetime.now(), None, MappingType.child, 1)
         db.session.add(m)
         db.session.commit()
         result = self.app.get('/api/v1/sensor_mappings?classroom_id=1', headers=self.authorized_headers)

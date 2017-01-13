@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
 const initialState = {
-  students: {},
+  children: {},
   teachers: {},
   materials: {},
   areas: {},

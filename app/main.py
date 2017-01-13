@@ -2,8 +2,7 @@ from flask import Flask
 from tc_auth_service import TCAuthService
 from models import db
 from api import api
-from api_json import APIJSONEncoder
-
+from api.api_json import APIJSONEncoder
 
 def create_app(config_obj):
     app = Flask(__name__)

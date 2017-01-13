@@ -1,6 +1,5 @@
 import _ from 'lodash';
-import {getCrsfToken} from './../constants';
-import {getSenseiToken, getClassroomId} from './../constants';
+import {getCrsfToken, getSenseiToken, getClassroomId} from './../constants';
 import {changeCase} from './../utils';
 
 const ADD_ENTITIES = 'ADD_ENTITIES';
@@ -31,7 +30,7 @@ export const handleRequest = (requestType, requestStatus, payload) => {
   }
 }
 
-export const fetchStudents = () => {
+export const fetchChildren = () => {
   return (dispatch) => {
     fetch('/api/v1/children.json', {
       credentials: 'include',
@@ -41,11 +40,11 @@ export const fetchStudents = () => {
     }).then(function(response) {
       return response.text()
     }).then((body) => {
-      let students = JSON.parse(body);
-      const decoratedStudents = students.map((student) => {
-        return _.merge(student, {displayName: `${student.first_name} ${student.last_name}`});
+      let children = JSON.parse(body);
+      const decoratedChildren = children.map((child) => {
+        return _.merge(child, {displayName: `${child.first_name} ${child.last_name}`});
       })
-      dispatch(addEntities('students', decoratedStudents));
+      dispatch(addEntities('children', decoratedChildren));
     })
   }
 }

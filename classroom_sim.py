@@ -90,7 +90,7 @@ class Teacher(Sensor):
         self.user_id = user_id
         self.sensor_id = sensor_id
 
-class Student(Sensor):
+class Child(Sensor):
     # probability in a given step while idle/observing, of deciding
     # to take out a new material
     MATERIAL_CHOOSE_PROB = 0.03
@@ -103,18 +103,18 @@ class Student(Sensor):
     states = ['observing', 'fetching material', 'moving to workplace',
               'working', 'returning material']
 
-    def __init__(self, room, student_id, sensor_id):
+    def __init__(self, room, child_id, sensor_id):
         self.room = room
         self.pos = room.random_pos()
-        self.student_id = student_id
+        self.child_id = child_id
         self.sensor_id = sensor_id
 
-        self.material = None # Material that student wants or is using
-        self.workplace = None  # Location student brings material to to work on
-        self.work_duration = None  # Number of sim steps student engaged for
+        self.material = None # Material that child wants or is using
+        self.workplace = None  # Location child brings material to to work on
+        self.work_duration = None  # Number of sim steps child engaged for
 
         # State machine
-        self.machine = Machine(model=self, states=Student.states, initial='observing')
+        self.machine = Machine(model=self, states=Child.states, initial='observing')
 
         # transitions
         self.machine.add_transition(trigger='wonder', source='observing',
@@ -128,13 +128,13 @@ class Student(Sensor):
             dest='observing', before='return_material')
 
     def __str__(self):
-        rval = "%d %d - %s, (%.02f,%.02f)" % (self.sensor_id, self.student_id, self.state, self.pos[0], self.pos[1])
+        rval = "%d %d - %s, (%.02f,%.02f)" % (self.sensor_id, self.child_id, self.state, self.pos[0], self.pos[1])
         if self.material is not None:
-            rval += " - %s" % self.material.name
+            rval += " - Material %s" % self.material.sensor_id
         return rval
 
     def has_work_idea(self):
-        return len(self.room.available_materials()) > 0 and trial(Student.MATERIAL_CHOOSE_PROB)
+        return len(self.room.available_materials()) > 0 and trial(Child.MATERIAL_CHOOSE_PROB)
 
     def choose_material(self):
         self.material = random.choice(self.room.available_materials())
@@ -156,8 +156,8 @@ class Student(Sensor):
         # Move towards target at SPEED
         move = target - self.pos
         distance = norm(move)
-        if distance > Student.SPEED:
-            move = move/norm(move) * Student.SPEED
+        if distance > Child.SPEED:
+            move = move/norm(move) * Child.SPEED
         self.pos += move
         # Have we arrived?
         return norm(self.pos - target) < .5
@@ -176,7 +176,7 @@ class Student(Sensor):
             self.material.pos = self.pos
 
         elif self.state == 'working':
-            if trial(Student.WORKING_STOP_PROB):
+            if trial(Child.WORKING_STOP_PROB):
                 self.work_finished()
 
         elif self.state == 'returning material':
@@ -224,7 +224,7 @@ def get_sensor_mappings():
 
 sensors = get_sensor_mappings()
 
-students = [Student(r, s['entity_id'], s['sensor_id']) for s in sensors if s['entity_type'] == 'student']
+children = [Child(r, s['entity_id'], s['sensor_id']) for s in sensors if s['entity_type'] == 'child']
 
 tray0 = MaterialTray(r, 20)
 tray1 = MaterialTray(r, 21)
@@ -235,7 +235,7 @@ materials = [Material(trays[idx%len(trays)], m['entity_id'], m['sensor_id']) for
 
 teachers = [Teacher(r, t['entity_id'], t['sensor_id']) for t in sensors if t['entity_type'] == 'teacher']
 
-sensors = students + teachers + trays + materials
+sensors = children + teachers + trays + materials
 
 
 # Start sim at 8am yesterday
@@ -247,18 +247,21 @@ end_time = sim_time + timedelta(hours=8)
 def upload_obs(obs):
     print "Uploading simulated radio observations."
     req = api_req('radio_observations')
+    start_time = time.time()
     response = urllib2.urlopen(req, json.dumps(obs))
     print response.read()
+    elapsed_time = time.time() - start_time
+    print "Upload took %s seconds" % elapsed_time
 
 while sim_time < end_time:
     print "*" * 80
     print "sim_time = %s" % sim_time
-    for student in students:
-        student.step()
+    for child in children:
+        child.step()
 
     # Print current state
-    for student in students:
-        print str(student)
+    for child in children:
+        print str(child)
 
     # Gather pings
     obs = []

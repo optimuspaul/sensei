@@ -1,5 +1,6 @@
 import React from 'react';
 import SensorMappingEntry from './SensorMappingEntry';
+import {entityInflections} from './../constants';
 import _ from 'lodash';
 
 class SensorMappingInterface extends React.Component {
@@ -25,8 +26,9 @@ class SensorMappingInterface extends React.Component {
 
   render() {
 
-    const entityTables = _.map(['student', 'teacher', 'material', 'area'], (entityType) => {
-      const rows = _.map(this.props.entities[`${entityType}s`], (entity) => {
+    const entityTables = _.map(['child', 'teacher', 'material', 'area'], (entityType) => {
+      var pluralEntity = entityInflections[entityType]
+      const rows = _.map(this.props.entities[pluralEntity], (entity) => {
         const mapping = (this.props.mappings[entityType] && this.props.mappings[entityType][entity.id]) || {
           entityId: entity.id,
           entityType,

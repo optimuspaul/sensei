@@ -1,10 +1,10 @@
 
 
-export const entityEnum = {
-  'students': 'student',
-  'teachers': 'teacher',
-  'materials': 'material',
-  'areas': 'area'
+export const entityInflections = {
+  'child': 'children',
+  'teacher': 'teachers',
+  'material': 'materials',
+  'area': 'areas'
 }
 
 export const getCrsfToken = () => {

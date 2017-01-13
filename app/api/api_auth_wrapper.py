@@ -1,6 +1,6 @@
 from functools import wraps
 from flask import request, Response, g, current_app
-from models import User
+from ..models import *
 
 class APIAuthWrapper():
     def auth_service(self):

@@ -8,3 +8,4 @@ sensei/lib
 sensei/pip-selfcheck.json
 sensei/include/*
 sensei/.Python
+*.swp
