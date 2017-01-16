@@ -1,6 +1,9 @@
-from flask import request
+from flask import request, abort, jsonify
+from sqlalchemy import or_, and_
+import numpy as np
 from shared import *
 from ..models import *
+import dateutil.parser
 
 # Radio Observations upload #
 @api.route('/api/v1/radio_observations', methods=['POST'])
@@ -47,6 +50,12 @@ def post_radio_observations():
     db.session.commit()
     return "OK", 201
 
+def assert_iso8601_time_param(name):
+    datestring = request.args.get(name)
+    if not datestring:
+        abort(400, "Missing %s parameter" % name)
+    return dateutil.parser.parse(datestring)
+
 @api.route('/api/v1/radio_observations', methods=['GET'])
 @api_auth.requires_auth
 def radio_observations_index():
@@ -57,28 +66,45 @@ def radio_observations_index():
     child_id = request.args.get('child_id')
     if not child_id:
         abort(400, "Missing child_id parameter")
+    entity_id = int(child_id)
+    entity_type = 'child'
 
-    start_time = request.args.get('start_time')
-    if not start_time:
-        abort(400, "Missing start_time parameter")
-
-    end_time = request.args.get('end_time')
-    if not end_time:
-        abort(400, "Missing start_time parameter")
+    start_time = assert_iso8601_time_param('start_time')
+    end_time = assert_iso8601_time_param('end_time')
 
     relationships = EntityRelationship.query.filter(
         EntityRelationship.classroom_id==classroom_id,
         or_(
             and_(
-                entity1_type=MappingType.child,
-                entity1_id=child_id
+                EntityRelationship.entity1_type==MappingType.child,
+                EntityRelationship.entity1_id==child_id
             ),
             and_(
-                entity2_type=MappingType.child,
-                entity2_id=child_id
+                EntityRelationship.entity2_type==MappingType.child,
+                EntityRelationship.entity2_id==child_id
             )
         )
     ).all()
+
+    entities = set(
+        [(rel.entity1_type.value, rel.entity1_id) for rel in relationships] +
+        [(rel.entity2_type.value, rel.entity2_id) for rel in relationships]
+    )
+    entities.remove((entity_type, entity_id))
+    entities = list(entities)
+    entities.sort()
+    entities_idx = dict((e,i) for (i,e) in enumerate(entities))
+
+    # Map EntityRelationship ids to entity,direction
+    relationships_idx = {}
+    query_entity = (entity_type, entity_id)
+    for r in relationships:
+        left_entity = (r.entity1_type.value, r.entity1_id)
+        right_entity = (r.entity2_type.value, r.entity2_id)
+        if left_entity == query_entity:
+            relationships_idx[r.id] = (entities_idx[right_entity], 0)
+        else:
+            relationships_idx[r.id] = (entities_idx[left_entity], 1)
 
     relationship_ids = [r.id for r in relationships]
 
@@ -89,4 +115,22 @@ def radio_observations_index():
         RadioObservation.relationship_id.in_(relationship_ids)
     ).all()
 
-    return jsonify([ob.as_dict() for ob in obs])
+    timestamps = set()
+    for ob in obs:
+        timestamps.add(ob.observed_at)
+    timestamps = list(timestamps)
+    timestamps.sort()
+
+    timestamps_idx = dict((t,i) for (i,t) in enumerate(timestamps))
+
+    output = np.zeros([len(entities), len(timestamps), 2])
+
+    for ob in obs:
+        (entity_idx, direction) = relationships_idx[ob.relationship_id]
+        output[entity_idx, timestamps_idx[ob.observed_at], direction] = ob.rssi
+
+    return jsonify({
+        'obs': output.tolist(),
+        'entities': entities,
+        'timestamps': timestamps
+    })

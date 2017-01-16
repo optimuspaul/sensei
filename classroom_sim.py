@@ -62,7 +62,7 @@ class Room(object):
 
 class Sensor(object):
     RF_COLLISION_PROB = 0.25
-    RSSI_AT_1M = -60
+    RSSI_AT_1M = -90
 
     # http://electronics.stackexchange.com/questions/83354/calculate-distance-from-rssi
     def rssi_at_distance(self, distance):
@@ -81,7 +81,10 @@ class Sensor(object):
             d = 0.1
         rssi = self.rssi_at_distance(d)
         # Simulate random attenuation
-        return rssi - abs(np.random.normal(0, 10))
+        rssi = rssi - abs(np.random.normal(0, 10))
+        if rssi < -99:
+            rssi = None
+        return rssi
 
 class Teacher(Sensor):
     def __init__(self, room, user_id, sensor_id):
@@ -241,7 +244,7 @@ sensors = children + teachers + trays + materials
 # Start sim at 8am yesterday
 sim_time = datetime.now() - timedelta(days=1)
 sim_time = sim_time.replace(hour=8, minute=0, second=0)
-end_time = sim_time + timedelta(hours=8)
+end_time = sim_time + timedelta(hours=7)
 
 # Example upload of sensor ob
 def upload_obs(obs):

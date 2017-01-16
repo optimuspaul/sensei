@@ -20,8 +20,7 @@ class ApiTestCase(unittest.TestCase):
         self.authorized_headers = {
             'Authorization': 'Basic ' + b64encode("testuser:testpass")
         }
-
-        # Use mock auth service
+        
         db.create_all()
 
     def tearDown(self):

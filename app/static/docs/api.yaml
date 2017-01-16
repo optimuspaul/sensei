@@ -46,6 +46,40 @@ paths:
           description: Upload accepted
         401:
           description: Unauthorized
+    get:
+      summary: Returns radio observations
+      produces:
+        - application/json
+      parameters:
+        - name: classroom_id
+          in: query
+          description: The id of the classroom to retrieve observations for.
+          required: true
+          type: integer
+        - name: child_id
+          in: query
+          description: The id of the child to retrieve observations for.
+          required: true
+          type: integer
+        - name: start_time
+          in: query
+          type: string
+          required: true
+          description: Obs after this date will be retrieved. iso8601 format. Example '2002-12-25T12:15:05'.
+        - name: end_time
+          in: query
+          required: true
+          type: string
+          description: Obs after this date will be retrieved. iso8601 format. Example '2002-12-25T12:15:05'.
+      tags:
+        - RadioObservation
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Radio observations in a matrix; dimensions are relationship, time, and direction.  The indexes are provided as separate attributes.
+        401:
+          description: Unauthorized
   /sensor_mappings:
     post:
       summary: Update mapping of sensor ids to children, teachers, materials, and classroom areas
