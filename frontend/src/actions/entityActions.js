@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import {getCrsfToken, getSenseiToken, getClassroomId} from './../constants';
+import {handleRequest} from './requestActions';
 import {changeCase} from './../utils';
 
 const ADD_ENTITIES = 'ADD_ENTITIES';
@@ -20,15 +21,7 @@ export const handleSaveEntitySuccess = (entityType, entity) => {
   }
 }
 
-const HANDLE_REQUEST = 'HANDLE_REQUEST';
-export const handleRequest = (requestType, requestStatus, payload) => {
-  return {
-    type: HANDLE_REQUEST,
-    requestType,
-    requestStatus,
-    payload
-  }
-}
+
 
 export const fetchChildren = () => {
   return (dispatch) => {
@@ -87,9 +80,9 @@ export const fetchEntities = (entityType) => {
   }
 }
 
-export const saveEntity = (entityType, entity) => {
+export const saveEntity = (entityType, entity, requestId) => {
   return (dispatch, getState) => {
-    dispatch(handleRequest('saveEntity', 'pending', entity));
+    dispatch(handleRequest(requestId, 'pending', entity));
     let saveableEntity = _.merge(changeCase(entity, 'snake'), {classroom_id: getClassroomId()});
     fetch(`http://0.0.0.0:5000/api/v1/${entityType}`, {
       headers: {
@@ -103,16 +96,16 @@ export const saveEntity = (entityType, entity) => {
     }).then((body) => {
       let savedEntity = JSON.parse(body);
       dispatch(handleSaveEntitySuccess(entityType, _.merge(changeCase(savedEntity, 'camel'), {displayName: savedEntity.name})));
-      dispatch(handleRequest('saveEntity', 'success', savedEntity));
+      dispatch(handleRequest(requestId, 'success', savedEntity));
     }).catch((error) => {
-      dispatch(handleRequest('saveEntity', 'error', error));
+      dispatch(handleRequest(requestId, 'error', {message: 'Something went wrong.'}));
     })
   }
 }
 
-export const updateEntity = (entityType, entity) => {
+export const updateEntity = (entityType, entity, requestId) => {
   return (dispatch, getState) => {
-    dispatch(handleRequest('saveEntity', 'pending', entity));
+    dispatch(handleRequest(requestId, 'pending', entity));
     let saveableEntity = _.merge(changeCase(entity, 'snake'), {classroom_id: getClassroomId()});
     fetch(`http://0.0.0.0:5000/api/v1/${entityType}/${entity.id}`, {
       headers: {
@@ -126,9 +119,9 @@ export const updateEntity = (entityType, entity) => {
     }).then((body) => {
       let savedEntity = JSON.parse(body);
       dispatch(handleSaveEntitySuccess(entityType, _.merge(changeCase(savedEntity, 'camel'), {displayName: savedEntity.name})));
-      dispatch(handleRequest('saveEntity', 'success', savedEntity));
+      dispatch(handleRequest(requestId, 'success', savedEntity));
     }).catch((error) => {
-      dispatch(handleRequest('saveEntity', 'error', error));
+      dispatch(handleRequest(requestId, 'error', {message: 'Something went wrong.'}));
     })
   }
 }

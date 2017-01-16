@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import {getSenseiToken, getClassroomId} from './../constants';
 import {changeCases} from './../utils';
+import {handleRequest} from './requestActions';
 
 const ADD_MAPPINGS = 'ADD_MAPPINGS';
 export const addMappings = (mappings) => {
@@ -25,9 +26,10 @@ export const handleCommitMappingsSuccess = (mapping) => {
   }
 }
 
-export const commitMappings = (mappings) => {
+export const commitMappings = (requestId) => {
   return (dispatch, getState) => {
     let mappings = getBulkMappings(getState().sensorMappings)
+    dispatch(handleRequest(requestId, 'pending', mappings));
     fetch('http://0.0.0.0:5000/api/v1/sensor_mappings', {
       headers: {
         'X-SenseiToken': getSenseiToken(),
@@ -39,7 +41,10 @@ export const commitMappings = (mappings) => {
       return response.text()
     }).then((body) => {
       dispatch(handleCommitMappingsSuccess());
-    })
+      dispatch(handleRequest(requestId, 'success', body));
+    }).catch((error) => {
+      dispatch(handleRequest(requestId, 'error', {message: 'Something went wrong.'}));
+    });
   }
 }
 

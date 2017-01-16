@@ -17,13 +17,20 @@ class EntityEntry extends React.Component {
     this.setState({showingForm: true});
   }
 
-  handleSave(entityType, entity) {
-    this.props.onUpdate(entityType, entity);
-    this.setState({showingForm: false});
+  handleSave(entityType, entity, requestId) {
+    this.requestId = requestId;
+    this.props.onUpdate(entityType, entity, requestId);
   }
 
   handleCancel(entityType, entity) {
     this.setState({showingForm: false});
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (_.get(nextProps, `requests[${this.requestId}].status`) === 'success') {
+      delete this.requestId;
+      this.setState({showingForm: false});
+    }
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -31,6 +38,8 @@ class EntityEntry extends React.Component {
   }
 
   render() {
+
+    console.log("this.state.showingForm", this.state.showingForm);
 
     let entry = (
       <span>

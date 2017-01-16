@@ -16,21 +16,29 @@ class ManageEntitiesInterface extends React.Component {
     }
   }
 
-  handleSave(entityType, entity) {
-    this.props.dispatch(this.props.saveEntity(entityType, entity));
-    this.setState({showingForm: false});
+  handleSave(entityType, entity, requestId) {
+    this.requestId = requestId;
+    this.props.dispatch(this.props.saveEntity(entityType, entity, requestId));
   }
 
   handleCancel() {
     this.setState({showingForm: false});
   }
 
-  handleUpdate(entityType, entity) {
-    this.props.dispatch(this.props.updateEntity(entityType, entity));
+  handleUpdate(entityType, entity, requestId) {
+    this.requestId = requestId;
+    this.props.dispatch(this.props.updateEntity(entityType, entity, requestId));
   }
 
   showEntityForm(entityType) {
     this.setState({showingForm: entityType})
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (_.get(nextProps, `requests[${this.requestId}].status`) === 'success') {
+      delete this.requestId;
+      this.setState({showingForm: false});
+    }
   }
 
   shouldComponentUpdate(nextProps, nextState) {

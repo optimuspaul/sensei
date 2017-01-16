@@ -9,15 +9,48 @@ class SensorMappingInterface extends React.Component {
     super(props);
     this.handleMappingChange = this.handleMappingChange.bind(this);
     this.handleSave = this.handleSave.bind(this);
+    this.state = {
+      saveDisabled: true
+    }
   }
 
   handleMappingChange(mapping) {
-
     this.props.dispatch(this.props.saveMapping(mapping));
+    this.setState({
+      saveDisabled: false,
+      success: null,
+      error: null
+    });
   }
 
   handleSave() {
-    this.props.dispatch(this.props.commitMappings());
+    this.requestId = _.uniqueId('mappings-save-');
+    this.props.dispatch(this.props.commitMappings(this.requestId));
+    this.setState({
+      saveDisabled: true,
+      success: null,
+      error: null
+    });
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (_.get(nextProps, `requests[${this.requestId}].status`) === 'success') {
+      delete this.requestId;
+      this.setState({
+        saveDisabled: false,
+        success: "Mappings saved successfully",
+        error: null
+      });
+    }
+    if (_.get(nextProps, `requests[${this.requestId}].status`) === 'error') {
+      let error = _.get(nextProps, `requests[${this.requestId}].payload.message`);
+      delete this.requestId;
+      this.setState({
+        saveDisabled: false,
+        success: null,
+        error
+      });
+    }
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -25,6 +58,22 @@ class SensorMappingInterface extends React.Component {
   }
 
   render() {
+
+    let requestMsg;
+
+    if (this.state.error) {
+      requestMsg = (
+        <div className="error">
+          {this.state.error}
+        </div>
+      )
+    } else if (this.state.success) {
+      requestMsg = (
+        <div className="success" style={{color: 'green'}}>
+          {this.state.success}
+        </div>
+      )
+    }
 
     const entityTables = _.map(['child', 'teacher', 'material', 'area'], (entityType) => {
       var pluralEntity = entityInflections[entityType]
@@ -75,8 +124,14 @@ class SensorMappingInterface extends React.Component {
             </div>
           </div>
           <div className="row">
-            <div className="col-md-6">
-              <button className="btn btn-primary" onClick={this.handleSave}>Save</button>
+            <div className="col-md-2">
+              <button className="btn btn-primary" 
+                      onClick={this.handleSave}
+                      disabled={this.state.saveDisabled}
+              >Save</button>
+            </div>
+            <div className="col-md-4">
+              {requestMsg}
             </div>
           </div>
         </div>

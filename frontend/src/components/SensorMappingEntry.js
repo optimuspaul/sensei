@@ -19,7 +19,9 @@ class SensorMappingEntry extends React.Component {
         delete this.tmpSensorId;
       }
       sensorId = parseInt(sensorId, 10);
-      this.props.onUpdate(_.merge(this.props.mapping, {sensorId}))
+      if (sensorId !== this.props.mapping.sensorId) {
+        this.props.onUpdate(_.merge(this.props.mapping, {sensorId}))
+      }
     } else {
       event.target.value = null;
     }
