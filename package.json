@@ -1,0 +1,16 @@
+{
+  "name": "sensei",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "cd frontend && npm install && npm run build && gulp"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "enginges": "6.9.1",
+  "dependencies": {
+    "gulp": "^3.9.1",
+    "gulp-rename": "^1.2.2"
+  }
+}

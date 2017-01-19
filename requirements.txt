@@ -10,3 +10,4 @@ Flask-DotEnv
 pytest
 Flask-Cors==2.1.2
 flask-swagger-ui
+numpy==1.12.0

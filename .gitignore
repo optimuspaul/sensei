@@ -9,3 +9,5 @@ sensei/pip-selfcheck.json
 sensei/include/*
 sensei/.Python
 *.swp
+app/static/bundle.js
+app/static/bundle.css
