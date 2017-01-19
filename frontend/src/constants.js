@@ -1,4 +1,4 @@
-
+import _ from 'lodash';
 
 export const entityInflections = {
   'child': 'children',
@@ -21,4 +21,8 @@ export const getClassroomId = () => {
   if (location.search.split("classroom_id=")) {
     return parseInt(location.search.split("classroom_id=")[1], 10);
   }
+}
+
+export const baseUrl = () => {
+  return _.get(window, 'tc.env.wfBaseUrl');
 }
