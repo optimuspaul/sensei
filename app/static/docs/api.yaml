@@ -47,7 +47,7 @@ paths:
         401:
           description: Unauthorized
     get:
-      summary: Returns radio observations
+      summary: Returns radio observations.
       produces:
         - application/json
       parameters:
@@ -70,7 +70,7 @@ paths:
           in: query
           required: true
           type: string
-          description: Obs after this date will be retrieved. iso8601 format. Example '2002-12-25T12:15:05'.
+          description: Obs before this date will be retrieved. iso8601 format. Example '2002-12-25T12:15:05'.
       tags:
         - RadioObservation
       security:
@@ -82,7 +82,7 @@ paths:
           description: Unauthorized
   /sensor_mappings:
     post:
-      summary: Update mapping of sensor ids to children, teachers, materials, and classroom areas
+      summary: Update mapping of sensor ids to children, teachers, materials, and classroom areas.
       description: |
         This endpoint is used to create and update mappings of sensors to physical entities, such as children, teachers, materials, or areas. To associate a sensor with a new entity, start_time and end_time should not be specified. The server will end any existing mapping of this sensor. To mark a sensor as not associated with any entity, the entity type and entity id fields should be left blank.
       consumes:
@@ -129,7 +129,7 @@ paths:
           description: Unauthorized
   /areas:
     post:
-      summary: Create new area
+      summary: Create new area.
       consumes:
         - application/json
       parameters:
@@ -217,7 +217,7 @@ paths:
           description: Unauthorized
   /materials:
     post:
-      summary: Create new material record
+      summary: Create new material record.
       consumes:
         - application/json
       parameters:
