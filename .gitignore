@@ -11,3 +11,4 @@ sensei/.Python
 *.swp
 app/static/bundle.js
 app/static/bundle.css
+app/static/*.map
