@@ -16,13 +16,15 @@ Getting started:
 
 1. `pip install -r requirements.txt`
 
-1. `npm install`
+1. `npm install -g create-react-app`
 
-1. `npm install webpack -g`
+1. `cd frontend && npm install && cd ..`
+
+1. `npm install && npm install -g gulp-cli`
+
+1. `npm run postinstall`
 
 1. `python run.py`
-
-1. `webpack --watch`
 
 1. Go to http://localhost:5000/
 

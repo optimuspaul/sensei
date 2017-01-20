@@ -18,9 +18,7 @@ export const getSenseiToken = () => {
 }
 
 export const getClassroomId = () => {
-  if (location.search.split("classroom_id=")) {
-    return parseInt(location.search.split("classroom_id=")[1], 10);
-  }
+  return _.get(window, 'tc.env.currentClassroomId');
 }
 
 export const baseUrl = () => {
