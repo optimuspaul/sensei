@@ -24,5 +24,5 @@ export const getClassroomId = () => {
 }
 
 export const baseUrl = () => {
-  return _.get(window, 'tc.env.wfBaseUrl');
+  return _.get(window, 'sensei.env.baseUrl');
 }
