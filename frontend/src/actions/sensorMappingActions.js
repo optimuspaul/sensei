@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import {getSenseiToken, getClassroomId} from './../constants';
+import {getSenseiToken, getClassroomId, baseUrl} from './../constants';
 import {changeCases} from './../utils';
 import {handleRequest} from './requestActions';
 
@@ -30,7 +30,7 @@ export const commitMappings = (requestId) => {
   return (dispatch, getState) => {
     let mappings = getBulkMappings(getState().sensorMappings)
     dispatch(handleRequest(requestId, 'pending', mappings));
-    fetch('http://0.0.0.0:5000/api/v1/sensor_mappings', {
+    fetch(`${baseUrl()}/api/v1/sensor_mappings`, {
       headers: {
         'X-SenseiToken': getSenseiToken(),
         'Content-Type': 'application/json'
@@ -60,7 +60,7 @@ export const saveMapping = (mapping) => {
 
 export const fetchMappings = (schoolId, classroomId) => {
   return (dispatch) => {
-    fetch(`http://0.0.0.0:5000/api/v1/sensor_mappings?classroom_id=${getClassroomId()}`, {
+    fetch(`${baseUrl()}/api/v1/sensor_mappings?classroom_id=${getClassroomId()}`, {
       headers: {
         'X-SenseiToken': getSenseiToken(),
         'Content-Type': 'application/json'

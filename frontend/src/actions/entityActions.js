@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import {getCrsfToken, getSenseiToken, getClassroomId} from './../constants';
+import {getCrsfToken, getSenseiToken, getClassroomId, baseUrl} from './../constants';
 import {handleRequest} from './requestActions';
 import {changeCase} from './../utils';
 
@@ -63,7 +63,7 @@ export const fetchTeachers = () => {
 
 export const fetchEntities = (entityType) => {
   return (dispatch) => {
-    fetch(`http://0.0.0.0:5000/api/v1/${entityType}?classroom_id=${getClassroomId()}`, {
+    fetch(`${baseUrl()}/api/v1/${entityType}?classroom_id=${getClassroomId()}`, {
       headers: {
         'X-SenseiToken': getSenseiToken(),
         'Content-Type': 'application/json'
@@ -84,7 +84,7 @@ export const saveEntity = (entityType, entity, requestId) => {
   return (dispatch, getState) => {
     dispatch(handleRequest(requestId, 'pending', entity));
     let saveableEntity = _.merge(changeCase(entity, 'snake'), {classroom_id: getClassroomId()});
-    fetch(`http://0.0.0.0:5000/api/v1/${entityType}`, {
+    fetch(`${baseUrl()}/api/v1/${entityType}`, {
       headers: {
         'X-SenseiToken': getSenseiToken(),
         'Content-Type': 'application/json'
@@ -107,7 +107,7 @@ export const updateEntity = (entityType, entity, requestId) => {
   return (dispatch, getState) => {
     dispatch(handleRequest(requestId, 'pending', entity));
     let saveableEntity = _.merge(changeCase(entity, 'snake'), {classroom_id: getClassroomId()});
-    fetch(`http://0.0.0.0:5000/api/v1/${entityType}/${entity.id}`, {
+    fetch(`${baseUrl()}/api/v1/${entityType}/${entity.id}`, {
       headers: {
         'X-SenseiToken': getSenseiToken(),
         'Content-Type': 'application/json'
