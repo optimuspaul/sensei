@@ -44,7 +44,7 @@ export const fetchChildren = () => {
 
 export const fetchTeachers = () => {
   return (dispatch) => {
-    fetch('/api/v1/teachers.json', {
+    fetch(`/api/v1/users.json?classroom_id=${getClassroomId()}&roles[]=teacher`, {
       credentials: 'include',
       headers: {
         "X-CSRF-Token": getCrsfToken()
