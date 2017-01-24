@@ -8,14 +8,15 @@ import store from './store/configureStore';
 import { Provider } from 'react-redux';
 import {fetchMappings} from './actions/sensorMappingActions';
 import {fetchChildren, fetchTeachers, fetchEntities} from './actions/entityActions';
-
+import _ from 'lodash';
 
 
 // TODO: real routing.
 setTimeout(function(){
   let dynamicSecondaryNav = document.createElement("div");
   dynamicSecondaryNav.className = "secondary-nav-link";
-  document.querySelector('.secondary-nav').insertBefore(dynamicSecondaryNav, document.querySelector('.secondary-nav .clear'))
+  let secondaryNav = document.querySelector('.secondary-nav');
+  secondaryNav && secondaryNav.insertBefore(dynamicSecondaryNav, document.querySelector('.secondary-nav .clear'))
   ReactDOM.render(
     <SubNav/>,
     dynamicSecondaryNav
@@ -23,7 +24,8 @@ setTimeout(function(){
 
   let dynamicPrimaryNav = document.createElement("a");
   dynamicPrimaryNav.className = "primary-nav-link";
-  dynamicPrimaryNav.href = `/networks/wf/events/sensors${location.search}`;
+  let classroomId = _.get(window, 'tc.env.currentClassroomId');
+  dynamicPrimaryNav.href = `/networks/wf/events/sensors${classroomId ? '?classroom_id=' + classroomId : '' }`;
   dynamicPrimaryNav.innerHTML = `<i class="fa fa-cubes"></i><span>Sensors</span>`
   document.querySelector('.primary-nav').appendChild(dynamicPrimaryNav);
 
