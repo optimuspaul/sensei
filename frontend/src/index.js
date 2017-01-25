@@ -9,7 +9,8 @@ import { Provider } from 'react-redux';
 import {fetchMappings} from './actions/sensorMappingActions';
 import {fetchChildren, fetchTeachers, fetchEntities} from './actions/entityActions';
 import _ from 'lodash';
-
+import * as d3 from "d3";
+import './index.css';
 
 // TODO: real routing.
 setTimeout(function(){
@@ -61,4 +62,26 @@ setTimeout(function(){
     store.dispatch(fetchEntities('materials'));
 
   }
+
+  if (location.pathname.indexOf('wf/events/insights') !== -1) {
+
+    let foundationEl = document.querySelector("#foundation")
+    foundationEl.innerHTML = "<div id='timeline-viz'></div>"
+
+    var data = [4, 8, 15, 16, 23, 42];
+
+    var x = d3.scaleLinear()
+        .domain([0, d3.max(data)])
+        .range([0, 420]);
+
+    d3.select("#foundation #timeline-viz")
+      .selectAll("div")
+        .data(data)
+      .enter().append("div")
+        .style("width", function(d) { return x(d) + "px"; })
+        .text(function(d) { return d; });
+
+  }
+
+
 }, 200);
