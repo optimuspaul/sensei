@@ -18,7 +18,11 @@ export const getSenseiToken = () => {
 }
 
 export const getClassroomId = () => {
-  return _.get(window, 'tc.env.currentClassroomId');
+  let classroom_id = _.get(window, 'tc.env.currentClassroomId');
+  if (classroom_id === "" || classroom_id === "all") {
+    classroom_id = _.get(window, 'tc.env.firstClassroomId');
+  }
+  return classroom_id;
 }
 
 export const baseUrl = () => {
