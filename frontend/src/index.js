@@ -8,9 +8,11 @@ import store from './store/configureStore';
 import { Provider } from 'react-redux';
 import {fetchMappings} from './actions/sensorMappingActions';
 import {fetchChildren, fetchTeachers, fetchEntities} from './actions/entityActions';
+import {fetchObservations} from './actions/insightsActions';
 import _ from 'lodash';
-import * as d3 from "d3";
+
 import './index.css';
+import activityTimeline from './visualizations/activityTimeline'
 
 // TODO: real routing.
 setTimeout(function(){
@@ -65,21 +67,18 @@ setTimeout(function(){
 
   if (location.pathname.indexOf('wf/events/insights') !== -1) {
 
-    let foundationEl = document.querySelector("#foundation")
-    foundationEl.innerHTML = "<div id='timeline-viz'></div>"
+    let childId = 1;
 
-    var data = [4, 8, 15, 16, 23, 42];
+    let foundationEl = document.querySelector("#foundation");
+    foundationEl.innerHTML = "<svg id='visualization'></svg>";
 
-    var x = d3.scaleLinear()
-        .domain([0, d3.max(data)])
-        .range([0, 420]);
+    store.dispatch(fetchObservations(childId));
 
-    d3.select("#foundation #timeline-viz")
-      .selectAll("div")
-        .data(data)
-      .enter().append("div")
-        .style("width", function(d) { return x(d) + "px"; })
-        .text(function(d) { return d; });
+    store.subscribe(() => {
+      activityTimeline(store.getState().insights.observations[childId]);
+    })
+
+
 
   }
 
