@@ -9,6 +9,7 @@ import store from './store/configureStore';
 import { Provider } from 'react-redux';
 import {fetchMappings} from './actions/sensorMappingActions';
 import {fetchChildren, fetchTeachers, fetchEntities} from './actions/entityActions';
+import {getClassroomId} from './constants';
 import {fetchObservations} from './actions/insightsActions';
 import _ from 'lodash';
 
@@ -28,7 +29,7 @@ setTimeout(function(){
 
   let dynamicPrimaryNav = document.createElement("a");
   dynamicPrimaryNav.className = "primary-nav-link";
-  let classroomId = _.get(window, 'tc.env.currentClassroomId');
+  let classroomId = getClassroomId();
   dynamicPrimaryNav.href = `/networks/wf/events/sensors${classroomId ? '?classroom_id=' + classroomId : '' }`;
   dynamicPrimaryNav.innerHTML = `<i class="fa fa-cubes"></i><span>Sensors</span>`
   document.querySelector('.primary-nav').appendChild(dynamicPrimaryNav);

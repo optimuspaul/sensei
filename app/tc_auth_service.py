@@ -15,7 +15,7 @@ class TCAuthService():
             if e.code == 401:
                 return AuthCheckResult(False)
             else:
-                raise error
+                raise e
         else:
             body = response.read()
             userinfo = json.loads(body)
