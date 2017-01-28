@@ -1,6 +1,7 @@
 import './index.css';
 import SensorMappingInterfaceContainer from './containers/SensorMappingInterfaceContainer';
 import ManageEntitiesInterfaceContainer from './containers/ManageEntitiesInterfaceContainer';
+import ActivityTimelineControlsContainer from './containers/ActivityTimelineControlsContainer';
 import SubNav from './components/SubNav';
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -9,8 +10,11 @@ import { Provider } from 'react-redux';
 import {fetchMappings} from './actions/sensorMappingActions';
 import {fetchChildren, fetchTeachers, fetchEntities} from './actions/entityActions';
 import {getClassroomId} from './constants';
+import {fetchObservations} from './actions/insightsActions';
 import _ from 'lodash';
 
+import './index.css';
+import activityTimeline from './visualizations/activityTimeline'
 
 // TODO: real routing.
 setTimeout(function(){
@@ -62,4 +66,62 @@ setTimeout(function(){
     store.dispatch(fetchEntities('materials'));
 
   }
+
+  if (location.pathname.indexOf('wf/events/insights') !== -1) {
+
+
+
+    let foundationEl = document.querySelector("#foundation");
+    foundationEl.innerHTML = `
+      <div class='row'>
+        <div class='col-md-2' id='insights-nav-container'></div>
+        <div class='col-md-10'>
+          <h2 id='visualization-title'></h2>
+          <hr />
+          <div id='visualization'><svg></svg></div>
+        </div>
+      </div>
+    `;
+
+    ReactDOM.render(
+      <Provider store={store}>
+        <ActivityTimelineControlsContainer/>
+      </Provider>,
+      document.getElementById('insights-nav-container')
+    );
+
+
+    store.dispatch(fetchChildren());
+    store.dispatch(fetchTeachers());
+    store.dispatch(fetchEntities('areas'));
+    store.dispatch(fetchEntities('materials'));
+
+    let prevChildId, prevDate;
+
+    store.subscribe(() => {
+      let state = store.getState();
+      let childId = _.get(state, 'insights.ui.currentChildId');
+      let date = _.get(state, 'insights.ui.currentDate');
+
+      if (childId && date) {
+        if (childId === prevChildId && date === prevDate) {
+          let child = _.get(state, `entities.children[${childId}]`);
+          let dateString = (new Date(date)).toDateString();
+          document.querySelector("#visualization-title").innerHTML = `${child.displayName} <small>${dateString}</small>`
+          activityTimeline(state.insights.observations[childId]);
+        } else {
+          document.querySelector("#visualization").innerHTML = '<h3>loading...</h3>';
+          store.dispatch(fetchObservations(childId, date));
+          prevDate = date;
+          prevChildId = childId;
+        }
+      }
+
+    })
+
+
+
+  }
+
+
 }, 200);

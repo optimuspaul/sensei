@@ -1,0 +1,14 @@
+#foundation #visualization line {
+
+  stroke: black;
+  stroke-width: 1;
+}
+
+#foundation #visualization text {
+  text-anchor: start;
+  color: black;
+}
+
+#foundation #visualization circle {
+  fill: red;
+}
