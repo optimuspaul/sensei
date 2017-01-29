@@ -7,5 +7,9 @@ before_script:
     - psql -c 'create database sensei_test;' -U postgres
 script:
     - py.test
+sudo: required
+dist: precise
+addons:
+    postgresql: "9.5"
 services:
     - postgresql
