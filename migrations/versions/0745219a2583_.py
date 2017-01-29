@@ -17,6 +17,7 @@ depends_on = None
 
 
 def upgrade():
+    op.drop_constraint("radio_observation_pkey", "radio_observation")
     op.create_primary_key("radio_observation_pkey", "radio_observation",
             ["classroom_id", "observed_at", "relationship_id"]
     )
@@ -29,4 +30,7 @@ def downgrade():
     op.add_column('radio_observation', sa.Column('local_id', sa.INTEGER(), autoincrement=False, nullable=False))
     op.add_column('radio_observation', sa.Column('id', sa.INTEGER(), nullable=False))
     op.add_column('radio_observation', sa.Column('remote_id', sa.INTEGER(), autoincrement=False, nullable=False))
-    op.drop_constraint("radio_observation_pkey")
+    op.drop_constraint("radio_observation_pkey", "radio_observation")
+    op.create_primary_key("radio_observation_pkey", "radio_observation",
+            ["id"]
+    )
