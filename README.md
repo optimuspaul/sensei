@@ -28,6 +28,12 @@ Getting started:
 
 1. Go to http://localhost:5000/
 
+## Running migrations
+
+1. `export FLASK_APP=run.py`
+
+1. `flask db upgrade`
+
 ## Running tests
 
 `pytest`

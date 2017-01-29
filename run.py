@@ -21,4 +21,6 @@ app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
 port = os.environ.get("PORT")
 app.config['DEBUG'] = os.environ.get("PRODUCTION_MODE", "False") != "True"
-app.run(host='0.0.0.0', port=port)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=port)

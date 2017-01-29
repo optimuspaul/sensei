@@ -1,5 +1,5 @@
 import unittest
-import datetime
+from datetime import datetime, timedelta
 import json
 from ..main import create_app
 from base64 import b64encode
@@ -20,7 +20,7 @@ class ApiTestCase(unittest.TestCase):
         self.authorized_headers = {
             'Authorization': 'Basic ' + b64encode("testuser:testpass")
         }
-        
+
         db.create_all()
 
     def tearDown(self):
@@ -44,7 +44,7 @@ class ApiTestCase(unittest.TestCase):
             classroom_id=1,
             local_id=1,
             remote_id=2,
-            observed_at=datetime.datetime.now().isoformat(),
+            observed_at=datetime.now().isoformat(),
         )
 
         event_data = json.dumps([radio_ob])
@@ -52,22 +52,54 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(result.status_code, 401)
 
     def test_upload_with_auth(self):
-        m = SensorMapping(1, 1, datetime.datetime.now(), None, MappingType.child, 1)
+        m = SensorMapping(1, 1, datetime.now(), None, MappingType.child, 1)
         db.session.add(m)
-        m = SensorMapping(1, 2, datetime.datetime.now(), None, MappingType.child, 2)
+        m = SensorMapping(1, 2, datetime.now(), None, MappingType.child, 2)
         db.session.add(m)
         db.session.commit()
         radio_ob = dict(
             classroom_id=1,
             local_id=1,
             remote_id=2,
-            observed_at=datetime.datetime.now().isoformat(),
+            observed_at=datetime.now().isoformat(),
         )
         event_data = json.dumps([radio_ob])
         result = self.api_post_json('radio_observations', event_data, True)
         self.assertEqual(result.status_code, 201)
         events = RadioObservation.query.all()
         self.assertEqual(len(events), 1)
+
+    def test_upload_duplicate(self):
+        m = SensorMapping(1, 1, datetime.now(), None, MappingType.child, 1)
+        db.session.add(m)
+        m = SensorMapping(1, 2, datetime.now(), None, MappingType.child, 2)
+        db.session.add(m)
+        db.session.commit()
+
+        now = datetime.now()
+
+        radio_ob = dict(
+            classroom_id=1,
+            local_id=1,
+            remote_id=2,
+            observed_at=now.isoformat(),
+        )
+        event_data = json.dumps([radio_ob])
+        result = self.api_post_json('radio_observations', event_data, True)
+
+        one_hour_ago = now - timedelta(hours=1)
+
+        radio_ob2 = dict(
+            classroom_id=1,
+            local_id=1,
+            remote_id=2,
+            observed_at=one_hour_ago.isoformat(),
+        )
+        event_data = json.dumps([radio_ob, radio_ob2])
+        result = self.api_post_json('radio_observations', event_data, True)
+        self.assertEqual(result.status_code, 201)
+        events = RadioObservation.query.all()
+        self.assertEqual(len(events), 2)
 
     def test_mapping_create(self):
         mapping_item = dict(
@@ -129,7 +161,7 @@ class ApiTestCase(unittest.TestCase):
 
 
     def test_get_mappings(self):
-        m = SensorMapping(1, 1, datetime.datetime.now(), None, MappingType.child, 1)
+        m = SensorMapping(1, 1, datetime.now(), None, MappingType.child, 1)
         db.session.add(m)
         db.session.commit()
         result = self.app.get('/api/v1/sensor_mappings?classroom_id=1', headers=self.authorized_headers)

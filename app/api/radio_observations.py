@@ -20,6 +20,8 @@ def post_radio_observations():
     mappings = {m.sensor_id: m for m in SensorMapping.query.filter_by(classroom_id=classroom_id, end_time=None)}
     relationships = {r.key(): r for r in EntityRelationship.query.filter_by(classroom_id=classroom_id)}
 
+    obs = []
+
     for event in event_data:
         local_mapping = mappings.get(event['local_id'])
         remote_mapping = mappings.get(event['remote_id'])
@@ -40,14 +42,13 @@ def post_radio_observations():
                     db.session.add(relationship)
 
             if relationship.should_be_stored():
-                db.session.add(RadioObservation(
+                obs.append(RadioObservation(
                     event.get('classroom_id'),
-                    event.get('local_id'),
-                    event.get('remote_id'),
                     event.get('observed_at'),
                     relationship,
                     event.get('rssi')))
-    db.session.commit()
+    db.session.commit() # This stores the new relationships
+    RadioObservation.bulk_store(obs)
     return "OK", 201
 
 def assert_iso8601_time_param(name):
