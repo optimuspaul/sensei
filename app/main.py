@@ -6,7 +6,7 @@ from api.api_json import APIJSONEncoder
 from flask_cors import CORS
 
 def create_app(config_obj):
-    app = Flask('sensei')
+    app = Flask(__name__)
     CORS(app, resources=r'/api/*')
     app.config.from_object(config_obj)
     app.json_encoder = APIJSONEncoder
