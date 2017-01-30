@@ -25,7 +25,7 @@ export const handleSaveEntitySuccess = (entityType, entity) => {
 
 export const fetchChildren = () => {
   return (dispatch) => {
-    fetch('/api/v1/children.json', {
+    fetch(`/api/v1/children.json?classroom_id=${getClassroomId()}`, {
       credentials: 'include',
       headers: {
         "X-CSRF-Token": getCrsfToken()
