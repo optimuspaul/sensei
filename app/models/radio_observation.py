@@ -34,4 +34,6 @@ class RadioObservation(db.Model):
             index_elements=['classroom_id', 'observed_at', 'relationship_id']
         )
         obs_values = [o.as_dict() for o in obs]
+
         db.session.execute(do_nothing_stmt, obs_values)
+        db.session.commit()

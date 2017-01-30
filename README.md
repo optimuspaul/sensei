@@ -28,6 +28,18 @@ Getting started:
 
 1. Go to http://localhost:5000/
 
+## Integrate with Transparent Classroom
+
+1. Go to the Wildflower Network, then Admin -> School Settings.
+
+2.  In the Custom Header box, put the following:
+
+```
+<script>window.sensei = {env: {baseUrl: 'http://localhost:5000'}}</script>
+<script src="http://localhost:5000/static/bundle.js"></script>
+<link rel="stylesheet" type="text/css" href="http://localhost:5000/static/bundle.css">
+```
+
 ## Running migrations
 
 1. `export FLASK_APP=run.py`

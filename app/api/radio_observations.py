@@ -48,7 +48,8 @@ def post_radio_observations():
                     relationship,
                     event.get('rssi')))
     db.session.commit() # This stores the new relationships
-    RadioObservation.bulk_store(obs)
+    if len(obs) > 0:
+        RadioObservation.bulk_store(obs)
     return "OK", 201
 
 def assert_iso8601_time_param(name):
