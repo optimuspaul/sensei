@@ -1,14 +1,23 @@
-#foundation #visualization line {
 
-  stroke: black;
-  stroke-width: 1;
-}
 
-#foundation #visualization text {
+#foundation #visualization .segments text {
   text-anchor: start;
   color: black;
 }
 
-#foundation #visualization circle {
+#foundation #visualization .segments circle {
   fill: red;
+}
+
+#foundation #visualization #ticks line {
+  stroke-linecap: round; 
+  stroke-width: 2; 
+  stroke-dasharray: 5,5; 
+  fill: none;
+  stroke: #ddd;
+}
+
+#foundation #visualization #ticks text {
+  fill: #bbb;
+  font-size: 12px;
 }

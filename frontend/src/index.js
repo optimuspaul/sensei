@@ -18,21 +18,25 @@ import activityTimeline from './visualizations/activityTimeline'
 
 // TODO: real routing.
 setTimeout(function(){
-  let dynamicSecondaryNav = document.createElement("div");
-  dynamicSecondaryNav.className = "secondary-nav-link";
-  let secondaryNav = document.querySelector('.secondary-nav');
-  secondaryNav && secondaryNav.insertBefore(dynamicSecondaryNav, document.querySelector('.secondary-nav .clear'))
-  ReactDOM.render(
-    <SubNav/>,
-    dynamicSecondaryNav
-  )
 
-  let dynamicPrimaryNav = document.createElement("a");
-  dynamicPrimaryNav.className = "primary-nav-link";
-  let classroomId = getClassroomId();
-  dynamicPrimaryNav.href = `/networks/wf/events/sensors${classroomId ? '?classroom_id=' + classroomId : '' }`;
-  dynamicPrimaryNav.innerHTML = `<i class="fa fa-cubes"></i><span>Sensors</span>`
-  document.querySelector('.primary-nav').appendChild(dynamicPrimaryNav);
+  if (location.pathname.indexOf('wf/events') !== -1) {
+    let dynamicSecondaryNav = document.createElement("div");
+    dynamicSecondaryNav.className = "secondary-nav-link";
+    let secondaryNav = document.querySelector('.secondary-nav');
+    secondaryNav && secondaryNav.insertBefore(dynamicSecondaryNav, document.querySelector('.secondary-nav .clear'))
+    ReactDOM.render(
+      <SubNav/>,
+      dynamicSecondaryNav
+    )
+
+    let dynamicPrimaryNav = document.createElement("a");
+    dynamicPrimaryNav.className = "primary-nav-link";
+    let classroomId = getClassroomId();
+    dynamicPrimaryNav.href = `/networks/wf/events/sensors${classroomId ? '?classroom_id=' + classroomId : '' }`;
+    dynamicPrimaryNav.innerHTML = `<i class="fa fa-cubes"></i><span>Sensors</span>`
+    document.querySelector('.primary-nav').appendChild(dynamicPrimaryNav);
+  }
+
 
   if (location.pathname.indexOf('wf/events/sensors') !== -1) {
     document.title = 'Sensors';
