@@ -5,7 +5,7 @@ class APIJSONEncoder(JSONEncoder):
     def default(self, obj):
         try:
             if isinstance(obj, datetime):
-                return obj.isoformat()
+                return obj.isoformat() + 'Z';
             iterable = iter(obj)
         except TypeError:
             pass
