@@ -30,6 +30,10 @@ def post_radio_observations():
     obs = []
 
     for event in event_data:
+        if event['local_id'] == event['remote_id']:
+            # this is garbage
+            continue
+
         local_mapping = mappings.get(event['local_id'])
         remote_mapping = mappings.get(event['remote_id'])
 
