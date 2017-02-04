@@ -22,6 +22,8 @@ export default function activityTimeline(data) {
   let segmentedData = _.reduce(data.entities, (current, entity, index) => {
     let entityType = entityInflections[entity[0]];
     let entityId = entity[1];
+    let entity = entities[entityType][entityId];
+    let entityName = entity ? entity.displayName : "Unknown";
     current[entityType] = current[entityType] || {obs: [], entities: []};
     current[entityType].obs.push(data.obs[index]);
     current[entityType].entities.push(entities[entityType][entityId].displayName);
@@ -29,7 +31,7 @@ export default function activityTimeline(data) {
     return current;
   }, {});
 
-  
+
 
   var xScalar = d3.scaleLinear()
     .domain([0, data.timestamps.length])
@@ -63,7 +65,7 @@ export default function activityTimeline(data) {
 
   // debugger
   let ticksContainer = chart.select('#ticks');
-  ticksContainer.selectAll("line") 
+  ticksContainer.selectAll("line")
        .data(_.toPairs(ticks))
        .enter().append("line")
        .attr("x1", (tick, index) => { return tick[1] + offset })
@@ -71,13 +73,13 @@ export default function activityTimeline(data) {
        .attr("y1", 20)
        .attr("y2", chartHeight - 30);
 
-  ticksContainer.selectAll("text") 
+  ticksContainer.selectAll("text")
        .data(_.toPairs(ticks))
        .enter().append("text")
        .attr("x", (tick, index) => { return tick[1] + offset - 15 })
        .attr("y", chartHeight - 10)
        .text((tick, index) => { return parseInt(tick[0]) > 12 ? `${parseInt(tick[0]) - 12}:00pm` : `${tick[0]}:00am` })
-       
+
 
   _.each(segmentedData, buildSection);
 
@@ -86,7 +88,7 @@ export default function activityTimeline(data) {
     let section = chart.select(`#${entityType}`);
     section.attr("transform", "translate(0," + ((entityData.y * rowHeight)) + ")");
 
-    section.append("text") 
+    section.append("text")
            .attr("x", 0)
            .attr("y", 0)
            .attr("style", "font-weight: bold")
