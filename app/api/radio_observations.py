@@ -11,7 +11,7 @@ import StringIO
 @api.route('/api/v1/radio_observations', methods=['POST'])
 @api_auth.requires_auth
 def post_radio_observations():
-    if 'gzip' in request.headers['Content-Encoding']:
+    if request.headers.get('Content-Encoding') == 'gzip':
         file = StringIO.StringIO(request.data)
         f = gzip.GzipFile(fileobj=file, mode="rb")
         event_data = json.loads(f.read())
