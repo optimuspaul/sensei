@@ -19,9 +19,9 @@ export default function activityTimeline(data) {
     }
   })
 
-  let segmentedData = _.reduce(data.entities, (current, entity, index) => {
-    let entityType = entityInflections[entity[0]];
-    let entityId = entity[1];
+  let segmentedData = _.reduce(data.entities, (current, entity_data, index) => {
+    let entityType = entityInflections[entity_data[0]];
+    let entityId = entity_data[1];
     let entity = entities[entityType][entityId];
     let entityName = entity ? entity.displayName : "Unknown";
     current[entityType] = current[entityType] || {obs: [], entities: []};
