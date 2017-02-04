@@ -1,15 +1,22 @@
 from flask import request, abort, jsonify
+import json, gzip
 from sqlalchemy import or_, and_
 import numpy as np
 from shared import *
 from ..models import *
 import dateutil.parser
+import StringIO
 
 # Radio Observations upload #
 @api.route('/api/v1/radio_observations', methods=['POST'])
 @api_auth.requires_auth
 def post_radio_observations():
-    event_data = request.get_json()
+    if 'gzip' in request.headers['Content-Encoding']:
+        file = StringIO.StringIO(request.data)
+        f = gzip.GzipFile(fileobj=file, mode="rb")
+        event_data = json.loads(f.read())
+    else:
+        event_data = request.get_json()
     if not event_data:
         abort(400)
     if not isinstance(event_data, list):
