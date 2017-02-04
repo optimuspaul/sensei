@@ -26,7 +26,7 @@ export default function activityTimeline(data) {
     let entityName = entity ? entity.displayName : "Unknown";
     current[entityType] = current[entityType] || {obs: [], entities: []};
     current[entityType].obs.push(data.obs[index]);
-    current[entityType].entities.push(entities[entityType][entityId].displayName);
+    current[entityType].entities.push(entityName);
     current[entityType].y = current[entityType].y || index + _.size(current);
     return current;
   }, {});
