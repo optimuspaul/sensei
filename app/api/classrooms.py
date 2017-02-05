@@ -17,7 +17,7 @@ def classrooms_index():
         child_map = {c.id: c for c in  Child.get_for_classroom(tc, g.user, c.id)}
         area_map = {a.id: a for a in Area.query.filter_by(classroom_id=c.id).all()}
         material_map = {m.id: m for m in Material.query.filter_by(classroom_id=c.id).all()}
-        sensor_map = {}
+        sensor_mappings = []
         for m in mappings:
             entity = None
             if m.entity_type.value == 'child':
@@ -30,12 +30,15 @@ def classrooms_index():
                 entity = material_map.get(int(m.entity_id))
 
             if entity:
-                entity = {'name': entity.name, 'type':m.entity_type.value}
+                name = entity.name
             else:
+                name = "unknown"
                 entity = {'name': "unknown", 'type':m.entity_type.value}
-            sensor_map[m.sensor_id] = entity
-
+            sensor_mappings.append({
+                'sensor_id': m.sensor_id,
+                'name': entity.name,
+                'type': m.entity_type.value})
         classroom_json = c.as_dict()
-        classroom_json['sensor_mappings'] = sensor_map
+        classroom_json['sensor_mappings'] = sensor_mappings
         output.append(classroom_json)
     return jsonify(output)
