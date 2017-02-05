@@ -6,3 +6,5 @@ from entity_relationship import *
 from area import *
 from material import *
 from classroom import *
+from child import *
+from teacher import *
