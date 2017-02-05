@@ -58,28 +58,30 @@ export default function activityTimeline(data) {
   let hours = parseInt(((new Date(d3.max(data.timestamps))).getTime()-startTime.getTime())/1000/60/60);
 
   let ticks = _.reduce(data.timestamps, (current, timestamp, index) => {
+
     let time = new Date(timestamp);
     current[time.getHours()] = current[time.getHours()] || index;
     return current;
   },{})
 
-  // debugger
+  let ticksAsPairs = _.slice(_.toPairs(ticks), 1);
+
   let ticksContainer = chart.select('#ticks');
-  ticksContainer.selectAll("line")
-       .data(_.toPairs(ticks))
+  ticksContainer.selectAll("line") 
+       .data(ticksAsPairs)
        .enter().append("line")
-       .attr("x1", (tick, index) => { return tick[1] + offset })
-       .attr("x2", (tick, index) => { return tick[1] + offset })
+       .attr("x1", (tick, index) => { return xScalar(tick[1]) + offset })
+       .attr("x2", (tick, index) => { return xScalar(tick[1]) + offset })
        .attr("y1", 20)
        .attr("y2", chartHeight - 30);
 
-  ticksContainer.selectAll("text")
-       .data(_.toPairs(ticks))
+  ticksContainer.selectAll("text") 
+       .data(ticksAsPairs)
        .enter().append("text")
-       .attr("x", (tick, index) => { return tick[1] + offset - 15 })
+       .attr("x", (tick, index) => { return xScalar(tick[1]) + offset - 15 })
        .attr("y", chartHeight - 10)
-       .text((tick, index) => { return parseInt(tick[0]) > 12 ? `${parseInt(tick[0]) - 12}:00pm` : `${tick[0]}:00am` })
-
+       .text((tick, index) => { return parseInt(tick[0]) > 12 ? `${parseInt(tick[0]) - 12}:00pm` : `${tick[0]}:00${tick[0] === '12' ? 'pm' : 'am'}` })
+       
 
   _.each(segmentedData, buildSection);
 
@@ -88,7 +90,7 @@ export default function activityTimeline(data) {
     let section = chart.select(`#${entityType}`);
     section.attr("transform", "translate(0," + ((entityData.y * rowHeight)) + ")");
 
-    section.append("text")
+    section.append("text") 
            .attr("x", 0)
            .attr("y", 0)
            .attr("style", "font-weight: bold")

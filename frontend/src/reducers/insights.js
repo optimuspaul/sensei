@@ -3,6 +3,9 @@ import _ from 'lodash';
 const initialState = {
   observations: {
 
+  },
+  ui: {
+    currentDate: (new Date()).toISOString()
   }
 };
 

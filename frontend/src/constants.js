@@ -7,6 +7,8 @@ export const entityInflections = {
   'area': 'areas'
 }
 
+export const env = process.env.NODE_ENV;
+
 export const getCrsfToken = () => {
   if (document.getElementsByName("csrf-token")[0]) {
     return document.getElementsByName("csrf-token")[0].content;
