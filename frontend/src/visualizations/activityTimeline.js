@@ -33,16 +33,27 @@ export default function activityTimeline(data) {
     be fed into d3
    */
   let startTime = new Date(d3.min(data.timestamps));
+  startTime.setMinutes(0);
+  startTime.setSeconds(0);
   let endTime = new Date(d3.max(data.timestamps));
-  let ticks = _.chain(data.timestamps)
-               .reduce((current, timestamp, index) => {
-                  let time = new Date(timestamp);
-                  current[time.getHours()] = current[time.getHours()] || time.getTime();
-                  return current;
-                },{})
-               .toPairs()
-               .slice(1)
-               .value()
+  endTime.setHours(endTime.getHours() + 2);
+  endTime.setMinutes(0);
+  endTime.setSeconds(0);
+  let tmpTime = new Date(startTime.getTime());
+  let ticks = []
+  while (tmpTime < endTime) {
+    ticks.push([tmpTime.getHours(), tmpTime.getTime()])
+    tmpTime.setHours(tmpTime.getHours() + 1);
+  }
+  // let ticks = _.chain(data.timestamps)
+  //              .reduce((current, timestamp, index) => {
+  //                 let time = new Date(timestamp);
+  //                 current[time.getHours()] = current[time.getHours()] || time.getTime();
+  //                 return current;
+  //               },{})
+  //              .toPairs()
+  //              .slice(1)
+  //              .value()
 
 
   /*
