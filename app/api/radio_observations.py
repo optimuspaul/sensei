@@ -103,7 +103,7 @@ def radio_observations_index():
         [(rel.entity1_type.value, rel.entity1_id) for rel in relationships] +
         [(rel.entity2_type.value, rel.entity2_id) for rel in relationships]
     )
-    entities.remove((entity_type, entity_id))
+    entities.discard((entity_type, entity_id))
     entities = list(entities)
     entities.sort()
     entities_idx = dict((e,i) for (i,e) in enumerate(entities))
