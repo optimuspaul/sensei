@@ -1,8 +1,6 @@
 import _ from 'lodash';
 import {getSenseiToken, getClassroomId, baseUrl} from './../constants';
 
-import {handleRequest} from './requestActions';
-
 export const ADD_OBSERVATIONS = 'ADD_OBSERVATIONS';
 export const addObservations = (childId, observations) => {
   return {

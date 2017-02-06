@@ -1,7 +1,6 @@
 import React from 'react';
 import _ from 'lodash';
 import DatePicker from 'react-bootstrap-date-picker';
-import {Nav, NavItem} from 'react-bootstrap';
 
 class ActivityTimelineControls extends React.Component {
 

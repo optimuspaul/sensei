@@ -116,7 +116,12 @@ setTimeout(function(){
             let child = _.get(state, `entities.children[${childId}]`);
             let dateString = (new Date(date)).toDateString();
             document.querySelector("#visualization-title").innerHTML = `${child.displayName} <small>${dateString}</small>`
-            activityTimeline(state.insights.observations[childId]);
+            let observationsData = state.insights.observations[childId];
+            if (observationsData && !_.isEmpty(observationsData.timestamps)) {
+              activityTimeline(observationsData);
+            } else {
+              document.querySelector("#visualization").innerHTML = '<h3>No data</h3>';  
+            }
           } else {
             document.querySelector("#visualization").innerHTML = '<h3>loading...</h3>';
             store.dispatch(fetchObservations(childId, date));
@@ -127,4 +132,4 @@ setTimeout(function(){
       })
     }
   }
-}, 200);
+}, 500);
