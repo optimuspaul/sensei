@@ -20,7 +20,7 @@ setTimeout(function(){
 
   // check to see if school is using sensors. hard coded to classroom ID 725 for now
   let classroomId = getClassroomId();
-  if (classroomId === "725" || !isProduction()) {
+  if (classroomId === "725" || classroomId === "676" || !isProduction()) {
 
       let dynamicPrimaryNav = document.createElement("a");
       dynamicPrimaryNav.className = "primary-nav-link";
@@ -120,7 +120,7 @@ setTimeout(function(){
             if (observationsData && !_.isEmpty(observationsData.timestamps)) {
               activityTimeline(observationsData);
             } else {
-              document.querySelector("#visualization").innerHTML = '<h3>No data</h3>';  
+              document.querySelector("#visualization").innerHTML = '<h3>No data</h3>';
             }
           } else {
             document.querySelector("#visualization").innerHTML = '<h3>loading...</h3>';
