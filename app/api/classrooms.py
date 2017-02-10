@@ -37,7 +37,7 @@ def classrooms_index():
             sensor_mappings.append({
                 'sensor_id': m.sensor_id,
                 'name': entity.name,
-                'type': m.entity_type.value})
+                'entity_type': m.entity_type.value})
         classroom_json = c.as_dict()
         classroom_json['sensor_mappings'] = sensor_mappings
         output.append(classroom_json)
