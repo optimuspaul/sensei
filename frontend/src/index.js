@@ -20,7 +20,7 @@ setTimeout(function(){
 
   // check to see if school is using sensors. hard coded to classroom ID 725 for now
   let classroomId = getClassroomId();
-  if (classroomId === "725" || classroomId === "676" || !isProduction()) {
+  if (classroomId === "725" || classroomId === "676" || classroomId === "1289" || !isProduction()) {
 
       let dynamicPrimaryNav = document.createElement("a");
       dynamicPrimaryNav.className = "primary-nav-link";
