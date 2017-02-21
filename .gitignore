@@ -12,3 +12,5 @@ sensei/.Python
 app/static/bundle.js
 app/static/bundle.css
 app/static/*.map
+.ipynb_checkpoints
+.DS_Store
