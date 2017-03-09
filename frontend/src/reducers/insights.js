@@ -12,19 +12,21 @@ const initialState = {
 export default function sensorMappings(state = initialState, action) {
   switch (action.type) {
     case 'ADD_OBSERVATIONS':
+      let entityUid = `${action.entityType}-${action.entityId}`
       return {
         ...state,
         observations: {
           ...state.observations,
-          [action.childId]: action.observations
+          [entityUid]: action.observations
         }
       }
-    case 'SELECT_CHILD':
+    case 'SELECT_ENTITY':
       return {
         ...state,
         ui: {
           ...state.ui,
-          currentChildId: action.childId
+          currentEntityId: action.entityId,
+          currentEntityType: action.entityType
         }
       }
     case 'SELECT_DATE':

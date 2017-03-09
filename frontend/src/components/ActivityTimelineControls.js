@@ -6,7 +6,7 @@ class ActivityTimelineControls extends React.Component {
 
   constructor(props) {
     super(props);
-    this.handleChildSelect = this.handleChildSelect.bind(this);
+    this.handleEntitySelect = this.handleEntitySelect.bind(this);
     this.handleDateChange = this.handleDateChange.bind(this);
     let date = new Date();
     date.setDate(date.getDate() - 1);
@@ -31,10 +31,11 @@ class ActivityTimelineControls extends React.Component {
     }
   }
 
-  handleChildSelect(event) {
+  handleEntitySelect(event) {
     if (event.target.value) {
-      this.childId = event.target.value;
-      this.props.dispatch(this.props.selectChild(this.childId));
+      this.entityId = event.target.value.split("-")[1];
+      this.entityType = event.target.value.split("-")[0]
+      this.props.dispatch(this.props.selectEntity(this.entityId, this.entityType));
     }
   }
 
@@ -42,7 +43,25 @@ class ActivityTimelineControls extends React.Component {
 
     let children = _.map(this.props.entities.children, (child) => {
       return (
-        <option key={`child-${child.id}`} value={child.id}>{child.displayName }</option>
+        <option key={`child-${child.id}`} value={`child-${child.id}`}>{child.displayName }</option>
+      )
+    })
+
+    let teachers = _.map(this.props.entities.teachers, (teacher) => {
+      return (
+        <option key={`teacher-${teacher.id}`} value={`teacher-${teacher.id}`}>{teacher.displayName }</option>
+      )
+    })
+
+    let areas = _.map(this.props.entities.areas, (area) => {
+      return (
+        <option key={`area-${area.id}`} value={`area-${area.id}`}>{area.displayName }</option>
+      )
+    })
+
+    let materials = _.map(this.props.entities.materials, (material) => {
+      return (
+        <option key={`material-${material.id}`} value={`material-${material.id}`}>{material.displayName }</option>
       )
     })
 
@@ -52,10 +71,21 @@ class ActivityTimelineControls extends React.Component {
           <div className="col-md-12">
             <form>
               <div className="form-group">
-                <label>Student</label>
-                <select className="form-control" name="select-child" onChange={this.handleChildSelect}>
-                  <option value="">Select Child..</option>
-                  {children}
+                <label>Viewpoint</label>
+                <select className="form-control" name="select-entity" onChange={this.handleEntitySelect}>
+                  <option value="">Select viewpoint..</option>
+                  <optgroup label="Children">
+                    {children}
+                  </optgroup>
+                  <optgroup label="Teachers">
+                    {teachers}
+                  </optgroup>
+                  <optgroup label="Areas">
+                    {areas}
+                  </optgroup>
+                  <optgroup label="Materials">
+                    {materials}
+                  </optgroup>
                 </select>
               </div>
             </form>

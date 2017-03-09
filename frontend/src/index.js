@@ -9,7 +9,7 @@ import store from './store/configureStore';
 import { Provider } from 'react-redux';
 import {fetchMappings} from './actions/sensorMappingActions';
 import {fetchChildren, fetchTeachers, fetchEntities} from './actions/entityActions';
-import {getClassroomId, isProduction} from './constants';
+import {getClassroomId, isProduction, entityInflections} from './constants';
 import {fetchObservations} from './actions/insightsActions';
 import _ from 'lodash';
 import './index.css';
@@ -104,19 +104,21 @@ setTimeout(function(){
       store.dispatch(fetchEntities('areas'));
       store.dispatch(fetchEntities('materials'));
 
-      let prevChildId, prevDate;
+      let prevEntityUid, prevDate;
 
       store.subscribe(() => {
         let state = store.getState();
-        let childId = _.get(state, 'insights.ui.currentChildId');
+        let entityId = _.get(state, 'insights.ui.currentEntityId');
+        let entityType = _.get(state, 'insights.ui.currentEntityType');
+        let entityUid = `${entityType}-${entityId}`
         let date = _.get(state, 'insights.ui.currentDate');
 
-        if (childId && date) {
-          if (childId === prevChildId && date === prevDate) {
-            let child = _.get(state, `entities.children[${childId}]`);
+        if (entityId && entityType && date) {
+          if ((entityUid === prevEntityUid) && date === prevDate) {
+            let entity = _.get(state, `entities.${entityInflections[entityType]}.${entityId}`);
             let dateString = (new Date(date)).toDateString();
-            document.querySelector("#visualization-title").innerHTML = `${child.displayName} <small>${dateString}</small>`
-            let observationsData = state.insights.observations[childId];
+            document.querySelector("#visualization-title").innerHTML = `${entity.displayName} <small>${dateString}</small>`
+            let observationsData = state.insights.observations[entityUid];
             if (observationsData && !_.isEmpty(observationsData.timestamps)) {
               activityTimeline(observationsData);
             } else {
@@ -124,9 +126,9 @@ setTimeout(function(){
             }
           } else {
             document.querySelector("#visualization").innerHTML = '<h3>loading...</h3>';
-            store.dispatch(fetchObservations(childId, date));
+            store.dispatch(fetchObservations(entityId, entityType, date));
             prevDate = date;
-            prevChildId = childId;
+            prevEntityUid = entityUid;
           }
         }
       })
