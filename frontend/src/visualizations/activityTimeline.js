@@ -15,6 +15,12 @@ const VISUALIZATION_TEMPLATE = `
     <g id='teachers' class='segments'></g>
   </svg>
 `
+const ENTITIES_TO_SHOW = {
+  child: ['children', 'areas', 'materials', 'teachers'],
+  teacher: ['children', 'areas'],
+  area: ['children', 'teachers'],
+  material:  ['children']
+}
 
 export default function activityTimeline(data) {
 
@@ -45,15 +51,10 @@ export default function activityTimeline(data) {
     ticks.push([tmpTime.getHours(), tmpTime.getTime()])
     tmpTime.setHours(tmpTime.getHours() + 1);
   }
-  // let ticks = _.chain(data.timestamps)
-  //              .reduce((current, timestamp, index) => {
-  //                 let time = new Date(timestamp);
-  //                 current[time.getHours()] = current[time.getHours()] || time.getTime();
-  //                 return current;
-  //               },{})
-  //              .toPairs()
-  //              .slice(1)
-  //              .value()
+
+
+  let currentEntityType = _.get(store.getState(), "insights.ui.currentEntityType");
+
 
 
   /*
@@ -62,6 +63,9 @@ export default function activityTimeline(data) {
    */
   let segmentedData = _.reduce(data.entities, (current, entity_data, index) => {
     let entityType = entityInflections[entity_data[0]];
+    if (!_.includes(ENTITIES_TO_SHOW[currentEntityType], entityType)) {
+      return current
+    }
     let entityId = entity_data[1];
     let entity = store.getState().entities[entityType][entityId];
     let entityName = entity ? entity.displayName : "Unknown";
@@ -89,7 +93,7 @@ export default function activityTimeline(data) {
     above, with an extra ROW_HEIGHT's worth of space added to the bottom to make
     space for the time tick labels
    */
-  let chartHeight = (ROW_HEIGHT * (data.entities.length + _.size(segmentedData))) + ROW_HEIGHT;
+  let chartHeight = (ROW_HEIGHT * (_.size(ENTITIES_TO_SHOW[currentEntityType]) + _.size(segmentedData))) + ROW_HEIGHT;
 
 
   /*
@@ -115,13 +119,13 @@ export default function activityTimeline(data) {
        .attr("x1", (tick, index) => { return xScalar(tick[1]) + OFFSET + 15 })
        .attr("x2", (tick, index) => { return xScalar(tick[1]) + OFFSET + 15 })
        .attr("y1", 20)
-       .attr("y2", chartHeight - 30);
+       .attr("y2", chartHeight - 20);
 
   ticksContainer.selectAll("text")
        .data(ticks)
        .enter().append("text")
        .attr("x", (tick, index) => { return xScalar(tick[1]) + OFFSET })
-       .attr("y", chartHeight - 10)
+       .attr("y", 10)
        .text((tick, index) => { return parseInt(tick[0], 10) > 12 ? `${parseInt(tick[0], 10) - 12}:00pm` : `${tick[0]}:00${tick[0] === '12' ? 'pm' : 'am'}` })
 
 
