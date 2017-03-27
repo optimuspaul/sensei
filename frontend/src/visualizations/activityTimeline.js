@@ -102,7 +102,7 @@ export default function activityTimeline(data) {
    */
   let chart = d3.select("#visualization svg")
                   .attr("width", STATIC_WIDTH)
-                  .attr("height", chartHeight);
+                  .attr("height", chartHeight + 20);
 
 
 
@@ -118,16 +118,18 @@ export default function activityTimeline(data) {
        .enter().append("line")
        .attr("x1", (tick, index) => { return xScalar(tick[1]) + OFFSET + 15 })
        .attr("x2", (tick, index) => { return xScalar(tick[1]) + OFFSET + 15 })
-       .attr("y1", 35)
+       .attr("y1", 20)
        .attr("y2", chartHeight);
 
-  ticksContainer.selectAll("text")
-       .data(ticks)
-       .enter().append("text")
-       .attr("x", (tick, index) => { return xScalar(tick[1]) + OFFSET })
-       .attr("y", 10)
-       .text((tick, index) => { return parseInt(tick[0], 10) > 12 ? `${parseInt(tick[0], 10) - 12}:00pm` : `${tick[0]}:00${tick[0] === '12' ? 'pm' : 'am'}` })
-
+  [10, chartHeight+15].forEach((y) => {
+    ticksContainer.selectAll(`text.y-${y}`)
+         .data(ticks)
+         .enter().append(`text`)
+         .attr('class', `y-${y}`)
+         .attr("x", (tick, index) => { return xScalar(tick[1]) + OFFSET })
+         .attr("y", y)
+         .text((tick, index) => { return parseInt(tick[0], 10) > 12 ? `${parseInt(tick[0], 10) - 12}:00pm` : `${tick[0]}:00${tick[0] === '12' ? 'pm' : 'am'}` })
+  });
 
   // builds each entity type section using the segmentedData generated above
   _.each(segmentedData, buildSection);
