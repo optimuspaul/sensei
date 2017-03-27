@@ -93,7 +93,7 @@ export default function activityTimeline(data) {
     above, with an extra ROW_HEIGHT's worth of space added to the bottom to make
     space for the time tick labels
    */
-  let chartHeight = (ROW_HEIGHT * (_.size(ENTITIES_TO_SHOW[currentEntityType]) + _.size(segmentedData))) + ROW_HEIGHT;
+  let chartHeight = (ROW_HEIGHT * _.sumBy(_.toArray(segmentedData), (entityType) => { return _.size(entityType.entities) + 1 }));
 
 
   /*
@@ -118,8 +118,8 @@ export default function activityTimeline(data) {
        .enter().append("line")
        .attr("x1", (tick, index) => { return xScalar(tick[1]) + OFFSET + 15 })
        .attr("x2", (tick, index) => { return xScalar(tick[1]) + OFFSET + 15 })
-       .attr("y1", 20)
-       .attr("y2", chartHeight - 20);
+       .attr("y1", 35)
+       .attr("y2", chartHeight);
 
   ticksContainer.selectAll("text")
        .data(ticks)
