@@ -24,11 +24,16 @@ export const getSenseiToken = () => {
 }
 
 export const getClassroomId = () => {
-  let classroom_id = _.get(window, 'tc.env.currentClassroomId');
-  if (classroom_id === "" || classroom_id === "all") {
-    classroom_id = _.get(window, 'tc.env.firstClassroomId');
+  let classroomId = _.get(window, 'tc.env.currentClassroomId');
+  if (classroomId === "" || classroomId === "all") {
+    classroomId = _.get(window, 'tc.env.firstClassroomId');
   }
-  return classroom_id;
+  return classroomId;
+}
+
+export const getSchoolId = () => {
+  let schoolId = _.get(window, 'tc.env.currentSchoolId');
+  return schoolId;
 }
 
 export const baseUrl = () => {
