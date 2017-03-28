@@ -5,7 +5,7 @@ const initialState = {
   teachers: {},
   materials: {},
   areas: {},
-  loading: false
+  anonymize: localStorage.getItem('anonymize') === 'true'
 };
 
 export default function sensorMappings(state = initialState, action) {
@@ -22,6 +22,12 @@ export default function sensorMappings(state = initialState, action) {
       return {
         ...state,
         [action.entityType]: _.merge(state[action.entityType], {[action.entity.id]: action.entity})
+      }
+    case 'TOGGLE_ANONYMIZER':
+      localStorage.setItem('anonymize', !state.anonymize)
+      return {
+        ...state,
+        anonymize: !state.anonymize
       }
     default:
       return state

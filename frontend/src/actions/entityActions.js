@@ -2,6 +2,7 @@ import _ from 'lodash';
 import {getCrsfToken, getSenseiToken, getClassroomId, baseUrl} from './../constants';
 import {handleRequest} from './requestActions';
 import {changeCase} from './../utils';
+import {fakeNames} from './../constants';
 
 const ADD_ENTITIES = 'ADD_ENTITIES';
 export const addEntities = (entityType, entities) => {
@@ -21,10 +22,19 @@ export const handleSaveEntitySuccess = (entityType, entity) => {
   }
 }
 
+const TOGGLE_ANONYMIZER = 'TOGGLE_ANONYMIZER';
+export const toggleAnonymizer = () => {
+  return {
+    type: TOGGLE_ANONYMIZER
+  }
+}
+
 
 
 export const fetchChildren = () => {
-  return (dispatch) => {
+  return (dispatch, getState) => {
+    let state = getState();
+
     fetch(`/api/v1/children.json?classroom_id=${getClassroomId()}`, {
       credentials: 'include',
       headers: {
@@ -34,8 +44,9 @@ export const fetchChildren = () => {
       return response.text()
     }).then((body) => {
       let children = JSON.parse(body);
-      const decoratedChildren = children.map((child) => {
-        return _.merge(child, {displayName: `${child.first_name} ${child.last_name}`});
+      const decoratedChildren = children.map((child, index) => {
+        let displayName = state.entities.anonymize ? fakeNames[index] : `${child.first_name} ${child.last_name}`;
+        return _.merge(child, {displayName});
       })
       dispatch(addEntities('children', decoratedChildren));
     })
@@ -125,3 +136,5 @@ export const updateEntity = (entityType, entity, requestId) => {
     })
   }
 }
+
+

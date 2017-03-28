@@ -45,15 +45,7 @@ export default function activityTimeline(data) {
     ticks.push([tmpTime.getHours(), tmpTime.getTime()])
     tmpTime.setHours(tmpTime.getHours() + 1);
   }
-  // let ticks = _.chain(data.timestamps)
-  //              .reduce((current, timestamp, index) => {
-  //                 let time = new Date(timestamp);
-  //                 current[time.getHours()] = current[time.getHours()] || time.getTime();
-  //                 return current;
-  //               },{})
-  //              .toPairs()
-  //              .slice(1)
-  //              .value()
+
 
 
   /*
