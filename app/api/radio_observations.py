@@ -76,11 +76,14 @@ def radio_observations_index():
     if not classroom_id:
         abort(400, "Missing classroom_id parameter")
 
-    child_id = request.args.get('child_id')
-    if not child_id:
-        abort(400, "Missing child_id parameter")
-    entity_id = int(child_id)
-    entity_type = 'child'
+    entity_id = request.args.get('entity_id')
+    if not entity_id:
+        abort(400, "Missing entity_id parameter")
+    entity_id = int(entity_id)
+    entity_type = request.args.get('entity_type')
+    if not entity_id:
+        abort(400, "Missing entity_type parameter")    
+    
 
     start_time = assert_iso8601_time_param('start_time')
     end_time = assert_iso8601_time_param('end_time')
@@ -89,12 +92,12 @@ def radio_observations_index():
         EntityRelationship.classroom_id==classroom_id,
         or_(
             and_(
-                EntityRelationship.entity1_type==MappingType.child,
-                EntityRelationship.entity1_id==child_id
+                EntityRelationship.entity1_type==entity_type,
+                EntityRelationship.entity1_id==entity_id
             ),
             and_(
-                EntityRelationship.entity2_type==MappingType.child,
-                EntityRelationship.entity2_id==child_id
+                EntityRelationship.entity2_type==entity_type,
+                EntityRelationship.entity2_id==entity_id
             )
         )
     ).all()

@@ -1,7 +1,7 @@
 import {connect} from 'react-redux';
 import _ from 'lodash';
 import ActivityTimelineControls from './../components/ActivityTimelineControls';
-import {selectChild, selectDate} from '../actions/insightsActions';
+import {selectEntity, selectDate} from '../actions/insightsActions';
 
 const ActivityTimelineControlsContainer = connect((state) => ({
   insights: state.insights,
@@ -9,7 +9,7 @@ const ActivityTimelineControlsContainer = connect((state) => ({
 }),
 (dispatch) => ({
   dispatch,
-  selectChild,
+  selectEntity,
   selectDate
 }))(ActivityTimelineControls);
 

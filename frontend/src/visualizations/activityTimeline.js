@@ -15,6 +15,12 @@ const VISUALIZATION_TEMPLATE = `
     <g id='teachers' class='segments'></g>
   </svg>
 `
+const ENTITIES_TO_SHOW = {
+  child: ['children', 'areas', 'materials', 'teachers'],
+  teacher: ['children', 'areas'],
+  area: ['children', 'teachers'],
+  material:  ['children']
+}
 
 export default function activityTimeline(data) {
 
@@ -46,7 +52,7 @@ export default function activityTimeline(data) {
     tmpTime.setHours(tmpTime.getHours() + 1);
   }
 
-
+  let currentEntityType = _.get(store.getState(), "insights.ui.currentEntityType");
 
   /*
     Creates an object containing the data necessary for drawing the observation
@@ -54,6 +60,9 @@ export default function activityTimeline(data) {
    */
   let segmentedData = _.reduce(data.entities, (current, entity_data, index) => {
     let entityType = entityInflections[entity_data[0]];
+    if (!_.includes(ENTITIES_TO_SHOW[currentEntityType], entityType)) {
+      return current
+    }
     let entityId = entity_data[1];
     let entity = store.getState().entities[entityType][entityId];
     let entityName = entity ? entity.displayName : "Unknown";
@@ -81,7 +90,7 @@ export default function activityTimeline(data) {
     above, with an extra ROW_HEIGHT's worth of space added to the bottom to make
     space for the time tick labels
    */
-  let chartHeight = (ROW_HEIGHT * (data.entities.length + _.size(segmentedData))) + ROW_HEIGHT;
+  let chartHeight = (ROW_HEIGHT * _.sumBy(_.toArray(segmentedData), (entityType) => { return _.size(entityType.entities) + 1 }));
 
 
   /*
@@ -90,7 +99,7 @@ export default function activityTimeline(data) {
    */
   let chart = d3.select("#visualization svg")
                   .attr("width", STATIC_WIDTH)
-                  .attr("height", chartHeight);
+                  .attr("height", chartHeight + 20);
 
 
 
@@ -107,15 +116,17 @@ export default function activityTimeline(data) {
        .attr("x1", (tick, index) => { return xScalar(tick[1]) + OFFSET + 15 })
        .attr("x2", (tick, index) => { return xScalar(tick[1]) + OFFSET + 15 })
        .attr("y1", 20)
-       .attr("y2", chartHeight - 30);
+       .attr("y2", chartHeight);
 
-  ticksContainer.selectAll("text")
-       .data(ticks)
-       .enter().append("text")
-       .attr("x", (tick, index) => { return xScalar(tick[1]) + OFFSET })
-       .attr("y", chartHeight - 10)
-       .text((tick, index) => { return parseInt(tick[0], 10) > 12 ? `${parseInt(tick[0], 10) - 12}:00pm` : `${tick[0]}:00${tick[0] === '12' ? 'pm' : 'am'}` })
-
+  [10, chartHeight+15].forEach((y) => {
+    ticksContainer.selectAll(`text.y-${y}`)
+         .data(ticks)
+         .enter().append(`text`)
+         .attr('class', `y-${y}`)
+         .attr("x", (tick, index) => { return xScalar(tick[1]) + OFFSET })
+         .attr("y", y)
+         .text((tick, index) => { return parseInt(tick[0], 10) > 12 ? `${parseInt(tick[0], 10) - 12}:00pm` : `${tick[0]}:00${tick[0] === '12' ? 'pm' : 'am'}` })
+  });
 
   // builds each entity type section using the segmentedData generated above
   _.each(segmentedData, buildSection);

@@ -2,15 +2,16 @@ import _ from 'lodash';
 import {getSenseiToken, getClassroomId, baseUrl} from './../constants';
 
 export const ADD_OBSERVATIONS = 'ADD_OBSERVATIONS';
-export const addObservations = (childId, observations) => {
+export const addObservations = (entityId, entityType, observations) => {
   return {
     type: ADD_OBSERVATIONS,
     observations,
-    childId
+    entityId,
+    entityType
   }
 }
 
-export const fetchObservations = (childId, date) => {
+export const fetchObservations = (entityId, entityType, date) => {
   return (dispatch, getState) => {
     let state = getState();
     date = date || _.get(state, 'insights.ui.currentDate');
@@ -22,7 +23,7 @@ export const fetchObservations = (childId, date) => {
     let endTime = encodeURIComponent(endDate.toISOString().split('.000Z')[0]);
 
 
-    fetch(`${baseUrl()}/api/v1/radio_observations?classroom_id=${getClassroomId()}&child_id=${childId}&start_time=${startTime}&end_time=${endTime}`, {
+    fetch(`${baseUrl()}/api/v1/radio_observations?classroom_id=${getClassroomId()}&entity_id=${entityId}&entity_type=${entityType}&start_time=${startTime}&end_time=${endTime}`, {
       headers: {
         'X-SenseiToken': getSenseiToken(),
         'Content-Type': 'application/json'
@@ -31,17 +32,18 @@ export const fetchObservations = (childId, date) => {
       return response.text()
     }).then((body) => {
       let observations = JSON.parse(body);
-      dispatch(addObservations(childId, observations));
+      dispatch(addObservations(entityId, entityType, observations));
     })
   }
 }
 
-export const SELECT_CHILD = 'SELECT_CHILD'
-export const selectChild = (childId) => {
+export const SELECT_ENTITY = 'SELECT_ENTITY'
+export const selectEntity = (entityId, entityType) => {
   return (dispatch, getState) => {
     dispatch({
-      type: SELECT_CHILD,
-      childId
+      type: SELECT_ENTITY,
+      entityId,
+      entityType
     });
   }
 }
