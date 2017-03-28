@@ -9,7 +9,7 @@ import store from './store/configureStore';
 import { Provider } from 'react-redux';
 import {fetchMappings} from './actions/sensorMappingActions';
 import {fetchChildren, fetchTeachers, fetchEntities} from './actions/entityActions';
-import {getClassroomId, isProduction} from './constants';
+import {getClassroomId, isProduction, getSchoolId} from './constants';
 import {fetchObservations} from './actions/insightsActions';
 import {toggleAnonymizer} from './actions/entityActions';
 import _ from 'lodash';
@@ -26,15 +26,18 @@ setTimeout(function(){
 
   // check to see if school is using sensors. hard coded to classroom ID 725 for now
   let classroomId = getClassroomId();
+  let schoolId = getSchoolId();
   if (classroomId === "725" || classroomId === "676" || classroomId === "1289" || !isProduction()) {
 
       let dynamicPrimaryNav = document.createElement("a");
       dynamicPrimaryNav.className = "primary-nav-link";
-      dynamicPrimaryNav.href = `/networks/wf/events/sensors${classroomId ? '?classroom_id=' + classroomId : '' }`;
+      dynamicPrimaryNav.id = "sensors-nav";
+      dynamicPrimaryNav.href = `/s/${schoolId}/networks/wf/events/sensors${classroomId ? '?classroom_id=' + classroomId : '' }`;
       dynamicPrimaryNav.innerHTML = `<i class="fa fa-cubes"></i><span>Sensors</span>`
       document.querySelector('.primary-nav').appendChild(dynamicPrimaryNav);
 
     if (location.pathname.indexOf('wf/events') !== -1) {
+      dynamicPrimaryNav.classList.add('active');
       let dynamicSecondaryNav = document.createElement("div");
       dynamicSecondaryNav.className = "secondary-nav-link";
       let secondaryNav = document.querySelector('.secondary-nav');
@@ -43,10 +46,7 @@ setTimeout(function(){
         <SubNav/>,
         dynamicSecondaryNav
       )
-
-
     }
-
 
     if (location.pathname.indexOf('wf/events/sensors') !== -1) {
       document.title = 'Sensors';
