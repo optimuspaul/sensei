@@ -9,7 +9,6 @@ class ActivityTimelineControls extends React.Component {
     this.handleEntitySelect = this.handleEntitySelect.bind(this);
     this.handleDateChange = this.handleDateChange.bind(this);
     let date = new Date();
-    date.setDate(date.getDate() - 1);
     date = date.toISOString().split('Z')[0];
 
     this.state = {

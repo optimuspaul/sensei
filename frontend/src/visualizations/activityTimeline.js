@@ -52,10 +52,7 @@ export default function activityTimeline(data) {
     tmpTime.setHours(tmpTime.getHours() + 1);
   }
 
-
   let currentEntityType = _.get(store.getState(), "insights.ui.currentEntityType");
-
-
 
   /*
     Creates an object containing the data necessary for drawing the observation

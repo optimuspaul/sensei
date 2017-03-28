@@ -11,12 +11,18 @@ import {fetchMappings} from './actions/sensorMappingActions';
 import {fetchChildren, fetchTeachers, fetchEntities} from './actions/entityActions';
 import {getClassroomId, isProduction, entityInflections} from './constants';
 import {fetchObservations} from './actions/insightsActions';
+import {toggleAnonymizer} from './actions/entityActions';
 import _ from 'lodash';
 import './index.css';
 import activityTimeline from './visualizations/activityTimeline';
-
+import key from 'keyboard-shortcut';
 
 setTimeout(function(){
+
+  key('ctrl shift a', function (e) {
+    store.dispatch(toggleAnonymizer());
+    store.dispatch(fetchChildren());
+  });
 
   // check to see if school is using sensors. hard coded to classroom ID 725 for now
   let classroomId = getClassroomId();

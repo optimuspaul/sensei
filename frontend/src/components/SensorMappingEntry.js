@@ -7,6 +7,8 @@ class SensorMappingEntry extends React.Component {
     this.handleBlur = this.handleBlur.bind(this);
     this.handleFocus = this.handleFocus.bind(this);
     this.handleKeyPress = this.handleKeyPress.bind(this);
+    this.entityId = this.props.mapping.entityId;
+    this.entityType = this.props.mapping.entityType;
   }
 
   handleBlur(event) {
@@ -17,11 +19,14 @@ class SensorMappingEntry extends React.Component {
         this.props.mapping.entityType = null;
         sensorId = this.tmpSensorId;
         delete this.tmpSensorId;
+      } else {
+        sensorId = parseInt(sensorId, 10);
+        this.props.mapping.entityId = this.entityId;
+        this.props.mapping.entityType = this.entityType;
       }
-      sensorId = parseInt(sensorId, 10);
-      if (sensorId !== this.props.mapping.sensorId) {
+      // if (sensorId !== this.props.mapping.sensorId) {
         this.props.onUpdate(_.merge(this.props.mapping, {sensorId}))
-      }
+      // }
     } else {
       event.target.value = null;
     }
@@ -32,7 +37,7 @@ class SensorMappingEntry extends React.Component {
   }
 
   handleKeyPress(event) {
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' || (event.key === 'Backspace' && event.target.value === "")) {
       this.handleBlur(event);
     }
   }
@@ -49,7 +54,7 @@ class SensorMappingEntry extends React.Component {
                  key={`sensorId-${this.props.mapping.sensorId}`}
                  defaultValue={this.props.mapping.sensorId}
                  onBlur={this.handleBlur}
-                 onKeyPress={this.handleKeyPress}
+                 onKeyUp={this.handleKeyPress}
                  onFocus={this.handleFocus}
           />
         </td>
