@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import {getCrsfToken, getSenseiToken, getClassroomId, baseUrl} from './../constants';
+import {getCrsfToken, getSenseiToken, getClassroomId, getSchoolId, baseUrl} from './../constants';
 import {handleRequest} from './requestActions';
 import {changeCase} from './../utils';
 import {fakeNames} from './../constants';
@@ -35,7 +35,7 @@ export const fetchChildren = () => {
   return (dispatch, getState) => {
     let state = getState();
 
-    fetch(`/api/v1/children.json?classroom_id=${getClassroomId()}`, {
+    fetch(`/api/v1/children.json?classroom_id=${getClassroomId()}&school_id=${getSchoolId()}`, {
       credentials: 'include',
       headers: {
         "X-CSRF-Token": getCrsfToken()
@@ -55,7 +55,7 @@ export const fetchChildren = () => {
 
 export const fetchTeachers = () => {
   return (dispatch) => {
-    fetch(`/api/v1/users.json?classroom_id=${getClassroomId()}&roles[]=teacher`, {
+    fetch(`/api/v1/users.json?classroom_id=${getClassroomId()}&school_id=${getSchoolId()}&roles[]=teacher`, {
       credentials: 'include',
       headers: {
         "X-CSRF-Token": getCrsfToken()
