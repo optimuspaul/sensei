@@ -64,6 +64,8 @@ class ActivityTimelineControls extends React.Component {
       )
     })
 
+    let selectedUid = this.props.insights.ui.currentEntityType ? `${this.props.insights.ui.currentEntityType}-${this.props.insights.ui.currentEntityId}` : '';
+
     return (
       <div>
         <div className="row">
@@ -71,7 +73,7 @@ class ActivityTimelineControls extends React.Component {
             <form>
               <div className="form-group">
                 <label>Viewpoint</label>
-                <select className="form-control" name="select-entity" onChange={this.handleEntitySelect}>
+                <select className="form-control" value={selectedUid} name="select-entity" onChange={this.handleEntitySelect}>
                   <option value="">Select viewpoint..</option>
                   <optgroup label="Children">
                     {children}

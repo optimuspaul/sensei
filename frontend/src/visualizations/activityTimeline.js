@@ -1,7 +1,7 @@
 import * as d3 from "d3";
 import {entityInflections} from './../constants';
 import store from './../store/configureStore';
-import {selectIdentity} from './../actions/entityActions';
+import {selectEntity} from './../actions/insightsActions';
 import _ from 'lodash';
 
 const ROW_HEIGHT = 30; // how tall each row of data in timeline is
@@ -166,9 +166,10 @@ export default function activityTimeline(data) {
         .attr("x", 5)
         .attr("y", ROW_HEIGHT / 1.5)
         .attr("dy", ".35em")
+        .attr('class', 'entity-label')
         .text(function(entity) { return entity.entityName })
         .on('click', (entity) => {
-          store.dispatch(selectIdentity(entity.entityId, entity.entityType))
+          store.dispatch(selectEntity(entity.entityId, _.invert(entityInflections)[entity.entityType]))
         });
 
     /*
