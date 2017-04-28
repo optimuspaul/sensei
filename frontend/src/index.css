@@ -5,6 +5,14 @@
   color: black;
 }
 
+#foundation #visualization .segments text.entity-label {
+  cursor: pointer;
+}
+
+#foundation #visualization .segments text.entity-label:hover {
+  text-decoration: underline;
+}
+
 #foundation #visualization .segments circle {
   fill: red;
 }

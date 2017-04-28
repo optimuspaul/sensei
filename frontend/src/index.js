@@ -133,6 +133,7 @@ setTimeout(function(){
             }
           } else {
             document.querySelector("#visualization").innerHTML = '<h3>loading...</h3>';
+            document.querySelector("#visualization-title").innerHTML = '';
             store.dispatch(fetchObservations(entityId, entityType, date));
             prevDate = date;
             prevEntityUid = entityUid;

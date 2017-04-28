@@ -1,6 +1,7 @@
 import * as d3 from "d3";
 import {entityInflections} from './../constants';
 import store from './../store/configureStore';
+import {selectEntity} from './../actions/insightsActions';
 import _ from 'lodash';
 
 const ROW_HEIGHT = 30; // how tall each row of data in timeline is
@@ -68,7 +69,7 @@ export default function activityTimeline(data) {
     let entityName = entity ? entity.displayName : "Unknown";
     current[entityType] = current[entityType] || {obs: [], entities: []};
     current[entityType].obs.push(data.obs[index]);
-    current[entityType].entities.push(entityName);
+    current[entityType].entities.push({entityName, entityId, entityType});
     current[entityType].y = current[entityType].y || index + _.size(current);
     return current;
   }, {});
@@ -125,7 +126,7 @@ export default function activityTimeline(data) {
          .attr('class', `y-${y}`)
          .attr("x", (tick, index) => { return xScalar(tick[1]) + OFFSET })
          .attr("y", y)
-         .text((tick, index) => { return parseInt(tick[0], 10) > 12 ? `${parseInt(tick[0], 10) - 12}:00pm` : `${tick[0]}:00${tick[0] === '12' ? 'pm' : 'am'}` })
+         .text((tick, index) => { return parseInt(tick[0], 10) > 12 ? `${parseInt(tick[0], 10) - 12}:00pm` : `${tick[0]}:00am` })
   });
 
   // builds each entity type section using the segmentedData generated above
@@ -165,7 +166,11 @@ export default function activityTimeline(data) {
         .attr("x", 5)
         .attr("y", ROW_HEIGHT / 1.5)
         .attr("dy", ".35em")
-        .text(function(entity) { return entity });
+        .attr('class', 'entity-label')
+        .text(function(entity) { return entity.entityName })
+        .on('click', (entity) => {
+          store.dispatch(selectEntity(entity.entityId, _.invert(entityInflections)[entity.entityType]))
+        });
 
     /*
       plots the observations for each entity within the current entity type group. The
