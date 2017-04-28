@@ -6,9 +6,8 @@
     "postinstall": "cd frontend && npm install && npm run build && gulp"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "description": "",
-  "enginges": "6.9.1",
   "dependencies": {
     "gulp": "^3.9.1",
     "gulp-rename": "^1.2.2"

@@ -10,6 +10,8 @@ from transitions import Machine
 import time
 from datetime import datetime, timedelta
 
+# This should be updated to use the sensei client library
+
 SENSEI_SERVER = 'http://localhost:5000/'
 SENSEI_API = SENSEI_SERVER + 'api/v1/'
 SENSEI_USER = 'super@example.com'
