@@ -29,12 +29,13 @@ setTimeout(function(){
   let schoolId = getSchoolId();
   if (classroomId === "725" || classroomId === "676" || classroomId === "1289" || !isProduction()) {
 
-      let dynamicPrimaryNav = document.createElement("a");
-      dynamicPrimaryNav.className = "primary-nav-link";
-      dynamicPrimaryNav.id = "sensors-nav";
-      dynamicPrimaryNav.href = `/s/${schoolId}/networks/wf/events/sensors${classroomId ? '?classroom_id=' + classroomId : '' }`;
-      dynamicPrimaryNav.innerHTML = `<i class="fa fa-cubes"></i><span>Sensors</span>`
-      document.querySelector('.primary-nav').appendChild(dynamicPrimaryNav);
+    let dynamicPrimaryNav = document.createElement("a");
+    dynamicPrimaryNav.className = "primary-nav-link";
+    dynamicPrimaryNav.id = "sensors-nav";
+    dynamicPrimaryNav.href = `/s/${schoolId}/networks/wf/events/sensors${classroomId ? '?classroom_id=' + classroomId : '' }`;
+    dynamicPrimaryNav.innerHTML = `<i class="fa fa-cubes"></i><span>Sensors</span>`
+    let insertionPoint = document.querySelector('.primary-nav');
+    insertionPoint && insertionPoint.appendChild(dynamicPrimaryNav);
 
     if (location.pathname.indexOf('wf/events') !== -1) {
       dynamicPrimaryNav.classList.add('active');
