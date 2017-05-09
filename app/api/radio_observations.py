@@ -18,7 +18,7 @@ def post_radio_observations():
     else:
         event_data = request.get_json()
     if not event_data:
-        abort(400)
+        abort(400, "Missing event data")
     if not isinstance(event_data, list):
         event_data = [event_data]
 

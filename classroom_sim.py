@@ -16,7 +16,7 @@ SENSEI_SERVER = 'http://localhost:5000/'
 SENSEI_API = SENSEI_SERVER + 'api/v1/'
 SENSEI_USER = 'super@example.com'
 SENSEI_PASSWORD = 'password'
-CLASSROOM_ID = 1
+CLASSROOM_ID = 2
 
 def api_req(endpoint, params=None):
     url = SENSEI_API + endpoint
@@ -41,6 +41,16 @@ class RadioObservation(object):
         self.remote_id = remote_id
         self.observed_at = observed_at
         self.rssi = RadioObservation.RSSI(rssi)
+
+class AccelerometerObservation(object):
+
+    def __init__(self, classroom_id, sensor_id, observed_at, accelerations):
+        self.classroom_id = classroom_id
+        self.sensor_id = sensor_id
+        self.observed_at = observed_at
+        self.x_acceleration = accelerations[0]
+        self.y_acceleration = accelerations[1]
+        self.z_acceleration = accelerations[2]
 
 def trial(prob):
     return random.random() < prob
@@ -87,6 +97,9 @@ class Sensor(object):
         if rssi < -99:
             rssi = None
         return rssi
+
+    def sim_acceleration(self):
+        return (np.random.uniform(-20, 20), np.random.uniform(-20, 20), np.random.uniform(-20, 20))
 
 class Teacher(Sensor):
     def __init__(self, room, user_id, sensor_id):
@@ -258,6 +271,15 @@ def upload_obs(obs):
     elapsed_time = time.time() - start_time
     print "Upload took %s seconds" % elapsed_time
 
+def upload_accel_obs(obs):
+    print "Uploading simulated accelerometer observations. %s" % json.dumps(obs)
+    req = api_req('accelerometer_observations')
+    start_time = time.time()
+    response = urllib2.urlopen(req, json.dumps(obs))
+    print response.read()
+    elapsed_time = time.time() - start_time
+    print "Upload took %s seconds" % elapsed_time
+
 while sim_time < end_time:
     print "*" * 80
     print "sim_time = %s" % sim_time
@@ -270,7 +292,11 @@ while sim_time < end_time:
 
     # Gather pings
     obs = []
+    accel_obs = []
     for sensor in sensors:
+        accelerations = sensor.sim_acceleration()
+        accel_event = AccelerometerObservation(CLASSROOM_ID, sensor.sensor_id, sim_time.isoformat(), accelerations)
+        accel_obs.append(accel_event)
         for other in sensors:
             if sensor.sensor_id == other.sensor_id:
                 continue
@@ -279,11 +305,17 @@ while sim_time < end_time:
                 event = RadioObservation(CLASSROOM_ID, sensor.sensor_id,
                             other.sensor_id, sim_time.isoformat(), rssi)
                 obs.append(event)
+
     print "%d obs" % len(obs)
+    print "%d accel_obs" % len(accel_obs)
 
     # upload obs
     obs = map(lambda x: x.__dict__, obs)
     upload_obs(obs)
+
+    # upload obs
+    accel_obs = map(lambda x: x.__dict__, accel_obs)
+    upload_accel_obs(accel_obs)
 
     #time.sleep(1)
     sim_time = sim_time + timedelta(seconds=10)
