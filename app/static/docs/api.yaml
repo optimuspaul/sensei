@@ -56,11 +56,21 @@ paths:
           description: The id of the classroom to retrieve observations for.
           required: true
           type: integer
-        - name: child_id
+        - name: entity_id
           in: query
-          description: The id of the child to retrieve observations for.
+          description: The id of the entity to retrieve observations for.
           required: true
           type: integer
+        - name: entity_type
+          in: query
+          description: "The type of entity that entity_id references."
+          required: true
+          type: string
+          enum:
+            - child
+            - teacher
+            - material
+            - area
         - name: start_time
           in: query
           type: string
