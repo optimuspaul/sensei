@@ -10,11 +10,12 @@ import { Provider } from 'react-redux';
 import {fetchMappings} from './actions/sensorMappingActions';
 import {fetchChildren, fetchTeachers, fetchEntities} from './actions/entityActions';
 import {getClassroomId, isProduction, entityInflections, getSchoolId} from './constants';
-import {fetchObservations} from './actions/insightsActions';
+import {fetchObservations, fetchInteractionPeriods} from './actions/insightsActions';
 import {toggleAnonymizer} from './actions/entityActions';
 import _ from 'lodash';
 import './index.css';
 import activityTimeline from './visualizations/activityTimeline';
+import segmentedTimeline from './visualizations/segmentedTimeline';
 import key from 'keyboard-shortcut';
 
 setTimeout(function(){
@@ -111,30 +112,46 @@ setTimeout(function(){
       store.dispatch(fetchEntities('areas'));
       store.dispatch(fetchEntities('materials'));
 
-      let prevEntityUid, prevDate;
+      let prevEntityUid, prevDate, prevVisualization;
 
       store.subscribe(() => {
         let state = store.getState();
         let entityId = _.get(state, 'insights.ui.currentEntityId');
         let entityType = _.get(state, 'insights.ui.currentEntityType');
+        let visualization = _.get(state, 'insights.ui.visualization');
         let entityUid = `${entityType}-${entityId}`
         let date = _.get(state, 'insights.ui.currentDate');
 
-        if (entityId && entityType && date) {
-          if ((entityUid === prevEntityUid) && date === prevDate) {
+        if (entityId && entityType && date && visualization) {
+          if (entityUid === prevEntityUid && date === prevDate && prevVisualization === visualization) {
             let entity = _.get(state, `entities.${entityInflections[entityType]}.${entityId}`);
             let dateString = (new Date(date)).toDateString();
             document.querySelector("#visualization-title").innerHTML = `${entity.displayName} <small>${dateString}</small>`
             let observationsData = state.insights.observations[entityUid];
             if (observationsData && !_.isEmpty(observationsData.timestamps)) {
-              activityTimeline(observationsData);
+              switch(visualization) {
+                case 'activityTimeline':
+                  activityTimeline(observationsData);
+                  break;
+                case 'segmentedTimeline':
+                  segmentedTimeline(observationsData);
+                  break;
+              }
             } else {
               document.querySelector("#visualization").innerHTML = '<h3>No data</h3>';
             }
           } else {
             document.querySelector("#visualization").innerHTML = '<h3>loading...</h3>';
             document.querySelector("#visualization-title").innerHTML = '';
-            store.dispatch(fetchObservations(entityId, entityType, date));
+            switch(visualization) {
+              case 'activityTimeline':
+                store.dispatch(fetchObservations(entityId, entityType, date));
+                break;
+              case 'segmentedTimeline':
+                store.dispatch(fetchInteractionPeriods(entityId, entityType, date));
+                break;
+            }
+            prevVisualization = visualization;
             prevDate = date;
             prevEntityUid = entityUid;
           }

@@ -17,6 +17,12 @@
   fill: red;
 }
 
+#foundation #visualization .segments rect {
+  stroke-width: 2; 
+  fill: #f9e9e9;
+  stroke: red;
+}
+
 #foundation #visualization #ticks line {
   stroke-linecap: round; 
   stroke-width: 2; 
@@ -24,6 +30,7 @@
   fill: none;
   stroke: #ddd;
 }
+
 
 #foundation #visualization #ticks text {
   fill: #bbb;

@@ -1,7 +1,5 @@
 import React from 'react';
 import _ from 'lodash';
-import EntityEntry from './EntityEntry';
-import EntityForm from './EntityForm';
 import d3 from 'd3';
 
 

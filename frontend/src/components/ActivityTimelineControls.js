@@ -8,6 +8,7 @@ class ActivityTimelineControls extends React.Component {
     super(props);
     this.handleEntitySelect = this.handleEntitySelect.bind(this);
     this.handleDateChange = this.handleDateChange.bind(this);
+    this.handleVisualizationSelect = this.handleVisualizationSelect.bind(this);
     let date = new Date();
     date = date.toISOString().split('Z')[0];
 
@@ -27,6 +28,13 @@ class ActivityTimelineControls extends React.Component {
       this.setState({
         date: this.state.date
       });
+    }
+  }
+
+  
+  handleVisualizationSelect(event) {
+    if (event.target.value) {
+      this.props.dispatch(this.props.selectVisualization(event.target.value));
     }
   }
 
@@ -68,6 +76,20 @@ class ActivityTimelineControls extends React.Component {
 
     return (
       <div>
+        <div className="row">
+          <div className="col-md-12">
+            <form>
+              <div className="form-group">
+                <label>Visualization</label>
+                <select className="form-control" name="select-entity" onChange={this.handleVisualizationSelect}>
+                  <option value="">Select visualization..</option>
+                  <option key={`activity-timeline`} value={`activityTimeline`}>Activity Timeline</option>
+                  <option key={`segmented-timeline`} value={`segmentedTimeline`}>Segmented Timeline</option>
+                </select>
+              </div>
+            </form>
+          </div>
+        </div>
         <div className="row">
           <div className="col-md-12">
             <form>

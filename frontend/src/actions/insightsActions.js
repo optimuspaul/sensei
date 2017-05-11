@@ -37,6 +37,32 @@ export const fetchObservations = (entityId, entityType, date) => {
   }
 }
 
+export const fetchInteractionPeriods = (entityId, entityType, date) => {
+  return (dispatch, getState) => {
+    let state = getState();
+    date = date || _.get(state, 'insights.ui.currentDate');
+    date = date ? new Date(date) : new Date();
+
+    let endDate = new Date(date);
+    endDate.setDate(endDate.getDate() + 1);
+    let startTime = encodeURIComponent(date.toISOString().split('.000Z')[0]);
+    let endTime = encodeURIComponent(endDate.toISOString().split('.000Z')[0]);
+
+
+    fetch(`${baseUrl()}/api/v1/interaction_periods?classroom_id=${getClassroomId()}&entity_id=${entityId}&entity_type=${entityType}&start_time=${startTime}&end_time=${endTime}`, {
+      headers: {
+        'X-SenseiToken': getSenseiToken(),
+        'Content-Type': 'application/json'
+      }
+    }).then(function(response) {
+      return response.text()
+    }).then((body) => {
+      let observations = JSON.parse(body);
+      dispatch(addObservations(entityId, entityType, observations));
+    })
+  }
+}
+
 export const SELECT_ENTITY = 'SELECT_ENTITY'
 export const selectEntity = (entityId, entityType) => {
   return (dispatch, getState) => {
@@ -44,6 +70,16 @@ export const selectEntity = (entityId, entityType) => {
       type: SELECT_ENTITY,
       entityId,
       entityType
+    });
+  }
+}
+
+export const SELECT_VISUALIZATION = 'SELECT_VISUALIZATION'
+export const selectVisualization = (visualization) => {
+  return (dispatch, getState) => {
+    dispatch({
+      type: SELECT_VISUALIZATION,
+      visualization
     });
   }
 }

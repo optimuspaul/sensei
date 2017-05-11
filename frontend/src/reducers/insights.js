@@ -29,6 +29,14 @@ export default function sensorMappings(state = initialState, action) {
           currentEntityType: action.entityType
         }
       }
+    case 'SELECT_VISUALIZATION':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          visualization: action.visualization
+        }
+      }
     case 'SELECT_DATE':
       return {
         ...state,
