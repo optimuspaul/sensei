@@ -6,6 +6,7 @@ from shared import *
 from ..models import *
 import dateutil.parser
 import StringIO
+import pytz
 
 # Radio Observations upload #
 @api.route('/api/v1/radio_observations', methods=['POST'])
@@ -67,7 +68,10 @@ def assert_iso8601_time_param(name):
     datestring = request.args.get(name)
     if not datestring:
         abort(400, "Missing %s parameter" % name)
-    return dateutil.parser.parse(datestring)
+    timestamp = dateutil.parser.parse(datestring)
+    if timestamp.tzinfo != None:
+        timestamp = timestamp.astimezone(pytz.utc).replace(tzinfo=None)
+    return timestamp
 
 @api.route('/api/v1/radio_observations', methods=['GET'])
 @api_auth.requires_auth
@@ -82,8 +86,11 @@ def radio_observations_index():
     entity_id = int(entity_id)
     entity_type = request.args.get('entity_type')
     if not entity_id:
-        abort(400, "Missing entity_type parameter")    
-    
+        abort(400, "Missing entity_type parameter")
+
+    as_matrix = request.args.get('as_matrix', default='True') != 'False'
+
+    print("Got as_matrix flag: %s" % as_matrix)
 
     start_time = assert_iso8601_time_param('start_time')
     end_time = assert_iso8601_time_param('end_time')
@@ -102,26 +109,6 @@ def radio_observations_index():
         )
     ).all()
 
-    entities = set(
-        [(rel.entity1_type.value, rel.entity1_id) for rel in relationships] +
-        [(rel.entity2_type.value, rel.entity2_id) for rel in relationships]
-    )
-    entities.discard((entity_type, entity_id))
-    entities = list(entities)
-    entities.sort()
-    entities_idx = dict((e,i) for (i,e) in enumerate(entities))
-
-    # Map EntityRelationship ids to entity,direction
-    relationships_idx = {}
-    query_entity = (entity_type, entity_id)
-    for r in relationships:
-        left_entity = (r.entity1_type.value, r.entity1_id)
-        right_entity = (r.entity2_type.value, r.entity2_id)
-        if left_entity == query_entity:
-            relationships_idx[r.id] = (entities_idx[right_entity], 0)
-        else:
-            relationships_idx[r.id] = (entities_idx[left_entity], 1)
-
     relationship_ids = [r.id for r in relationships]
 
     obs = RadioObservation.query.filter(
@@ -131,22 +118,45 @@ def radio_observations_index():
         RadioObservation.relationship_id.in_(relationship_ids)
     ).all()
 
-    timestamps = set()
-    for ob in obs:
-        timestamps.add(ob.observed_at)
-    timestamps = list(timestamps)
-    timestamps.sort()
+    if not as_matrix:
+        return jsonify([o.as_dict_for_web_resource() for o in obs])
+    else:
+        entities = set(
+            [(rel.entity1_type.value, rel.entity1_id) for rel in relationships] +
+            [(rel.entity2_type.value, rel.entity2_id) for rel in relationships]
+        )
+        entities.discard((entity_type, entity_id))
+        entities = list(entities)
+        entities.sort()
+        entities_idx = dict((e,i) for (i,e) in enumerate(entities))
 
-    timestamps_idx = dict((t,i) for (i,t) in enumerate(timestamps))
+        # Map EntityRelationship ids to entity,direction
+        relationships_idx = {}
+        query_entity = (entity_type, entity_id)
+        for r in relationships:
+            left_entity = (r.entity1_type.value, r.entity1_id)
+            right_entity = (r.entity2_type.value, r.entity2_id)
+            if left_entity == query_entity:
+                relationships_idx[r.id] = (entities_idx[right_entity], 0)
+            else:
+                relationships_idx[r.id] = (entities_idx[left_entity], 1)
 
-    output = np.zeros([len(entities), len(timestamps), 2])
+        timestamps = set()
+        for ob in obs:
+            timestamps.add(ob.observed_at)
+        timestamps = list(timestamps)
+        timestamps.sort()
 
-    for ob in obs:
-        (entity_idx, direction) = relationships_idx[ob.relationship_id]
-        output[entity_idx, timestamps_idx[ob.observed_at], direction] = ob.rssi
+        timestamps_idx = dict((t,i) for (i,t) in enumerate(timestamps))
 
-    return jsonify({
-        'obs': output.tolist(),
-        'entities': entities,
-        'timestamps': timestamps
-    })
+        output = np.zeros([len(entities), len(timestamps), 2])
+
+        for ob in obs:
+            (entity_idx, direction) = relationships_idx[ob.relationship_id]
+            output[entity_idx, timestamps_idx[ob.observed_at], direction] = ob.rssi
+
+        return jsonify({
+            'obs': output.tolist(),
+            'entities': entities,
+            'timestamps': timestamps
+        })

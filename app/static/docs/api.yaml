@@ -81,6 +81,15 @@ paths:
           required: true
           type: string
           description: Obs before this date will be retrieved. iso8601 format. Example '2002-12-25T12:15:05'.
+        - name: as_matrix
+          in: query
+          required: false
+          type: string
+          default: "True"
+          enum:
+            - "True"
+            - "False"
+          description: If this flag is provided and set to 'False', a flatter version of the obs will be returned.
       tags:
         - RadioObservation
       security:

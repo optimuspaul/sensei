@@ -9,6 +9,8 @@ import random
 from transitions import Machine
 import time
 from datetime import datetime, timedelta
+from tzlocal import get_localzone
+
 
 # This should be updated to use the sensei client library
 
@@ -16,7 +18,7 @@ SENSEI_SERVER = 'http://localhost:5000/'
 SENSEI_API = SENSEI_SERVER + 'api/v1/'
 SENSEI_USER = 'super@example.com'
 SENSEI_PASSWORD = 'password'
-CLASSROOM_ID = 2
+CLASSROOM_ID = 1
 
 def api_req(endpoint, params=None):
     url = SENSEI_API + endpoint
@@ -59,13 +61,13 @@ class Room(object):
     def __init__(self, width, length):
         self.width = width
         self.length = length
-        self.trays = []
+        self.areas = []
 
-    def add_tray(self, tray):
-        self.trays.append(tray)
+    def add_area(self, area):
+        self.areas.append(area)
 
     def available_materials(self):
-        return [material for tray in self.trays for material in tray.materials if material.available]
+        return [material for area in self.areas for material in area.materials if material.available]
 
     def random_pos(self):
         return np.array([
@@ -102,10 +104,9 @@ class Sensor(object):
         return (np.random.uniform(-20, 20), np.random.uniform(-20, 20), np.random.uniform(-20, 20))
 
 class Teacher(Sensor):
-    def __init__(self, room, user_id, sensor_id):
+    def __init__(self, room, sensor_id):
         self.room = room
         self.pos = room.random_pos()
-        self.user_id = user_id
         self.sensor_id = sensor_id
 
 class Child(Sensor):
@@ -121,10 +122,9 @@ class Child(Sensor):
     states = ['observing', 'fetching material', 'moving to workplace',
               'working', 'returning material']
 
-    def __init__(self, room, child_id, sensor_id):
+    def __init__(self, room, sensor_id):
         self.room = room
         self.pos = room.random_pos()
-        self.child_id = child_id
         self.sensor_id = sensor_id
 
         self.material = None # Material that child wants or is using
@@ -142,11 +142,11 @@ class Child(Sensor):
         self.machine.add_transition(trigger='arrived_at_workplace', source='moving to workplace',
             dest='working')
         self.machine.add_transition(trigger='work_finished', source='working', dest='returning material')
-        self.machine.add_transition(trigger='returned_to_tray', source='returning material',
+        self.machine.add_transition(trigger='returned_to_area', source='returning material',
             dest='observing', before='return_material')
 
     def __str__(self):
-        rval = "%d %d - %s, (%.02f,%.02f)" % (self.sensor_id, self.child_id, self.state, self.pos[0], self.pos[1])
+        rval = "%d - %s, (%.02f,%.02f)" % (self.sensor_id, self.state, self.pos[0], self.pos[1])
         if self.material is not None:
             rval += " - Material %s" % self.material.sensor_id
         return rval
@@ -198,18 +198,18 @@ class Child(Sensor):
                 self.work_finished()
 
         elif self.state == 'returning material':
-            arrived = self.move_toward(self.material.home_tray.pos)
+            arrived = self.move_toward(self.material.home_area.pos)
             self.material.pos = self.pos
             if arrived:
-                self.returned_to_tray()
+                self.returned_to_area()
 
 
-class MaterialTray(Sensor):
+class Area(Sensor):
     def __init__(self, room, sensor_id):
         self.pos = room.random_pos()
         self.materials = []
         self.sensor_id = sensor_id
-        room.add_tray(self)
+        room.add_area(self)
 
     def add_material(self, material):
         self.materials.append(material)
@@ -218,19 +218,18 @@ class MaterialTray(Sensor):
         self.materials.remove(material)
 
 class Material(Sensor):
-    def __init__(self, tray, material_id, sensor_id):
-        self.home_tray = tray
-        self.pos = tray.pos
-        self.material_id = material_id
+    def __init__(self, area, sensor_id):
+        self.home_area = area
+        self.pos = area.pos
         self.sensor_id = sensor_id
-        tray.add_material(self)
+        area.add_material(self)
         self.available = True
 
     def take_out(self):
-        self.home_tray.remove_material(self)
+        self.home_area.remove_material(self)
 
     def put_back(self):
-        self.home_tray.add_material(self)
+        self.home_area.add_material(self)
 
 
 r = Room(7,18)
@@ -242,23 +241,20 @@ def get_sensor_mappings():
 
 sensors = get_sensor_mappings()
 
-children = [Child(r, s['entity_id'], s['sensor_id']) for s in sensors if s['entity_type'] == 'child']
+children = [Child(r, s['sensor_id']) for s in sensors if s['entity_type'] == 'child']
 
-tray0 = MaterialTray(r, 20)
-tray1 = MaterialTray(r, 21)
-tray2 = MaterialTray(r, 23)
-trays = [tray0, tray1, tray2]
+areas = [Area(r, s['sensor_id']) for s in sensors if s['entity_type'] == 'area']
 
-materials = [Material(trays[idx%len(trays)], m['entity_id'], m['sensor_id']) for idx,m in enumerate(sensors) if m['entity_type'] == 'material']
+materials = [Material(areas[idx%len(areas)], m['sensor_id']) for idx,m in enumerate(sensors) if m['entity_type'] == 'material']
 
-teachers = [Teacher(r, t['entity_id'], t['sensor_id']) for t in sensors if t['entity_type'] == 'teacher']
+teachers = [Teacher(r, t['sensor_id']) for t in sensors if t['entity_type'] == 'teacher']
 
-sensors = children + teachers + trays + materials
+sensors = children + teachers + areas + materials
 
 
 # Start sim at 8am yesterday
-sim_time = datetime.now() - timedelta(days=1)
-sim_time = sim_time.replace(hour=8, minute=0, second=0)
+sim_time = datetime.now(get_localzone()) - timedelta(days=1)
+sim_time = sim_time.replace(hour=8, minute=0, second=0, microsecond=0)
 end_time = sim_time + timedelta(hours=7)
 
 # Example upload of sensor ob
@@ -310,12 +306,14 @@ while sim_time < end_time:
     print "%d accel_obs" % len(accel_obs)
 
     # upload obs
-    obs = map(lambda x: x.__dict__, obs)
-    upload_obs(obs)
+    if len(obs) > 0:
+        obs = map(lambda x: x.__dict__, obs)
+        upload_obs(obs)
 
     # upload obs
-    accel_obs = map(lambda x: x.__dict__, accel_obs)
-    upload_accel_obs(accel_obs)
+    if len(accel_obs) > 0:
+        accel_obs = map(lambda x: x.__dict__, accel_obs)
+        upload_accel_obs(accel_obs)
 
     #time.sleep(1)
     sim_time = sim_time + timedelta(seconds=10)
