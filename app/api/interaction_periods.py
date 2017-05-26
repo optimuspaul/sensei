@@ -4,7 +4,6 @@ from sqlalchemy import or_, and_
 import numpy as np
 from shared import *
 from ..models import *
-import dateutil.parser
 import StringIO
 
 # Interaction Periods upload #
@@ -63,11 +62,6 @@ def post_interaction_periods():
         InteractionPeriod.bulk_store(obs)
     return "OK", 201
 
-def assert_iso8601_time_param(name):
-    datestring = request.args.get(name)
-    if not datestring:
-        abort(400, "Missing %s parameter" % name)
-    return dateutil.parser.parse(datestring)
 
 @api.route('/api/v1/interaction_periods', methods=['GET'])
 @api_auth.requires_auth

@@ -4,7 +4,6 @@ from sqlalchemy import or_, and_
 import numpy as np
 from shared import *
 from ..models import *
-import dateutil.parser
 import StringIO
 
 # Accelerometer Observations upload #
@@ -47,11 +46,7 @@ def post_accelerometer_observations():
         AccelerometerObservation.bulk_store(obs)
     return "OK", 201
 
-def assert_iso8601_time_param(name):
-    datestring = request.args.get(name)
-    if not datestring:
-        abort(400, "Missing %s parameter" % name)
-    return dateutil.parser.parse(datestring)
+
 
 @api.route('/api/v1/accelerometer_observations', methods=['GET'])
 @api_auth.requires_auth

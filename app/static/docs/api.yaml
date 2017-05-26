@@ -164,6 +164,71 @@ paths:
           description: Accelerometer observations in a matrix; dimensions are relationship, time, and direction.  The indexes are provided as separate attributes.
         401:
           description: Unauthorized
+  /accelerometer_events:
+    post:
+      summary: Upload accelerometer events.
+      description: |
+        The Accelerometer Events endpoint provides a way to upload accelerometer events (i.e. "jostle") from sensors to the sensei platform.
+      consumes:
+        - application/json
+      parameters:
+        - name: events
+          in: body
+          description: List of accelerometer events.
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/AccelerometerEvent'
+      tags:
+        - AccelerometerEvent
+      security:
+        - basicAuth: []
+        - apiKeyAuth: []
+      responses:
+        201:
+          description: Upload accepted
+        401:
+          description: Unauthorized
+    get:
+      summary: Returns accelerometer events.
+      produces:
+        - application/json
+      parameters:
+        - name: classroom_id
+          in: query
+          description: The id of the classroom to retrieve events for.
+          required: true
+          type: integer
+        - name: entity_id
+          in: query
+          description: The id of the entity to retrieve events for.
+          required: true
+          type: integer
+        - name: entity_type
+          in: query
+          description: The type of the entity to retrieve events for.
+          required: true
+          type: string
+        - name: start_time
+          in: query
+          type: string
+          required: true
+          description: Obs after this date will be retrieved. iso8601 format. Example '2002-12-25T12:15:05'.
+        - name: end_time
+          in: query
+          required: true
+          type: string
+          description: Obs before this date will be retrieved. iso8601 format. Example '2002-12-25T12:15:05'.
+      tags:
+        - AccelerometerEvent
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: A list of accelerometer events that contain the date and time of the event in iso8601 format and the type of event observed. Example [['2002-12-25T12:15:05', 'jostle'], ['2002-12-24T12:17:30', 'drop']].
+        401:
+          description: Unauthorized
   /sensor_mappings:
     post:
       summary: Update mapping of sensor ids to children, teachers, materials, and classroom areas.
@@ -470,6 +535,22 @@ definitions:
       z_acceleration:
         type: number
         description: The acceleration in the z direction. Example '-9.81234'.
+  AccelerometerEvent:
+    type: object
+    description: Accelerometer events occur when sensor records a specific physical movement as detected by its internal accelerometer, such as 'jostle' or 'drop'.
+    properties:
+      classroom_id:
+        type: integer
+        description: Unique identifier for the classroom that the sensors involved belong to.
+      sensor_id:
+        type: integer
+        description: Classroom specific sensor id of the sensor that received and recorded accelerometer event.
+      observed_at:
+        type: string
+        description: The timestamp of the event, in iso8601 format. Example '2002-12-25T12:15:05'
+      event_type:
+        type: string
+        description: The type of accelerometer event that occured, such as 'jostle' or 'drop'.
   Area:
     type: object
     description: Describes an area of the classroom.

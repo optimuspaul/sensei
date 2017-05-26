@@ -4,9 +4,7 @@ from sqlalchemy import or_, and_
 import numpy as np
 from shared import *
 from ..models import *
-import dateutil.parser
 import StringIO
-import pytz
 
 # Radio Observations upload #
 @api.route('/api/v1/radio_observations', methods=['POST'])
@@ -64,14 +62,7 @@ def post_radio_observations():
         RadioObservation.bulk_store(obs)
     return "OK", 201
 
-def assert_iso8601_time_param(name):
-    datestring = request.args.get(name)
-    if not datestring:
-        abort(400, "Missing %s parameter" % name)
-    timestamp = dateutil.parser.parse(datestring)
-    if timestamp.tzinfo != None:
-        timestamp = timestamp.astimezone(pytz.utc).replace(tzinfo=None)
-    return timestamp
+
 
 @api.route('/api/v1/radio_observations', methods=['GET'])
 @api_auth.requires_auth

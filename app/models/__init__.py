@@ -2,6 +2,7 @@ from shared import *
 from user import *
 from radio_observation import *
 from accelerometer_observation import *
+from accelerometer_event import *
 from interaction_period import *
 from sensor_mapping import *
 from entity_relationship import *
