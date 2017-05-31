@@ -1,46 +1,36 @@
 from app import main
-from app.models import db
+from app.models import db,RadioObservation,InteractionPeriod
+from app.analysis import *
+import time
+from datetime import datetime, timedelta
+from tzlocal import get_localzone
 
 app = main.create_app('app.config.Base')
 app.app_context().push()
 
-relationships = EntityRelationship.query.all();
 
-classroom_id = 2
 
-for rel in relationships:
+app.config.get("TC_SERVICE")
+tc = app.config.get("TC_SERVICE")
+classroom_ids = RadioObservation.query.group_by(RadioObservation.classroom_id).with_entities(RadioObservation.classroom_id).all()
+for cid in classroom_ids:
+
+    ip = InteractionPeriod.query.filter(
+                InteractionPeriod.classroom_id==cid
+            ).order_by(InteractionPeriod.ended_at.desc()).first()
+    now = datetime.now(get_localzone())
+    if ip:
+      most_recent = (ip.ended_at + timedelta(hours=8))
+    else:
+      most_recent = (datetime.now() + timedelta(days=-1))
+
     obs = RadioObservation.query.filter(
-            RadioObservation.classroom_id==classroom_id,
-            RadioObservation.relationship==rel,
-          ).order_by(RadioObservation.observed_at.asc()).all()
+                    RadioObservation.classroom_id==cid,
+                    RadioObservation.observed_at >= most_recent
+                  ).all()
 
-cutoff_idx = 0
-prev_marker = obs[0].observed_at
-ips = []
-for idx, ob in enumerate(obs[1:]):
-    time_diff = (ob.observed_at-prev_marker).seconds
-    idx_diff = idx - cutoff_idx
-    prev_avg = avg
-    avg = idx_diff / (time_diff/10.0)
-    # print "elapsed seconds:        %d" % time_diff
-    # print "observations/s:         %s" % avg
-    # print "prev observations/s:    %s" % prev_avg
-    # print "index:                  %d" % idx
-    # print "observation time:           %s" % ob.observed_at
-    # print "index diff:             %d" % idx_diff
-    # print "cutoff_idx:             %d" % cutoff_idx
-    # print "prev_marker:            %s" % prev_marker
-    if avg < 0.70:
-        if idx_diff > 0:
-            if prev_avg >= 0.7:
-                segment_viz = "="*(time_diff/50)
-                print "     <%s> %s to %s" % (segment_viz, prev_marker.strftime("%m/%d %H:%M:%S"), obs[idx].observed_at.strftime("%m/%d %H:%M:%S"))
-        cutoff_idx = idx
-        prev_marker = ob.observed_at
-                
-                ips.append(InteractionPeriod(
-                        classroom.classroom_id,
-                        prev_marker,
-                        obs[idx-1].observed_at,
-                        relationship))
-            
+    if len(obs) > 0:
+        generate_interaction_periods(cid, most_recent.isoformat(), now.isoformat())
+
+
+

@@ -78,59 +78,48 @@ def interaction_periods_index():
     if not entity_id:
         abort(400, "Missing entity_type parameter")    
     
-
     start_time = assert_iso8601_time_param('start_time')
     end_time = assert_iso8601_time_param('end_time')
-
-    relationships = EntityRelationship.query.filter(
-        EntityRelationship.classroom_id==classroom_id,
-        EntityRelationship.entity1_type==entity_type,
-        EntityRelationship.entity1_id==entity_id
-    ).order_by(EntityRelationship.entity2_type.asc(),
-               EntityRelationship.entity2_id.asc()).all()
 
     output = []
     entities = []
     earliest_timestamp = None
     latest_timestamp = None
-    for rel in relationships:
-        ips = []
-        obs = RadioObservation.query.filter(
-                RadioObservation.classroom_id==classroom_id,
-                RadioObservation.relationship==rel,
-                RadioObservation.observed_at >= start_time,
-                RadioObservation.observed_at <= end_time,
-              ).order_by(RadioObservation.observed_at.asc()).all()
 
-        cutoff_idx = 0
-        if len(obs) > 0:
-            prev_marker = obs[0].observed_at
-            avg = 0
-            ips = []
-            for idx, ob in enumerate(obs[1:]):
-                time_diff = (ob.observed_at-prev_marker).seconds
-                idx_diff = idx - cutoff_idx
-                prev_avg = avg
-                avg = idx_diff / (time_diff/10.0)
-                if avg < 0.70:
-                    if idx_diff > 0 and prev_avg >= 0.7:
-                        actual_time_diff = (obs[idx].observed_at - prev_marker).seconds
-                        if actual_time_diff > 300:
-                            ips.append([prev_marker, obs[idx].observed_at])
-                            if latest_timestamp is None or latest_timestamp < obs[idx].observed_at:
-                                latest_timestamp = obs[idx].observed_at
-                            if earliest_timestamp is None or earliest_timestamp > prev_marker:
-                                earliest_timestamp = prev_marker
-                    cutoff_idx = idx
-                    prev_marker = ob.observed_at
-        entities.append([rel.entity2_type.value,rel.entity2_id])
-        output.append(ips)
+    relationships = EntityRelationship.query.filter(
+            EntityRelationship.classroom_id==classroom_id,
+            EntityRelationship.entity1_type==entity_type,
+            EntityRelationship.entity1_id==entity_id
+        ).order_by(EntityRelationship.entity2_type.asc(),
+                   EntityRelationship.entity2_id.asc()).all()
+
+    for rel in relationships:
+
+        ips = []
+
+        interaction_periods = InteractionPeriod.query.filter(
+                InteractionPeriod.classroom_id==classroom_id,
+                InteractionPeriod.relationship_id==rel.id,
+                InteractionPeriod.started_at >= start_time,
+                InteractionPeriod.ended_at <= end_time
+            ).order_by(InteractionPeriod.started_at.asc()).all()
+
+        for ip in interaction_periods:
+            ips.append([ip.started_at, ip.ended_at])
+            if latest_timestamp is None or latest_timestamp < ip.ended_at:
+               latest_timestamp = ip.ended_at
+            if earliest_timestamp is None or earliest_timestamp > ip.started_at:
+               earliest_timestamp = ip.started_at
+
+        if len(ips) > 0:
+            output.append(ips)
+            entities.append([rel.entity2_type.value,rel.entity2_id])
 
     return jsonify({
         'obs': output,
         'entities': entities,
         'timestamps': [
-            earliest_timestamp,
-            latest_timestamp
+            latest_timestamp,
+            earliest_timestamp
         ]
     })

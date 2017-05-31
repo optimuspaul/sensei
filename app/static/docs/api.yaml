@@ -229,6 +229,41 @@ paths:
           description: A list of accelerometer events that contain the date and time of the event in iso8601 format and the type of event observed. Example [['2002-12-25T12:15:05', 'jostle'], ['2002-12-24T12:17:30', 'drop']].
         401:
           description: Unauthorized
+  /interaction_periods:
+    get:
+      summary: Returns interaction periods between a given entity and all other entities in a given classroom. Interaction periods are determined by taking a running average of radio observation points within a given period of time to get a start and end time to be visualized as one continuous interaction.
+      produces:
+        - application/json
+      parameters:
+        - name: classroom_id
+          in: query
+          description: The id of the classroom to retrieve interaction periods for.
+          required: true
+          type: integer
+        - name: entity_id
+          in: query
+          description: The id of the entity to retrieve interaction periods for.
+          required: true
+          type: integer
+        - name: entity_type
+          in: query
+          description: The type of the entity to retrieve interaction periods for.
+          required: true
+          type: string
+        - name: start_time
+          in: query
+          type: string
+          required: true
+          description: Determines the date after which all interaction periods will be summed. iso8601 format. Example '2002-12-25T12:15:05'.
+      tags:
+        - InteractionPeriods
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Interaction periods, entities interacted with, and start/end timestamps.  The indexes are provided as separate attributes.
+        401:
+          description: Unauthorized
   /sensor_mappings:
     post:
       summary: Update mapping of sensor ids to children, teachers, materials, and classroom areas.
@@ -535,6 +570,22 @@ definitions:
       z_acceleration:
         type: number
         description: The acceleration in the z direction. Example '-9.81234'.
+  InteractionPeriod:
+    type: object
+    description: Interaction periods have a start and end time determined by examining the radio observations recorded for a given entity and another entity to find groupings that can be lumped together and represented as a single continuous segment on a timeline
+    properties:
+      classroom_id:
+        type: integer
+        description: Unique identifier for the classroom that the sensors involved belong to.
+      sensor_id:
+        type: integer
+        description: Classroom specific sensor id of the sensor that received and recorded the accelerometer events used to generate the interaction periods.
+      start_time:
+        type: string
+        description: The starting time of the interaction period, in iso8601 format. Example '2002-12-25T12:15:05'. If not set during a create, the current time will be used.
+      end_time:
+        type: string
+        description: The ending time of the interaction period, in iso8601 format. Example '2002-12-25T12:15:05'.  If not set, this indicates the current mapping.
   AccelerometerEvent:
     type: object
     description: Accelerometer events occur when sensor records a specific physical movement as detected by its internal accelerometer, such as 'jostle' or 'drop'.
