@@ -63,6 +63,33 @@ export const fetchInteractionPeriods = (entityId, entityType, date) => {
   }
 }
 
+export const fetchInteractionTotals = (entityId, entityType, date) => {
+  return (dispatch, getState) => {
+    let state = getState();
+    date = date || _.get(state, 'insights.ui.currentDate');
+    date = date ? new Date(date) : new Date();
+
+    let endDate = endDate || _.get(state, 'insights.ui.endDate');
+    endDate = endDate ? new Date(endDate) : new Date();
+
+    let startTime = encodeURIComponent(date.toISOString().split('.000Z')[0]);
+    let endTime = encodeURIComponent(endDate.toISOString().split('.000Z')[0]);
+
+
+    fetch(`${baseUrl()}/api/v1/interaction_totals?classroom_id=${getClassroomId()}&entity_id=${entityId}&entity_type=${entityType}&start_time=${startTime}&end_time=${endTime}`, {
+      headers: {
+        'X-SenseiToken': getSenseiToken(),
+        'Content-Type': 'application/json'
+      }
+    }).then(function(response) {
+      return response.text()
+    }).then((body) => {
+      let observations = JSON.parse(body);
+      dispatch(addObservations(entityId, entityType, observations));
+    })
+  }
+}
+
 export const SELECT_ENTITY = 'SELECT_ENTITY'
 export const selectEntity = (entityId, entityType) => {
   return (dispatch, getState) => {
@@ -94,6 +121,14 @@ export const selectDate = (date) => {
   }
 }
 
-
+export const SELECT_END_DATE = 'SELECT_END_DATE'
+export const selectEndDate = (endDate) => {
+  return (dispatch, getState) => {
+    dispatch({
+      type: SELECT_END_DATE,
+      endDate
+    });
+  }
+}
 
 

@@ -3,6 +3,7 @@ from radio_observations import *
 from accelerometer_observations import *
 from accelerometer_events import *
 from interaction_periods import *
+from interaction_totals import *
 from sensor_mappings import *
 from areas import *
 from materials import *

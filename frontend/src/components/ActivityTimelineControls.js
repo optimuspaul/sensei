@@ -8,12 +8,16 @@ class ActivityTimelineControls extends React.Component {
     super(props);
     this.handleEntitySelect = this.handleEntitySelect.bind(this);
     this.handleDateChange = this.handleDateChange.bind(this);
+    this.handleEndDateChange = this.handleEndDateChange.bind(this);
     this.handleVisualizationSelect = this.handleVisualizationSelect.bind(this);
     let date = new Date();
     date = date.toISOString().split('Z')[0];
 
     this.state = {
-      date
+      date,
+      maxStartDate: (new Date()).toISOString(),
+      maxEndDate: (new Date()).toISOString(),
+      minEndDate: (new Date()).toISOString()
     }
   }
 
@@ -21,7 +25,8 @@ class ActivityTimelineControls extends React.Component {
     let zeroDate = new Date((new Date(date)).toDateString());
     if (date) {
       this.setState({
-        date
+        date,
+        minEndDate: date
       });
       this.props.dispatch(this.props.selectDate(zeroDate.toISOString()));
     } else {
@@ -31,10 +36,26 @@ class ActivityTimelineControls extends React.Component {
     }
   }
 
+  handleEndDateChange (endDate) {
+    let zeroDate = new Date((new Date(endDate)).toDateString());
+    if (endDate) {
+      this.setState({
+        endDate,
+        maxStartDate: endDate
+      });
+      zeroDate.setDate(zeroDate.getDate() + 1)
+      this.props.dispatch(this.props.selectEndDate(zeroDate.toISOString()));
+    } else {
+      this.setState({
+        endDate: this.state.endDate
+      });
+    }
+  }
   
   handleVisualizationSelect(event) {
     if (event.target.value) {
       this.props.dispatch(this.props.selectVisualization(event.target.value));
+      this.setState({selectedVisualization: event.target.value})
     }
   }
 
@@ -72,7 +93,20 @@ class ActivityTimelineControls extends React.Component {
       )
     })
 
+
+
     let selectedUid = this.props.insights.ui.currentEntityType ? `${this.props.insights.ui.currentEntityType}-${this.props.insights.ui.currentEntityId}` : '';
+    let endDatePicker = '';
+    if (this.state.selectedVisualization === 'interactionTotals') {
+      endDatePicker = (
+        <div className="row">
+          <div className="col-md-12">
+            <label>To: </label>
+            <DatePicker maxDate={this.state.maxEndDate} minDate={this.state.minEndDate} showClearButton={false} value={this.state.endDate} onChange={this.handleEndDateChange.bind(this)} />
+          </div>
+        </div>
+      )
+    }
 
     return (
       <div>
@@ -85,6 +119,7 @@ class ActivityTimelineControls extends React.Component {
                   <option value="">Select visualization..</option>
                   <option key={`activity-timeline`} value={`activityTimeline`}>Activity Timeline</option>
                   <option key={`segmented-timeline`} value={`segmentedTimeline`}>Segmented Timeline</option>
+                  <option key={`interaction-totals`} value={`interactionTotals`}>Interaction Totals</option>
                 </select>
               </div>
             </form>
@@ -114,11 +149,13 @@ class ActivityTimelineControls extends React.Component {
             </form>
           </div>
         </div>
-        <div className="row">
+        <div className="row" style={{marginBottom: '10px'}}>
           <div className="col-md-12">
-            <DatePicker showClearButton={false} value={this.state.date} onChange={this.handleDateChange.bind(this)} />
+            { this.state.selectedVisualization === 'interactionTotals' ? <label>From: </label> : <label>On: </label>}
+            <DatePicker maxDate={this.state.maxStartDate} showClearButton={false} value={this.state.date} onChange={this.handleDateChange.bind(this)} />
           </div>
         </div>
+        {endDatePicker}
       </div>
     )
   }

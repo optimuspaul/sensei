@@ -5,7 +5,7 @@ import pytz
 
 # Interaction Period between various entities
 class InteractionPeriod(db.Model):
-    classroom_id = db.Column(db.Integer, nullable=False, primary_key=True)
+    classroom_id = db.Column(db.Integer, nullable=False, primary_key=False)
     started_at = db.Column(db.DateTime, nullable=False, primary_key=True)
     ended_at = db.Column(db.DateTime, nullable=False, primary_key=True)
     relationship_id = db.Column(db.Integer,  db.ForeignKey('entity_relationship.id'), nullable=False, primary_key=True)

@@ -10,12 +10,13 @@ import { Provider } from 'react-redux';
 import {fetchMappings} from './actions/sensorMappingActions';
 import {fetchChildren, fetchTeachers, fetchEntities} from './actions/entityActions';
 import {getClassroomId, isProduction, entityInflections, getSchoolId} from './constants';
-import {fetchObservations, fetchInteractionPeriods} from './actions/insightsActions';
+import {fetchObservations, fetchInteractionPeriods, fetchInteractionTotals} from './actions/insightsActions';
 import {toggleAnonymizer} from './actions/entityActions';
 import _ from 'lodash';
 import './index.css';
 import activityTimeline from './visualizations/activityTimeline';
 import segmentedTimeline from './visualizations/segmentedTimeline';
+import interactionTotals from './visualizations/interactionTotals';
 import key from 'keyboard-shortcut';
 
 setTimeout(function(){
@@ -112,7 +113,7 @@ setTimeout(function(){
       store.dispatch(fetchEntities('areas'));
       store.dispatch(fetchEntities('materials'));
 
-      let prevEntityUid, prevDate, prevVisualization;
+      let prevEntityUid, prevDate, prevEndDate, prevVisualization;
 
       store.subscribe(() => {
         let state = store.getState();
@@ -121,11 +122,15 @@ setTimeout(function(){
         let visualization = _.get(state, 'insights.ui.visualization');
         let entityUid = `${entityType}-${entityId}`
         let date = _.get(state, 'insights.ui.currentDate');
+        let endDate = _.get(state, 'insights.ui.endDate');
 
-        if (entityId && entityType && date && visualization) {
-          if (entityUid === prevEntityUid && date === prevDate && prevVisualization === visualization) {
+        if (entityId && entityType && date && visualization && (endDate && visualization === 'interactionTotals' || visualization !== 'interactionTotals')) {
+          if (entityUid === prevEntityUid && date === prevDate && endDate === prevEndDate && prevVisualization === visualization) {
             let entity = _.get(state, `entities.${entityInflections[entityType]}.${entityId}`);
             let dateString = (new Date(date)).toDateString();
+            if (endDate) {
+              dateString += ` to ${(new Date(endDate)).toDateString()}`
+            }
             document.querySelector("#visualization-title").innerHTML = `${entity.displayName} <small>${dateString}</small>`
             let observationsData = state.insights.observations[entityUid];
             if (observationsData && !_.isEmpty(observationsData.timestamps)) {
@@ -135,6 +140,9 @@ setTimeout(function(){
                   break;
                 case 'segmentedTimeline':
                   segmentedTimeline(observationsData);
+                  break;
+                case 'interactionTotals':
+                  interactionTotals(observationsData);
                   break;
               }
             } else {
@@ -150,9 +158,17 @@ setTimeout(function(){
               case 'segmentedTimeline':
                 store.dispatch(fetchInteractionPeriods(entityId, entityType, date));
                 break;
+              case 'interactionTotals':
+                if (endDate) {
+                  store.dispatch(fetchInteractionTotals(entityId, entityType, date, endDate));
+                } else {
+                  document.querySelector("#visualization").innerHTML = '';
+                }
+                break;
             }
             prevVisualization = visualization;
             prevDate = date;
+            prevEndDate = endDate;
             prevEntityUid = entityUid;
           }
         }

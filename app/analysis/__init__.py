@@ -1,1 +1,1 @@
-from interaction_periods import *
+from interaction_periods import generate_interaction_periods

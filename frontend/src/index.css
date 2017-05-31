@@ -23,6 +23,12 @@
   stroke: red;
 }
 
+#foundation #visualization .segments.total rect {
+  stroke-width: 0; 
+  fill: red;
+  stroke: red;
+}
+
 #foundation #visualization #ticks line {
   stroke-linecap: round; 
   stroke-width: 2; 

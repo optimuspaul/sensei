@@ -45,6 +45,14 @@ export default function sensorMappings(state = initialState, action) {
           currentDate: action.date
         }
       }
+    case 'SELECT_END_DATE':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          endDate: action.endDate
+        }
+      }
     default:
       return state
   }

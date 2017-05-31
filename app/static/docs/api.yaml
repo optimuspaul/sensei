@@ -264,6 +264,46 @@ paths:
           description: Interaction periods, entities interacted with, and start/end timestamps.  The indexes are provided as separate attributes.
         401:
           description: Unauthorized
+  /interaction_totals:
+    get:
+      summary: Returns interaction totals in minutes between a given entity and all other entities in a given classroom.
+      produces:
+        - application/json
+      parameters:
+        - name: classroom_id
+          in: query
+          description: The id of the classroom to retrieve interaction totals for.
+          required: true
+          type: integer
+        - name: entity_id
+          in: query
+          description: The id of the entity to retrieve interaction totals for.
+          required: true
+          type: integer
+        - name: entity_type
+          in: query
+          description: The type of the entity to retrieve interaction totals for.
+          required: true
+          type: string
+        - name: start_time
+          in: query
+          type: string
+          required: true
+          description: Determines the date after which all interaction periods will be summed. iso8601 format. Example '2002-12-25T12:15:05'.
+        - name: end_time
+          in: query
+          required: true
+          type: string
+          description: Determines the date before which all interaction periods will be summed. iso8601 format. Example '2002-12-25T12:15:05'.
+      tags:
+        - InteractionTotals
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Interaction totals, entities interacted with, and start/end timestamps.  The indexes are provided as separate attributes.
+        401:
+          description: Unauthorized
   /sensor_mappings:
     post:
       summary: Update mapping of sensor ids to children, teachers, materials, and classroom areas.
