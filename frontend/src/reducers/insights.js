@@ -5,7 +5,7 @@ const initialState = {
 
   },
   ui: {
-    currentDate: (new Date()).toISOString()
+    currentDate: new Date((new Date()).toDateString())
   }
 };
 

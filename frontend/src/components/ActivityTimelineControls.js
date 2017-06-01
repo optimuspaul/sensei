@@ -10,7 +10,7 @@ class ActivityTimelineControls extends React.Component {
     this.handleDateChange = this.handleDateChange.bind(this);
     this.handleEndDateChange = this.handleEndDateChange.bind(this);
     this.handleVisualizationSelect = this.handleVisualizationSelect.bind(this);
-    let date = new Date();
+    let date = new Date((new Date()).toDateString());
     date = date.toISOString().split('Z')[0];
 
     this.state = {

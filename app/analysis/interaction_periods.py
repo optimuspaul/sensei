@@ -63,6 +63,8 @@ def generate_interaction_periods(classroom_id, start, end):
                 avg = 0
                 for idx, ob in enumerate(obs[1:]):
                     time_diff = (ob.observed_at-prev_marker).seconds
+                    if time_diff == 0:
+                        time_diff = 1
                     idx_diff = idx - cutoff_idx
                     prev_avg = avg
                     avg = idx_diff / (time_diff/TIME_DIFF_DENOMINATOR)
