@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from app import main
 from app.models import db,RadioObservation,InteractionPeriod
 from app.analysis import *
@@ -7,8 +9,6 @@ from tzlocal import get_localzone
 
 app = main.create_app('app.config.Base')
 app.app_context().push()
-
-
 
 app.config.get("TC_SERVICE")
 tc = app.config.get("TC_SERVICE")
@@ -22,7 +22,7 @@ for cid in classroom_ids:
     if ip:
       most_recent = (ip.ended_at + timedelta(hours=8))
     else:
-      most_recent = (datetime.now() + timedelta(days=-1))
+      most_recent = (datetime.now() + timedelta(days=-200))
 
     obs = RadioObservation.query.filter(
                     RadioObservation.classroom_id==cid,
@@ -30,7 +30,8 @@ for cid in classroom_ids:
                   ).all()
 
     if len(obs) > 0:
-        generate_interaction_periods(cid, most_recent.isoformat(), now.isoformat())
-
-
-
+        periods = generate_interaction_periods(cid[0], most_recent, now)
+        print "%d interaction periods" % len(periods)
+        if len(periods) > 0:
+            print "bulk storing interation periods"
+            InteractionPeriod.bulk_store(periods)

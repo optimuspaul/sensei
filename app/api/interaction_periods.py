@@ -1,9 +1,11 @@
 from flask import request, abort, jsonify
 import json, gzip
 from sqlalchemy import or_, and_
+from datetime import datetime,timedelta
 import numpy as np
 from shared import *
 from ..models import *
+from ..analysis.interaction_periods import generate_interaction_periods_for_relationship
 import StringIO
 
 # Interaction Periods upload #
@@ -76,8 +78,8 @@ def interaction_periods_index():
     entity_id = int(entity_id)
     entity_type = request.args.get('entity_type')
     if not entity_id:
-        abort(400, "Missing entity_type parameter")    
-    
+        abort(400, "Missing entity_type parameter")
+
     start_time = assert_iso8601_time_param('start_time')
     end_time = assert_iso8601_time_param('end_time')
 
@@ -97,12 +99,15 @@ def interaction_periods_index():
 
         ips = []
 
-        interaction_periods = InteractionPeriod.query.filter(
-                InteractionPeriod.classroom_id==classroom_id,
-                InteractionPeriod.relationship_id==rel.id,
-                InteractionPeriod.started_at >= start_time,
-                InteractionPeriod.ended_at <= end_time
-            ).order_by(InteractionPeriod.started_at.asc()).all()
+        if start_time > (datetime.now() - timedelta(hours=24)):
+            interaction_periods = generate_interaction_periods_for_relationship(rel, start_time, end_time)
+        else:
+            interaction_periods = InteractionPeriod.query.filter(
+                    InteractionPeriod.classroom_id==classroom_id,
+                    InteractionPeriod.relationship_id==rel.id,
+                    InteractionPeriod.started_at >= start_time,
+                    InteractionPeriod.ended_at <= end_time
+                ).order_by(InteractionPeriod.started_at.asc()).all()
 
         for ip in interaction_periods:
             ips.append([ip.started_at, ip.ended_at])

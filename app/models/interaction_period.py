@@ -11,7 +11,6 @@ class InteractionPeriod(db.Model):
     relationship_id = db.Column(db.Integer,  db.ForeignKey('entity_relationship.id'), nullable=False, primary_key=True)
     relationship = db.relationship("EntityRelationship")
 
-
     def __init__(self, classroom_id, started_at, ended_at, relationship):
         self.classroom_id = classroom_id
         self.started_at = dateutil.parser.parse(started_at)
