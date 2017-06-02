@@ -183,8 +183,8 @@ export default function interactionTotals(data) {
        .attr("x", () => {
           return OFFSET + 15;
         })
-       .attr('width', () => {
-          return xScalar(entityData.totals[0]);
+       .attr('width', (t, index) => {
+          return xScalar(entityData.totals[index]);
         })
        .attr('height', ROW_HEIGHT*0.6)
        .attr("y", ROW_HEIGHT*0.3)
