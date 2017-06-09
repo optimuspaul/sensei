@@ -1,5 +1,8 @@
 import Case from 'case';
 import _ from 'lodash';
+import createHistory from 'history/createBrowserHistory';
+
+export const history = createHistory();
 
 export const changeCase = (data, toCase = 'camel') => {
   return _.reduce(data, (current, val, key) => {

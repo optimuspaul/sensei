@@ -166,11 +166,11 @@ setTimeout(function(){
                 }
                 break;
             }
-            prevVisualization = visualization;
-            prevDate = date;
-            prevEndDate = endDate;
-            prevEntityUid = entityUid;
           }
+          prevVisualization = visualization;
+          prevDate = date;
+          prevEndDate = endDate;
+          prevEntityUid = entityUid;
         }
       })
     }

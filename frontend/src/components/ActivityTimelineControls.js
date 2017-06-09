@@ -1,6 +1,8 @@
 import React from 'react';
 import _ from 'lodash';
 import DatePicker from 'react-bootstrap-date-picker';
+import QueryParams from 'query-params';
+import { history } from '../utils';
 
 class ActivityTimelineControls extends React.Component {
 
@@ -10,19 +12,40 @@ class ActivityTimelineControls extends React.Component {
     this.handleDateChange = this.handleDateChange.bind(this);
     this.handleEndDateChange = this.handleEndDateChange.bind(this);
     this.handleVisualizationSelect = this.handleVisualizationSelect.bind(this);
-    let date = new Date((new Date()).toDateString());
+
+    let params = QueryParams.decode(location.search.slice(1));
+
+    let date = new Date((params.date ? new Date(params.date) : new Date()).toDateString());
     date = date.toISOString().split('Z')[0];
+
+    let endDate = new Date((params.endDate ? new Date(params.endDate) : new Date()).toDateString());
+    endDate = endDate.toISOString().split('Z')[0];
 
     this.state = {
       date,
+      endDate,
       maxStartDate: (new Date()).toISOString(),
       maxEndDate: (new Date()).toISOString(),
       minEndDate: (new Date()).toISOString()
     }
   }
 
+  componentWillMount() {
+
+    this.unlisten = history.listen((location, action) => {
+      // location is an object like window.location
+      let params = QueryParams.decode(location.search.slice(1));
+      this.props.dispatch(this.props.refreshFromParams(params))
+    })
+  }
+
+  componentWillUnmount() {
+    this.unlisten();
+  }
+
   handleDateChange (date) {
     let zeroDate = new Date((new Date(date)).toDateString());
+
     if (date) {
       this.setState({
         date,
@@ -35,6 +58,8 @@ class ActivityTimelineControls extends React.Component {
       });
     }
   }
+
+  
 
   handleEndDateChange (endDate) {
     let zeroDate = new Date((new Date(endDate)).toDateString());
@@ -50,19 +75,38 @@ class ActivityTimelineControls extends React.Component {
         endDate: this.state.endDate
       });
     }
+    
   }
   
   handleVisualizationSelect(event) {
     if (event.target.value) {
       this.props.dispatch(this.props.selectVisualization(event.target.value));
-      this.setState({selectedVisualization: event.target.value})
+      this.setState({
+        selectedVisualization: event.target.value
+      })
+    }
+  }
+
+  componentWillReceiveProps(nextProps) {
+    let params = QueryParams.decode(location.search.slice(1));
+    params = _.pick(params, ['currentDate', 'endDate', 'visualization', 'currentEntityType', 'currentEntityId'])
+    if (!_.isEqual(this.props.insights.ui, nextProps.insights.ui) && !_.isEqual(params, nextProps.insights.ui)) {
+      history.push({
+        search: QueryParams.encode(_.merge(params, nextProps.insights.ui))
+      });
     }
   }
 
   handleEntitySelect(event) {
     if (event.target.value) {
       this.entityId = event.target.value.split("-")[1];
-      this.entityType = event.target.value.split("-")[0]
+      this.entityType = event.target.value.split("-")[0];
+      this.setState({
+        params: {
+          entityId: this.entityId, 
+          entityType: this.entityType
+        }
+      });
       this.props.dispatch(this.props.selectEntity(this.entityId, this.entityType));
     }
   }
@@ -97,12 +141,12 @@ class ActivityTimelineControls extends React.Component {
 
     let selectedUid = this.props.insights.ui.currentEntityType ? `${this.props.insights.ui.currentEntityType}-${this.props.insights.ui.currentEntityId}` : '';
     let endDatePicker = '';
-    if (this.state.selectedVisualization === 'interactionTotals') {
+    if (this.props.insights.ui.visualization === 'interactionTotals') {
       endDatePicker = (
         <div className="row">
           <div className="col-md-12">
             <label>To: </label>
-            <DatePicker maxDate={this.state.maxEndDate} minDate={this.state.minEndDate} showClearButton={false} value={this.state.endDate} onChange={this.handleEndDateChange.bind(this)} />
+            <DatePicker maxDate={this.state.maxEndDate} minDate={this.state.minEndDate} showClearButton={false} value={this.props.insights.ui.endDate} onChange={this.handleEndDateChange.bind(this)} />
           </div>
         </div>
       )
@@ -115,7 +159,7 @@ class ActivityTimelineControls extends React.Component {
             <form>
               <div className="form-group">
                 <label>Visualization</label>
-                <select className="form-control" name="select-entity" onChange={this.handleVisualizationSelect}>
+                <select className="form-control" name="select-entity" value={this.props.insights.ui.visualization} onChange={this.handleVisualizationSelect}>
                   <option value="">Select visualization..</option>
                   <option key={`activity-timeline`} value={`activityTimeline`}>Activity Timeline</option>
                   <option key={`segmented-timeline`} value={`segmentedTimeline`}>Segmented Timeline</option>
@@ -151,8 +195,8 @@ class ActivityTimelineControls extends React.Component {
         </div>
         <div className="row" style={{marginBottom: '10px'}}>
           <div className="col-md-12">
-            { this.state.selectedVisualization === 'interactionTotals' ? <label>From: </label> : <label>On: </label>}
-            <DatePicker maxDate={this.state.maxStartDate} showClearButton={false} value={this.state.date} onChange={this.handleDateChange.bind(this)} />
+            { this.props.insights.ui.visualization === 'interactionTotals' ? <label>From: </label> : <label>On: </label>}
+            <DatePicker maxDate={this.state.maxStartDate} showClearButton={false} value={this.props.insights.ui.currentDate} onChange={this.handleDateChange.bind(this)} />
           </div>
         </div>
         {endDatePicker}
