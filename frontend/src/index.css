@@ -7,6 +7,7 @@
 
 #foundation #visualization .segments text.entity-label {
   cursor: pointer;
+  z-index: 5;
 }
 
 #foundation #visualization .segments text.entity-label:hover {
@@ -28,6 +29,15 @@
   fill: red;
   stroke: red;
 }
+
+#foundation #visualization .student-summary .segments.total rect {
+  stroke-width: 2; 
+  fill: white;
+  stroke: red;
+  z-index: 0;
+}
+
+
 
 #foundation #visualization #ticks line {
   stroke-linecap: round; 
