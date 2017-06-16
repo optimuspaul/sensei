@@ -152,7 +152,7 @@ export default function interactionTotals(data) {
     // adds the entity type label for the current entity group
     section.append("text")
            .attr("y", STATIC_HEIGHT)
-           .attr("x", 40)
+           .attr("x", ROW_WIDTH/2)
            .attr("style", "font-weight: bold")
            .text(entityType);
 
