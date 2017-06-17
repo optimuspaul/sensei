@@ -5,6 +5,7 @@
   color: black;
 }
 
+
 #foundation #visualization .segments text.entity-label {
   cursor: pointer;
   z-index: 5;
@@ -51,4 +52,19 @@
 #foundation #visualization #ticks text {
   fill: #bbb;
   font-size: 12px;
+}
+
+#foundation #visualization .student-summary #ticks text {
+  fill: #000;
+  font-size: 12px;
+}
+
+#foundation #visualization line.axis {
+  stroke-linecap: square; 
+  stroke-width: 2; 
+  stroke: black;
+}
+
+#foundation #visualization .student-summary .segments text {
+  text-anchor: middle;
 }

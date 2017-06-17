@@ -94,7 +94,7 @@ export default function interactionTotals(data) {
     above, with an extra ROW_WIDTH's worth of space added to the bottom to make
     space for the time tick labels
    */
-  let chartWidth = (ROW_WIDTH * _.size(segmentedData));
+  let chartWidth = (ROW_WIDTH * _.size(segmentedData)) + OFFSET*2;
 
 
   /*
@@ -106,7 +106,19 @@ export default function interactionTotals(data) {
                   .attr("width", chartWidth + 20);
 
 
+  chart.append("line")
+       .attr("y1", 0)
+       .attr("y2", STATIC_HEIGHT - 25)
+       .attr("x1", OFFSET + 10)
+       .attr("x2", OFFSET + 10)
+       .attr('class', 'y axis');
 
+  chart.append("line")
+       .attr("y1", STATIC_HEIGHT - 25)
+       .attr("y2", STATIC_HEIGHT - 25)
+       .attr("x1", OFFSET + 10)
+       .attr("x2", chartWidth + OFFSET)
+       .attr('class', 'x axis');
   /*
     Adds the dashed time tick lines and their appropriate 10-minute increment labels
     using the ticks data array created above and scaled using the linear
@@ -117,20 +129,18 @@ export default function interactionTotals(data) {
   ticksContainer.selectAll("line")
        .data(ticks)
        .enter().append("line")
-       .attr("y1", (tick, index) => { return STATIC_HEIGHT - yScalar(tick) - OFFSET - 15 })
-       .attr("y2", (tick, index) => { return STATIC_HEIGHT - yScalar(tick) - OFFSET - 15 })
-       .attr("x1", 20)
-       .attr("x2", chartWidth);
+       .attr("y1", (tick, index) => { return STATIC_HEIGHT - yScalar(tick) - OFFSET + 15})
+       .attr("y2", (tick, index) => { return STATIC_HEIGHT - yScalar(tick) - OFFSET + 15})
+       .attr("x1", OFFSET + 10)
+       .attr("x2", chartWidth + OFFSET);
 
-  [10, chartWidth+15].forEach((x) => {
-    ticksContainer.selectAll(`text.x-${x}`)
-         .data(ticks)
-         .enter().append(`text`)
-         .attr('class', `x-${x}`)
-         .attr("y", (tick, index) => { return STATIC_HEIGHT - yScalar(tick) - OFFSET })
-         .attr("x", x)
-         .text((tick, index) => { return `${tick/60} min` })
-  });
+  ticksContainer.selectAll(`text.x-10`)
+       .data(ticks)
+       .enter().append(`text`)
+       .attr('class', `x-10`)
+       .attr("y", (tick, index) => { return STATIC_HEIGHT - yScalar(tick) - OFFSET + 20 })
+       .attr("x", 0)
+       .text((tick, index) => { return `${tick/60} min` });
 
   // builds each entity type section using the segmentedData generated above
   let i = 0;
@@ -152,7 +162,7 @@ export default function interactionTotals(data) {
     // adds the entity type label for the current entity group
     section.append("text")
            .attr("y", STATIC_HEIGHT)
-           .attr("x", ROW_WIDTH/2)
+           .attr("x", ROW_WIDTH/2 + 20 + OFFSET)
            .attr("style", "font-weight: bold")
            .text(entityType);
 
@@ -183,8 +193,8 @@ export default function interactionTotals(data) {
        .attr('height', (t, index) => {
           return yScalar(entityData.totals[index]);
         })
-       .attr('width', ROW_WIDTH*0.6)
-       .attr("x", ROW_WIDTH*0.3)
+       .attr('width', ROW_WIDTH*0.8)
+       .attr("x", ROW_WIDTH*0.2 + OFFSET)
 
     // // adds the entity display names as labels for each entity row within the current group
     row.append("text")
@@ -193,10 +203,11 @@ export default function interactionTotals(data) {
           let prevY = prevTotal ? yScalar(prevTotal) : 0;
           let y = yScalar(entityData.totals[index])
           let newTotal = y + prevY
-          return STATIC_HEIGHT - (newTotal-(y/2)) - (OFFSET - 15);
+          return STATIC_HEIGHT - (newTotal-(y/2)) - (OFFSET - 10);
         })
-        .attr("x", ROW_WIDTH/2)
+        .attr("x", ROW_WIDTH/2 + 20 + OFFSET)
         .text(function(entity) { return entity })
+        .attr('text-anchor', 'middle')
         .on('click', (entity) => {
           store.dispatch(selectEntity(entity.entityId, _.invert(entityInflections)[entity.entityType]))
         });
