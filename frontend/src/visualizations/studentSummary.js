@@ -173,9 +173,6 @@ export default function interactionTotals(data) {
     let row = section.selectAll("g")
               .data(entityData.entities)
               .enter().append("g")
-              // .attr("transform", function(entity, index) { 
-              //   return "translate(" + ((index * ROW_WIDTH)) + ",0)"; 
-              // });
 
 
     /*
