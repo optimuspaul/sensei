@@ -131,4 +131,14 @@ export const selectEndDate = (endDate) => {
   }
 }
 
+export const REFRESH_FROM_PARAMS = 'REFRESH_FROM_PARAMS'
+export const refreshFromParams = (params) => {
+  return (dispatch, getState) => {
+    dispatch({
+      type: REFRESH_FROM_PARAMS,
+      params
+    });
+  }
+}
+
 

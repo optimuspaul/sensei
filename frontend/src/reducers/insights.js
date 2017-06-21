@@ -1,12 +1,14 @@
 import _ from 'lodash';
+import QueryParams from 'query-params';
 
+let params = QueryParams.decode(location.search.slice(1));
+params.currentDate = params.currentDate || (new Date((new Date()).toDateString())).toISOString();
+params.endDate = params.endDate || (new Date((new Date()).toDateString())).toISOString();
 const initialState = {
   observations: {
 
   },
-  ui: {
-    currentDate: new Date((new Date()).toDateString())
-  }
+  ui: params
 };
 
 export default function sensorMappings(state = initialState, action) {
@@ -22,7 +24,7 @@ export default function sensorMappings(state = initialState, action) {
       }
     case 'SELECT_ENTITY':
       return {
-        ...state,
+        observations: {},
         ui: {
           ...state.ui,
           currentEntityId: action.entityId,
@@ -31,7 +33,7 @@ export default function sensorMappings(state = initialState, action) {
       }
     case 'SELECT_VISUALIZATION':
       return {
-        ...state,
+        observations: {},
         ui: {
           ...state.ui,
           visualization: action.visualization
@@ -39,7 +41,7 @@ export default function sensorMappings(state = initialState, action) {
       }
     case 'SELECT_DATE':
       return {
-        ...state,
+        observations: {},
         ui: {
           ...state.ui,
           currentDate: action.date
@@ -47,11 +49,16 @@ export default function sensorMappings(state = initialState, action) {
       }
     case 'SELECT_END_DATE':
       return {
-        ...state,
+        observations: {},
         ui: {
           ...state.ui,
           endDate: action.endDate
         }
+      }
+    case 'REFRESH_FROM_PARAMS':
+      return {
+        observations: {},
+        ui: _.pick(action.params, ['currentDate', 'endDate', 'visualization', 'currentEntityType', 'currentEntityId'])
       }
     default:
       return state
