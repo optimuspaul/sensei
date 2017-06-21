@@ -17,6 +17,7 @@ import './index.css';
 import activityTimeline from './visualizations/activityTimeline';
 import segmentedTimeline from './visualizations/segmentedTimeline';
 import interactionTotals from './visualizations/interactionTotals';
+import studentSummary from './visualizations/studentSummary';
 import key from 'keyboard-shortcut';
 
 setTimeout(function(){
@@ -124,7 +125,7 @@ setTimeout(function(){
         let date = _.get(state, 'insights.ui.currentDate');
         let endDate = _.get(state, 'insights.ui.endDate');
 
-        if (entityId && entityType && date && visualization && (endDate && visualization === 'interactionTotals' || visualization !== 'interactionTotals')) {
+        if (entityId && entityType && date && visualization && (endDate && _.includes(['studentSummary', 'interactionTotals'], visualization) || !_.includes(['studentSummary', 'interactionTotals'], visualization))) {
           if (entityUid === prevEntityUid && date === prevDate && endDate === prevEndDate && prevVisualization === visualization) {
             let entity = _.get(state, `entities.${entityInflections[entityType]}.${entityId}`);
             let dateString = (new Date(date)).toDateString();
@@ -144,6 +145,9 @@ setTimeout(function(){
                 case 'interactionTotals':
                   interactionTotals(observationsData);
                   break;
+                case 'studentSummary':
+                  studentSummary(observationsData);
+                  break;
               }
             } else {
               document.querySelector("#visualization").innerHTML = '<h3>No data</h3>';
@@ -159,6 +163,7 @@ setTimeout(function(){
                 store.dispatch(fetchInteractionPeriods(entityId, entityType, date));
                 break;
               case 'interactionTotals':
+              case 'studentSummary':
                 if (endDate) {
                   store.dispatch(fetchInteractionTotals(entityId, entityType, date, endDate));
                 } else {
