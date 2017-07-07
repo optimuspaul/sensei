@@ -124,6 +124,7 @@ setTimeout(function(){
         let entityUid = `${entityType}-${entityId}`
         let date = _.get(state, 'insights.ui.currentDate');
         let endDate = _.get(state, 'insights.ui.endDate');
+        let status = _.get(state, 'insights.status');
 
         if (entityId && entityType && date && visualization && (endDate && _.includes(['studentSummary', 'interactionTotals'], visualization) || !_.includes(['studentSummary', 'interactionTotals'], visualization))) {
           if (entityUid === prevEntityUid && date === prevDate && endDate === prevEndDate && prevVisualization === visualization) {
@@ -134,7 +135,7 @@ setTimeout(function(){
             }
             document.querySelector("#visualization-title").innerHTML = `${entity.displayName} <small>${dateString}</small>`
             let observationsData = state.insights.observations[entityUid];
-            if (observationsData && !_.isEmpty(observationsData.timestamps)) {
+            if (observationsData && (!_.isEmpty(observationsData.entities) && !_.isEmpty(observationsData.timestamps))) {
               switch(visualization) {
                 case 'activityTimeline':
                   activityTimeline(observationsData);
@@ -150,7 +151,10 @@ setTimeout(function(){
                   break;
               }
             } else {
-              document.querySelector("#visualization").innerHTML = '<h3>No data</h3>';
+              debugger
+              if (status === 'fetched') {
+                document.querySelector("#visualization").innerHTML = '<h3>No data</h3>';
+              }
             }
           } else {
             document.querySelector("#visualization").innerHTML = '<h3>loading...</h3>';

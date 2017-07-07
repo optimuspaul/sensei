@@ -8,7 +8,8 @@ const initialState = {
   observations: {
 
   },
-  ui: params
+  ui: params,
+  status: 'unfetched'
 };
 
 export default function sensorMappings(state = initialState, action) {
@@ -20,7 +21,8 @@ export default function sensorMappings(state = initialState, action) {
         observations: {
           ...state.observations,
           [entityUid]: action.observations
-        }
+        },
+        status: 'fetched'
       }
     case 'SELECT_ENTITY':
       return {
@@ -29,7 +31,8 @@ export default function sensorMappings(state = initialState, action) {
           ...state.ui,
           currentEntityId: action.entityId,
           currentEntityType: action.entityType
-        }
+        },
+        status: 'fetching'
       }
     case 'SELECT_VISUALIZATION':
       return {
@@ -37,7 +40,8 @@ export default function sensorMappings(state = initialState, action) {
         ui: {
           ...state.ui,
           visualization: action.visualization
-        }
+        },
+        status: 'fetching'
       }
     case 'SELECT_DATE':
       return {
@@ -45,7 +49,8 @@ export default function sensorMappings(state = initialState, action) {
         ui: {
           ...state.ui,
           currentDate: action.date
-        }
+        },
+        status: 'fetching'
       }
     case 'SELECT_END_DATE':
       return {
@@ -53,12 +58,14 @@ export default function sensorMappings(state = initialState, action) {
         ui: {
           ...state.ui,
           endDate: action.endDate
-        }
+        },
+        status: 'fetching'
       }
     case 'REFRESH_FROM_PARAMS':
       return {
         observations: {},
-        ui: _.pick(action.params, ['currentDate', 'endDate', 'visualization', 'currentEntityType', 'currentEntityId'])
+        ui: _.pick(action.params, ['currentDate', 'endDate', 'visualization', 'currentEntityType', 'currentEntityId']),
+        status: 'fetching'
       }
     default:
       return state

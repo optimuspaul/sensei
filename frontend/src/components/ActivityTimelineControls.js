@@ -24,7 +24,6 @@ class ActivityTimelineControls extends React.Component {
     this.state = {
       date,
       endDate,
-      maxStartDate: (new Date()).toISOString(),
       maxEndDate: (new Date()).toISOString(),
       minEndDate: (new Date()).toISOString()
     }
@@ -44,12 +43,18 @@ class ActivityTimelineControls extends React.Component {
   }
 
   handleDateChange (date) {
-    let zeroDate = new Date((new Date(date)).toDateString());
-
+    let newStartDate = new Date(date);
+    let endDate = new Date(this.state.endDate);
+    let zeroDate = new Date(newStartDate.toDateString());
+    if (newStartDate > endDate) {
+      endDate = zeroDate;
+      this.props.dispatch(this.props.selectEndDate(endDate.toISOString()));
+    }
     if (date) {
       this.setState({
         date,
-        minEndDate: date
+        minEndDate: date,
+        endDate,
       });
       this.props.dispatch(this.props.selectDate(zeroDate.toISOString()));
     } else {
@@ -65,10 +70,9 @@ class ActivityTimelineControls extends React.Component {
     let zeroDate = new Date((new Date(endDate)).toDateString());
     if (endDate) {
       this.setState({
-        endDate,
-        maxStartDate: endDate
+        endDate
       });
-      zeroDate.setDate(zeroDate.getDate() + 1)
+      zeroDate.setDate(zeroDate.getDate())
       this.props.dispatch(this.props.selectEndDate(zeroDate.toISOString()));
     } else {
       this.setState({
