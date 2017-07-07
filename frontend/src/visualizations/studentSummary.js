@@ -29,26 +29,22 @@ export default function interactionTotals(data) {
     return
   }
 
+  // _.forEach(_.orderBy(_.zip(data.totals, data.entities), '0', 'desc'), (pair, index) => { data.entities[index] = pair[1]; data.totals[index] = pair[0]; });
+  // let data = {totals: rawData.totals.sort().reverse(), timestamps: rawData.timestamps};
+  // data.entities = _.map(data.totals, (total) => { return rawData.entities[rawData.totals.indexOf(total)] })
+
   /*
     Initializes the template into the DOM
    */
   document.querySelector("#visualization").innerHTML = VISUALIZATION_TEMPLATE;
 
   /*
-    Creates array of pairs that determine where the vertical timeline ticks
-    are drawn and which hour label should be placed at the bottom of them to
+    Creates array of pairs that determine where the vertical percentage ticks
+    are drawn and which percentage label should be placed to the right of them to
     be fed into d3
    */
-  let startTime = new Date(d3.min(data.timestamps));
-  startTime.setMinutes(0);
-  startTime.setSeconds(0);
-  let endTime = new Date(d3.max(data.timestamps));
-  endTime.setHours(endTime.getHours() + 2);
-  endTime.setMinutes(0);
-  endTime.setSeconds(0);
-  let ticks = [0];
-  let seconds = 0;
 
+  let ticks = _.reduce(_.times(10),(c,n) => {return _.concat(c,(n+1)*10)}, []);
 
   let currentEntityType = _.get(store.getState(), "insights.ui.currentEntityType");
 
@@ -74,10 +70,6 @@ export default function interactionTotals(data) {
   });
 
   let maxTotal = d3.max(summedTotals);
-  while (seconds < maxTotal) {
-    seconds += 600;
-    ticks.push([seconds]);
-  }
 
   /*
     Creates a scalar on the x axis that constrains all values to the
@@ -129,8 +121,8 @@ export default function interactionTotals(data) {
   ticksContainer.selectAll("line")
        .data(ticks)
        .enter().append("line")
-       .attr("y1", (tick, index) => { return STATIC_HEIGHT - yScalar(tick) - OFFSET + 15})
-       .attr("y2", (tick, index) => { return STATIC_HEIGHT - yScalar(tick) - OFFSET + 15})
+       .attr("y1", (tick, index) => { return STATIC_HEIGHT - yScalar((tick/100)*maxTotal) - OFFSET + 15})
+       .attr("y2", (tick, index) => { return STATIC_HEIGHT - yScalar((tick/100)*maxTotal) - OFFSET + 15})
        .attr("x1", OFFSET + 10)
        .attr("x2", chartWidth + OFFSET);
 
@@ -138,9 +130,9 @@ export default function interactionTotals(data) {
        .data(ticks)
        .enter().append(`text`)
        .attr('class', `x-10`)
-       .attr("y", (tick, index) => { return STATIC_HEIGHT - yScalar(tick) - OFFSET + 20 })
+       .attr("y", (tick, index) => { return STATIC_HEIGHT - yScalar((tick/100)*maxTotal) - OFFSET + 20 })
        .attr("x", 0)
-       .text((tick, index) => { return `${tick/60} min` });
+       .text((tick, index) => { return `${tick}%` });
 
   // builds each entity type section using the segmentedData generated above
   let i = 0;
@@ -152,6 +144,19 @@ export default function interactionTotals(data) {
     d3 and scaled linearly to fit the SVG's fixed width
    */
   function buildSection(entityData, entityType, i) {
+    let totalSeconds = _.sum(entityData.totals);
+    let totalMinutes = parseInt(totalSeconds/60);
+    let totalHours = parseInt(totalMinutes/60);
+    let remainderMinutes = totalMinutes%60;
+    let totalTimeText = '';
+    if (totalHours > 0) {
+      totalTimeText += `${totalHours} hour${totalHours > 1 ? 's' : ''}, `
+    }
+    if (totalMinutes > 0) {
+      totalTimeText += `${remainderMinutes} minute${remainderMinutes > 1 ? 's' : ''}`;
+    } else {
+      totalTimeText = `less than a minute`;
+    }
 
     // selects group tag that corresponds to the current entity type
     let section = chart.select(`#${entityType}`);
@@ -165,6 +170,12 @@ export default function interactionTotals(data) {
            .attr("x", ROW_WIDTH/2 + 20 + OFFSET)
            .attr("style", "font-weight: bold")
            .text(entityType);
+
+    section.append("text")
+           .attr("y", 10)
+           .attr("x", ROW_WIDTH/2 + 20 + OFFSET)
+           .attr("style", "font-weight: bold")
+           .text(totalTimeText);
 
     /*
       adds a row for each entity included in the current entity type group and sets
@@ -180,15 +191,20 @@ export default function interactionTotals(data) {
       is scaled linearly on the x-axis using yScalar defined above, and its timestamp 
       is added as a data attribute for debugging purposes.
      */
+    
+    let myYScalar = d3.scaleLinear()
+    .domain([0, totalSeconds])
+    .range([0, STATIC_HEIGHT-OFFSET]);
+
     row.append("rect")
        .attr("y", (t, index) => {
           let prevTotal = _.sum(entityData.totals.slice(0,index));
-          let prevY = prevTotal ? yScalar(prevTotal) : 0;
-          let y = yScalar(entityData.totals[index]) + prevY
+          let prevY = prevTotal ? myYScalar(prevTotal) : 0;
+          let y = myYScalar(entityData.totals[index]) + prevY
           return STATIC_HEIGHT - y - (OFFSET - 15);
         })
        .attr('height', (t, index) => {
-          return yScalar(entityData.totals[index]);
+          return myYScalar(entityData.totals[index]);
         })
        .attr('width', ROW_WIDTH*0.8)
        .attr("x", ROW_WIDTH*0.2 + OFFSET)
@@ -197,14 +213,15 @@ export default function interactionTotals(data) {
     row.append("text")
         .attr("y", (t, index) => {
           let prevTotal = _.sum(entityData.totals.slice(0,index));
-          let prevY = prevTotal ? yScalar(prevTotal) : 0;
-          let y = yScalar(entityData.totals[index])
+          let prevY = prevTotal ? myYScalar(prevTotal) : 0;
+          let y = myYScalar(entityData.totals[index])
           let newTotal = y + prevY
-          return STATIC_HEIGHT - (newTotal-(y/2)) - (OFFSET - 10);
+          return STATIC_HEIGHT - (newTotal-(y/2)) - (OFFSET - 20);
         })
         .attr("x", ROW_WIDTH/2 + 20 + OFFSET)
-        .text(function(entity) { return entity })
+        .text(function(entity, index) { return `entity (${parseInt((entityData.totals[index]/totalSeconds)*100)}%)` })
         .attr('text-anchor', 'middle')
+        .attr("style", "font-size: 11px")
         .on('click', (entity) => {
           store.dispatch(selectEntity(entity.entityId, _.invert(entityInflections)[entity.entityType]))
         });
