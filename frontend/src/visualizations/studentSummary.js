@@ -29,9 +29,8 @@ export default function interactionTotals(data) {
     return
   }
 
-  // _.forEach(_.orderBy(_.zip(data.totals, data.entities), '0', 'desc'), (pair, index) => { data.entities[index] = pair[1]; data.totals[index] = pair[0]; });
-  // let data = {totals: rawData.totals.sort().reverse(), timestamps: rawData.timestamps};
-  // data.entities = _.map(data.totals, (total) => { return rawData.entities[rawData.totals.indexOf(total)] })
+  _.forEach(_.orderBy(_.zip(data.totals, data.entities), '0', 'desc'), (pair, index) => { data.entities[index] = pair[1]; data.totals[index] = pair[0]; });
+  
 
   /*
     Initializes the template into the DOM
@@ -145,18 +144,7 @@ export default function interactionTotals(data) {
    */
   function buildSection(entityData, entityType, i) {
     let totalSeconds = _.sum(entityData.totals);
-    let totalMinutes = parseInt(totalSeconds/60);
-    let totalHours = parseInt(totalMinutes/60);
-    let remainderMinutes = totalMinutes%60;
-    let totalTimeText = '';
-    if (totalHours > 0) {
-      totalTimeText += `${totalHours} hour${totalHours > 1 ? 's' : ''}, `
-    }
-    if (totalMinutes > 0) {
-      totalTimeText += `${remainderMinutes} minute${remainderMinutes > 1 ? 's' : ''}`;
-    } else {
-      totalTimeText = `less than a minute`;
-    }
+    let timeText = generateTimeText(totalSeconds)
 
     // selects group tag that corresponds to the current entity type
     let section = chart.select(`#${entityType}`);
@@ -174,8 +162,8 @@ export default function interactionTotals(data) {
     section.append("text")
            .attr("y", 10)
            .attr("x", ROW_WIDTH/2 + 20 + OFFSET)
-           .attr("style", "font-weight: bold")
-           .text(totalTimeText);
+           .attr("style", "font-weight: bold; font-size: 12px;")
+           .text(timeText.text);
 
     /*
       adds a row for each entity included in the current entity type group and sets
@@ -210,25 +198,61 @@ export default function interactionTotals(data) {
        .attr("x", ROW_WIDTH*0.2 + OFFSET)
 
     // // adds the entity display names as labels for each entity row within the current group
+
     row.append("text")
-        .attr("y", (t, index) => {
-          let prevTotal = _.sum(entityData.totals.slice(0,index));
-          let prevY = prevTotal ? myYScalar(prevTotal) : 0;
-          let y = myYScalar(entityData.totals[index])
-          let newTotal = y + prevY
-          return STATIC_HEIGHT - (newTotal-(y/2)) - (OFFSET - 20);
-        })
+        .attr("y", (t, i) => { return calcEntityTextY(t,i)})
         .attr("x", ROW_WIDTH/2 + 20 + OFFSET)
-        .text(function(entity, index) { return `entity (${parseInt((entityData.totals[index]/totalSeconds)*100)}%)` })
+        .text(function(entity, index) { 
+          return entity 
+        })
         .attr('text-anchor', 'middle')
-        .attr("style", "font-size: 11px")
+        .attr("class", (t, index) => {
+          return myYScalar(entityData.totals[index]) < 30 ? 'show-on-hover' : ''
+        })
         .on('click', (entity) => {
           store.dispatch(selectEntity(entity.entityId, _.invert(entityInflections)[entity.entityType]))
         });
+    row.append("text")
+        .attr("y", (t, i) => { return calcEntityTextY(t,i) + 15 })
+        .attr("x", ROW_WIDTH/2 + 20 + OFFSET)
+        .text(function(entity, index) { 
+          return generateTimeText(entityData.totals[index]).text;
+        })
+        .attr('text-anchor', 'middle')
+        .attr("class", (t, index) => {
+          return myYScalar(entityData.totals[index]) < 30 ? 'show-on-hover' : ''
+        })
+        .on('click', (entity) => {
+          store.dispatch(selectEntity(entity.entityId, _.invert(entityInflections)[entity.entityType]))
+        })
+
 
  
+    function calcEntityTextY(t, index) {
+      let prevTotal = _.sum(entityData.totals.slice(0,index));
+      let prevY = prevTotal ? myYScalar(prevTotal) : 0;
+      let y = myYScalar(entityData.totals[index])
+      let newTotal = y + prevY
+      return STATIC_HEIGHT - (newTotal-(y/2)) - (OFFSET - 10);
+    }
 
+  }
 
+  function generateTimeText(totalSeconds) {
+    let data = {}
+    data.totalMinutes = parseInt(totalSeconds/60);
+    data.totalHours = parseInt(data.totalMinutes/60);
+    data.remainderMinutes = data.totalMinutes%60;
+    data.text = '';
+    if (data.totalHours > 0) {
+      data.text += `${data.totalHours} hour${data.totalHours > 1 ? 's' : ''}, `
+    }
+    if (data.totalMinutes > 0) {
+      data.text += `${data.remainderMinutes} minute${data.remainderMinutes > 1 ? 's' : ''}`;
+    } else {
+      data.text = `less than a minute`;
+    }
+    return data;
   }
 
 }
