@@ -18,6 +18,7 @@ import activityTimeline from './visualizations/activityTimeline';
 import segmentedTimeline from './visualizations/segmentedTimeline';
 import interactionTotals from './visualizations/interactionTotals';
 import studentSummary from './visualizations/studentSummary';
+import unitSummary from './visualizations/unitSummary';
 import key from 'keyboard-shortcut';
 
 setTimeout(function(){
@@ -114,20 +115,21 @@ setTimeout(function(){
       store.dispatch(fetchEntities('areas'));
       store.dispatch(fetchEntities('materials'));
 
-      let prevEntityUid, prevDate, prevEndDate, prevVisualization;
+      let prevEntityUid, prevDate, prevEndDate, prevVisualization, prevInteractionType;
 
       store.subscribe(() => {
         let state = store.getState();
         let entityId = _.get(state, 'insights.ui.currentEntityId');
         let entityType = _.get(state, 'insights.ui.currentEntityType');
         let visualization = _.get(state, 'insights.ui.visualization');
+        let interactionType = _.get(state, 'insights.ui.interactionType');
         let entityUid = `${entityType}-${entityId}`
         let date = _.get(state, 'insights.ui.currentDate');
         let endDate = _.get(state, 'insights.ui.endDate');
         let status = _.get(state, 'insights.status');
 
         if (entityId && entityType && date && visualization && (endDate && _.includes(['studentSummary', 'interactionTotals'], visualization) || !_.includes(['studentSummary', 'interactionTotals'], visualization))) {
-          if (entityUid === prevEntityUid && date === prevDate && endDate === prevEndDate && prevVisualization === visualization) {
+          if (entityUid === prevEntityUid && date === prevDate && endDate === prevEndDate && prevVisualization === visualization && prevInteractionType === interactionType) {
             let entity = _.get(state, `entities.${entityInflections[entityType]}.${entityId}`);
             let dateString = (new Date(date)).toDateString();
             if (endDate) {
@@ -146,12 +148,14 @@ setTimeout(function(){
                 case 'interactionTotals':
                   interactionTotals(observationsData);
                   break;
+                case 'unitSummary':
+                  unitSummary(observationsData);
+                  break;
                 case 'studentSummary':
                   studentSummary(observationsData);
                   break;
               }
             } else {
-              debugger
               if (status === 'fetched') {
                 document.querySelector("#visualization").innerHTML = '<h3>No data</h3>';
               }
@@ -161,15 +165,16 @@ setTimeout(function(){
             document.querySelector("#visualization-title").innerHTML = '';
             switch(visualization) {
               case 'activityTimeline':
-                store.dispatch(fetchObservations(entityId, entityType, date));
+                store.dispatch(fetchObservations(entityId, entityType, date, interactionType));
                 break;
               case 'segmentedTimeline':
                 store.dispatch(fetchInteractionPeriods(entityId, entityType, date));
                 break;
               case 'interactionTotals':
+              case 'unitSummary':
               case 'studentSummary':
                 if (endDate) {
-                  store.dispatch(fetchInteractionTotals(entityId, entityType, date, endDate));
+                  store.dispatch(fetchInteractionTotals(entityId, entityType, date, endDate, visualization === 'unitSummary' && interactionType));
                 } else {
                   document.querySelector("#visualization").innerHTML = '';
                 }
@@ -177,6 +182,7 @@ setTimeout(function(){
             }
           }
           prevVisualization = visualization;
+          prevInteractionType = interactionType;
           prevDate = date;
           prevEndDate = endDate;
           prevEntityUid = entityUid;

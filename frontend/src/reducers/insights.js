@@ -43,6 +43,15 @@ export default function sensorMappings(state = initialState, action) {
         },
         status: 'fetching'
       }
+    case 'SELECT_INTERACTION_TYPE':
+      return {
+        observations: {},
+        ui: {
+          ...state.ui,
+          interactionType: action.interactionType
+        },
+        status: 'fetching'
+      }
     case 'SELECT_DATE':
       return {
         observations: {},
@@ -64,7 +73,7 @@ export default function sensorMappings(state = initialState, action) {
     case 'REFRESH_FROM_PARAMS':
       return {
         observations: {},
-        ui: _.pick(action.params, ['currentDate', 'endDate', 'visualization', 'currentEntityType', 'currentEntityId']),
+        ui: _.pick(action.params, ['currentDate', 'endDate', 'visualization', 'interactionType', 'currentEntityType', 'currentEntityId']),
         status: 'fetching'
       }
     default:
