@@ -173,7 +173,7 @@ setTimeout(function(){
               case 'interactionTotals':
               case 'unitSummary':
               case 'studentSummary':
-                if (endDate) {
+                if (endDate && !(visualization === 'unitSummary' && !interactionType)) {
                   store.dispatch(fetchInteractionTotals(entityId, entityType, date, endDate, visualization === 'unitSummary' && interactionType));
                 } else {
                   document.querySelector("#visualization").innerHTML = '';

@@ -79,7 +79,7 @@ export default function interactionTotals(data) {
    */
   var xScalar = d3.scaleLinear()
     .domain([0, maxTotal])
-    .range([0, STATIC_WIDTH-OFFSET]);
+    .range([0, STATIC_WIDTH-OFFSET-30]);
 
   /*
     Determines the height of the chart based on the number of entities included

@@ -75,9 +75,9 @@ export const fetchInteractionTotals = (entityId, entityType, date, endDate, inte
 
     let startTime = encodeURIComponent(date.toISOString().split('.000Z')[0]);
     let endTime = encodeURIComponent(endDate.toISOString().split('.000Z')[0]);
+    let it = _.invert(entityInflections)[interactionType];
 
-
-    fetch(`${baseUrl()}/api/v1/interaction_totals?classroom_id=${getClassroomId()}&entity_id=${entityId}&entity_type=${entityType}&start_time=${startTime}&end_time=${endTime}&interaction_type=${_.invert(entityInflections)[interactionType]}`, {
+    fetch(`${baseUrl()}/api/v1/interaction_totals?classroom_id=${getClassroomId()}&entity_id=${entityId}&entity_type=${entityType}&start_time=${startTime}&end_time=${endTime}${it ? `&interaction_type=${it}` : ''}`, {
       headers: {
         'X-SenseiToken': getSenseiToken(),
         'Content-Type': 'application/json'
