@@ -5,7 +5,7 @@ import {selectEntity} from './../actions/insightsActions';
 import _ from 'lodash';
 
 const ROW_HEIGHT = 30; // how tall each row of data in timeline is
-const STATIC_WIDTH = 1260; // how wide the width of the visualization is
+
 const OFFSET = 205; // how far to the right the observation points start being drawn
 const VISUALIZATION_TEMPLATE = `
   <svg>
@@ -28,6 +28,10 @@ export default function activityTimeline(data) {
   if (!data) {
     return
   }
+
+  let zoom = _.get(store.getState(), "insights.ui.zoom") || 1;
+
+  const STATIC_WIDTH = 1260 * zoom; // how wide the width of the visualization is
 
   /*
     Initializes the template into the DOM

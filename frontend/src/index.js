@@ -114,7 +114,7 @@ setTimeout(function(){
       store.dispatch(fetchEntities('areas'));
       store.dispatch(fetchEntities('materials'));
 
-      let prevEntityUid, prevDate, prevEndDate, prevVisualization;
+      let prevEntityUid, prevDate, prevEndDate, prevVisualization, prevZoom;
 
       store.subscribe(() => {
         let state = store.getState();
@@ -124,9 +124,10 @@ setTimeout(function(){
         let entityUid = `${entityType}-${entityId}`
         let date = _.get(state, 'insights.ui.currentDate');
         let endDate = _.get(state, 'insights.ui.endDate');
+        let zoom = _.get(state, 'insights.ui.zoom');
 
         if (entityId && entityType && date && visualization && (endDate && _.includes(['studentSummary', 'interactionTotals'], visualization) || !_.includes(['studentSummary', 'interactionTotals'], visualization))) {
-          if (entityUid === prevEntityUid && date === prevDate && endDate === prevEndDate && prevVisualization === visualization) {
+          if (entityUid === prevEntityUid && date === prevDate && endDate === prevEndDate && prevVisualization === visualization && prevZoom === zoom) {
             let entity = _.get(state, `entities.${entityInflections[entityType]}.${entityId}`);
             let dateString = (new Date(date)).toDateString();
             if (endDate) {
@@ -176,6 +177,7 @@ setTimeout(function(){
           prevDate = date;
           prevEndDate = endDate;
           prevEntityUid = entityUid;
+          prevZoom = zoom;
         }
       })
     }

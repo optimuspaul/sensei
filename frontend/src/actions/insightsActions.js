@@ -141,4 +141,14 @@ export const refreshFromParams = (params) => {
   }
 }
 
+export const SET_ZOOM = 'SET_ZOOM'
+export const setZoom = (zoom) => {
+  return (dispatch, getState) => {
+    dispatch({
+      type: SET_ZOOM,
+      zoom
+    });
+  }
+}
+
 

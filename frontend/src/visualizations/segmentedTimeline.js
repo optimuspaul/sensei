@@ -5,7 +5,6 @@ import store from './../store/configureStore';
 import _ from 'lodash';
 
 const ROW_HEIGHT = 30; // how tall each row of data in timeline is
-const STATIC_WIDTH = 1260; // how wide the width of the visualization is
 const OFFSET = 205; // how far to the right the interaction segments should start being drawn from
 const VISUALIZATION_TEMPLATE = `
   <svg>
@@ -28,6 +27,10 @@ export default function activityTimeline(data) {
   if (!data) {
     return
   }
+
+  let zoom = _.get(store.getState(), "insights.ui.zoom") || 1;
+
+  const STATIC_WIDTH = 1260 * zoom; // how wide the width of the visualization is
 
   /*
     Initializes the template into the DOM
@@ -171,12 +174,12 @@ export default function activityTimeline(data) {
           store.dispatch(selectEntity(entity.entityId, _.invert(entityInflections)[entity.entityType]))
         });
 
- 
+
 
     /*
       plots the interaction segments for each entity within the current entity type group. The
-      segments are based on a running average of radio observations between the current entity 
-      and any other given entity. Each segment is scaled linearly on the x-axis using xScalar 
+      segments are based on a running average of radio observations between the current entity
+      and any other given entity. Each segment is scaled linearly on the x-axis using xScalar
       defined above, and its timestamp is added as a data attribute for debugging purposes.
      */
     row.selectAll("rect")

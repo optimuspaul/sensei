@@ -12,6 +12,8 @@ class ActivityTimelineControls extends React.Component {
     this.handleDateChange = this.handleDateChange.bind(this);
     this.handleEndDateChange = this.handleEndDateChange.bind(this);
     this.handleVisualizationSelect = this.handleVisualizationSelect.bind(this);
+    this.handleZoomSet = this.handleZoomSet.bind(this);
+    this.handleZoomChange = this.handleZoomChange.bind(this);
 
     let params = QueryParams.decode(location.search.slice(1));
 
@@ -24,6 +26,7 @@ class ActivityTimelineControls extends React.Component {
     this.state = {
       date,
       endDate,
+      zoom: '1',
       maxStartDate: (new Date()).toISOString(),
       maxEndDate: (new Date()).toISOString(),
       minEndDate: (new Date()).toISOString()
@@ -59,7 +62,7 @@ class ActivityTimelineControls extends React.Component {
     }
   }
 
-  
+
 
   handleEndDateChange (endDate) {
     let zeroDate = new Date((new Date(endDate)).toDateString());
@@ -75,9 +78,9 @@ class ActivityTimelineControls extends React.Component {
         endDate: this.state.endDate
       });
     }
-    
+
   }
-  
+
   handleVisualizationSelect(event) {
     if (event.target.value) {
       this.props.dispatch(this.props.selectVisualization(event.target.value));
@@ -89,12 +92,22 @@ class ActivityTimelineControls extends React.Component {
 
   componentWillReceiveProps(nextProps) {
     let params = QueryParams.decode(location.search.slice(1));
-    params = _.pick(params, ['currentDate', 'endDate', 'visualization', 'currentEntityType', 'currentEntityId'])
+    params = _.pick(params, ['currentDate', 'endDate', 'visualization', 'currentEntityType', 'currentEntityId', 'zoom'])
+    this.setState({zoom: params.zoom})
     if (!_.isEqual(this.props.insights.ui, nextProps.insights.ui) && !_.isEqual(params, nextProps.insights.ui)) {
       history.push({
         search: QueryParams.encode(_.merge(params, nextProps.insights.ui))
       });
     }
+  }
+
+  handleZoomChange(event) {
+    this.setState({zoom:event.target.value});
+  }
+
+  handleZoomSet(event) {
+    this.setState({zoom:event.target.value});
+    this.props.dispatch(this.props.setZoom(event.target.value));
   }
 
   handleEntitySelect(event) {
@@ -103,7 +116,7 @@ class ActivityTimelineControls extends React.Component {
       this.entityType = event.target.value.split("-")[0];
       this.setState({
         params: {
-          entityId: this.entityId, 
+          entityId: this.entityId,
           entityType: this.entityType
         }
       });
@@ -201,6 +214,22 @@ class ActivityTimelineControls extends React.Component {
           </div>
         </div>
         {endDatePicker}
+        <div className="row" style={{marginBottom: '10px'}}>
+          <div className="col-md-12">
+            <h6> Zoom level: {this.state.zoom} </h6>
+            <input
+              id="zoom-slider"
+              type="range"
+              defaultValue={this.props.insights.ui.zoom}
+              onChange={this.handleZoomChange}
+              min="1"
+              max="10"
+              step="1"
+              onMouseUp={this.handleZoomSet}
+            />
+          </div>
+        </div>
+
       </div>
     )
   }
