@@ -4,6 +4,7 @@ import DatePicker from 'react-bootstrap-date-picker';
 import QueryParams from 'query-params';
 import { history } from '../utils';
 
+
 class ActivityTimelineControls extends React.Component {
 
   constructor(props) {
@@ -223,7 +224,7 @@ class ActivityTimelineControls extends React.Component {
               defaultValue={this.props.insights.ui.zoom}
               onChange={this.handleZoomChange}
               min="1"
-              max="10"
+              max="5"
               step="1"
               onMouseUp={this.handleZoomSet}
             />

@@ -2,7 +2,10 @@ import * as d3 from "d3";
 import {entityInflections} from './../constants';
 import store from './../store/configureStore';
 import {selectEntity} from './../actions/insightsActions';
+import timeTicks from './timeTicks';
+import {startAndEndTimes} from './utils';
 import _ from 'lodash';
+import moment from 'moment';
 
 const ROW_HEIGHT = 30; // how tall each row of data in timeline is
 
@@ -38,24 +41,7 @@ export default function activityTimeline(data) {
    */
   document.querySelector("#visualization").innerHTML = VISUALIZATION_TEMPLATE;
 
-  /*
-    Creates array of pairs that determine where the vertical timeline ticks
-    are drawn and which hour label should be placed at the bottom of them to
-    be fed into d3
-   */
-  let startTime = new Date(d3.min(data.timestamps));
-  startTime.setMinutes(0);
-  startTime.setSeconds(0);
-  let endTime = new Date(d3.max(data.timestamps));
-  endTime.setHours(endTime.getHours() + 2);
-  endTime.setMinutes(0);
-  endTime.setSeconds(0);
-  let tmpTime = new Date(startTime.getTime());
-  let ticks = []
-  while (tmpTime < endTime) {
-    ticks.push([tmpTime.getHours(), tmpTime.getTime()])
-    tmpTime.setHours(tmpTime.getHours() + 1);
-  }
+
 
   let currentEntityType = _.get(store.getState(), "insights.ui.currentEntityType");
 
@@ -79,6 +65,7 @@ export default function activityTimeline(data) {
   }, {});
 
 
+  let {startTime, endTime} = startAndEndTimes(data.timestamps);
 
   /*
     Creates a scalar on the x axis that constrains all values to the
@@ -98,6 +85,13 @@ export default function activityTimeline(data) {
   let chartHeight = (ROW_HEIGHT * _.sumBy(_.toArray(segmentedData), (entityType) => { return _.size(entityType.entities) + 1 }));
 
 
+  timeTicks(startTime, endTime, {
+    offset: OFFSET,
+    chartHeight,
+    staticWidth: STATIC_WIDTH,
+    selector: '#visualization svg #ticks'
+  });
+
   /*
     Initializes the chart with d3 using the STATIC_WIDTH constant defined above
     and the calculated chartHeight from above
@@ -106,32 +100,6 @@ export default function activityTimeline(data) {
                   .attr("width", STATIC_WIDTH)
                   .attr("height", chartHeight + 20);
 
-
-
-  /*
-    Adds the dashed time tick lines and their appropriate hour labels
-    using the ticks data array created above and scaled using the linear
-    scalar xScalar created above to ensure they stay within the SVG's width
-   */
-  let ticksContainer = chart.select('#ticks');
-
-  ticksContainer.selectAll("line")
-       .data(ticks)
-       .enter().append("line")
-       .attr("x1", (tick, index) => { return xScalar(tick[1]) + OFFSET + 15 })
-       .attr("x2", (tick, index) => { return xScalar(tick[1]) + OFFSET + 15 })
-       .attr("y1", 20)
-       .attr("y2", chartHeight);
-
-  [10, chartHeight+15].forEach((y) => {
-    ticksContainer.selectAll(`text.y-${y}`)
-         .data(ticks)
-         .enter().append(`text`)
-         .attr('class', `y-${y}`)
-         .attr("x", (tick, index) => { return xScalar(tick[1]) + OFFSET })
-         .attr("y", y)
-         .text((tick, index) => { return parseInt(tick[0], 10) > 12 ? `${parseInt(tick[0], 10) - 12}:00pm` : `${tick[0]}:00am` })
-  });
 
   // builds each entity type section using the segmentedData generated above
   _.each(segmentedData, buildSection);
