@@ -3,22 +3,13 @@ import {entityInflections} from './../constants';
 import store from './../store/configureStore';
 import {selectEntity} from './../actions/insightsActions';
 import timeTicks from './timeTicks';
-import {startAndEndTimes} from './utils';
+import chart from './chart';
+import {startAndEndTimes, generateXScalar, calcChartHeight} from './utils';
 import _ from 'lodash';
-import moment from 'moment';
 
 const ROW_HEIGHT = 30; // how tall each row of data in timeline is
-
 const OFFSET = 205; // how far to the right the observation points start being drawn
-const VISUALIZATION_TEMPLATE = `
-  <svg>
-    <g id='ticks'></g>
-    <g id='children' class='segments'></g>
-    <g id='areas' class='segments'></g>
-    <g id='materials' class='segments'></g>
-    <g id='teachers' class='segments'></g>
-  </svg>
-`
+
 const ENTITIES_TO_SHOW = {
   child: ['children', 'areas', 'materials', 'teachers'],
   teacher: ['children', 'areas'],
@@ -36,53 +27,15 @@ export default function activityTimeline(data) {
 
   const STATIC_WIDTH = 1260 * zoom; // how wide the width of the visualization is
 
-  /*
-    Initializes the template into the DOM
-   */
-  document.querySelector("#visualization").innerHTML = VISUALIZATION_TEMPLATE;
-
-
-
   let currentEntityType = _.get(store.getState(), "insights.ui.currentEntityType");
 
-  /*
-    Creates an object containing the data necessary for drawing the observation
-    points provided for each entity
-   */
-  let segmentedData = _.reduce(data.entities, (current, entity_data, index) => {
-    let entityType = entityInflections[entity_data[0]];
-    if (!_.includes(ENTITIES_TO_SHOW[currentEntityType], entityType)) {
-      return current
-    }
-    let entityId = entity_data[1];
-    let entity = store.getState().entities[entityType][entityId];
-    let entityName = entity ? entity.displayName : "Unknown";
-    current[entityType] = current[entityType] || {obs: [], entities: []};
-    current[entityType].obs.push(data.obs[index]);
-    current[entityType].entities.push({entityName, entityId, entityType});
-    current[entityType].y = current[entityType].y || index + _.size(current);
-    return current;
-  }, {});
-
+  let segmentedData = segmentData(data.entities, store.getState().entities, ENTITIES_TO_SHOW);
 
   let {startTime, endTime} = startAndEndTimes(data.timestamps);
 
-  /*
-    Creates a scalar on the x axis that constrains all values to the
-    fixed width of the visualization, specified by the STATIC_WIDTH
-    constant defined above
-   */
-  var xScalar = d3.scaleLinear()
-    .domain([startTime.getTime(), endTime.getTime()])
-    .range([0, STATIC_WIDTH-OFFSET]);
+  let xScalar = generateXScalar(startTime, endTime, STATIC_WIDTH-OFFSET);
 
-  /*
-    Determines the height of the chart based on the number of entities included
-    with the observational data and the predetermined ROW_HEIGHT constant defined
-    above, with an extra ROW_HEIGHT's worth of space added to the bottom to make
-    space for the time tick labels
-   */
-  let chartHeight = (ROW_HEIGHT * _.sumBy(_.toArray(segmentedData), (entityType) => { return _.size(entityType.entities) + 1 }));
+  let chartHeight = calcChartHeight(segmentedData);
 
 
   timeTicks(startTime, endTime, {
@@ -92,14 +45,8 @@ export default function activityTimeline(data) {
     selector: '#visualization svg #ticks'
   });
 
-  /*
-    Initializes the chart with d3 using the STATIC_WIDTH constant defined above
-    and the calculated chartHeight from above
-   */
-  let chart = d3.select("#visualization svg")
-                  .attr("width", STATIC_WIDTH)
-                  .attr("height", chartHeight + 20);
 
+  let chart = chart(STATIC_WIDTH, chartHeight + 20);
 
   // builds each entity type section using the segmentedData generated above
   _.each(segmentedData, buildSection);
