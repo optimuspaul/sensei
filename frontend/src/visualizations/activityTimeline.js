@@ -4,6 +4,7 @@ import store from './../store/configureStore';
 import {selectEntity} from './../actions/insightsActions';
 import timeTicks from './timeTicks';
 import chart from './chart';
+import segmentData from './segmentData';
 import {startAndEndTimes, generateXScalar, calcChartHeight} from './utils';
 import _ from 'lodash';
 

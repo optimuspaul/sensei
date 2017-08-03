@@ -5,15 +5,14 @@ import moment from 'moment';
 
 let defaultOpts = {
   zoom: 1,
-  selector: '#ticks',
+  id: 'bottom',
   offset: 205,
-  staticWidth: 1260,
   chartHeight: 500,
   dualLabel: true
 }
 
 
-export default function timeTicks(startTime, endTime, opts) {
+export default function timeTicks(selection, startTime, endTime, xScalar, opts = {}) {
   opts = _.merge(defaultOpts, opts);
 
 
@@ -35,45 +34,34 @@ export default function timeTicks(startTime, endTime, opts) {
     }
   }
 
-  /*
-    Creates a scalar on the x axis that constrains all values to the
-    fixed width of the visualization, specified by the STATIC_WIDTH
-    constant defined above
-   */
-  var xScalar = d3.scaleLinear()
-    .domain([startTime.getTime(), endTime.getTime()])
-    .range([0, opts.staticWidth-opts.offset]);
-
 
   /*
     Adds the dashed time tick lines and their appropriate hour labels
     using the ticks data array created above and scaled using the linear
     scalar xScalar created above to ensure they stay within the SVG's width
    */
-  let ticksContainer = d3.select(opts.selector);
 
-  ticksContainer.selectAll("line")
-       .data(ticks)
-       .enter().append("line")
-       .attr("x1", (tick, index) => { return xScalar(tick[1]) + opts.offset + 15 })
-       .attr("x2", (tick, index) => { return xScalar(tick[1]) + opts.offset + 15 })
-       .attr("y1", 20)
-       .attr("y2", opts.chartHeight);
+  let ticksContainer = selection.append("g")
+    .attr("id", opts.id)
+    .attr("class", "ticks")
 
+  ticksContainer
+    .selectAll("line")
+    .data(ticks)
+    .enter().append("line")
+    .attr("x1", (tick, index) => { return xScalar(tick[1]) + opts.offset + 15 })
+    .attr("x2", (tick, index) => { return xScalar(tick[1]) + opts.offset + 15 })
+    .attr("y1", 20)
+    .attr("y2", opts.chartHeight)
 
-  let textPlacements =  opts.dualLabel ? [10, opts.chartHeight+15] : [10];
+  ticksContainer
+    .selectAll(`text.y-${y}`)
+    .data(ticks)
+    .enter().append(`text`)
+    .attr('class', `y-${y}`)
+    .attr("x", (tick, index) => { return xScalar(tick[1]) + opts.offset })
+    .attr("y", y)
+    .text((tick, index) => { return tick[0] })
 
-
-  textPlacements.forEach((y) => {
-    ticksContainer.selectAll(`text.y-${y}`)
-         .data(ticks)
-         .enter().append(`text`)
-         .attr('class', `y-${y}`)
-         .attr("x", (tick, index) => { return xScalar(tick[1]) + opts.offset })
-         .attr("y", y)
-         .text((tick, index) => { return tick[0] })
-  });
-
-  return ticksContainer;
 
 }

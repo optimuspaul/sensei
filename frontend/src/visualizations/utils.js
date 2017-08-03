@@ -24,7 +24,7 @@ export const generateXScalar = (startTime, endTime, upperRange) => {
 
   var xScalar = d3.scaleLinear()
     .domain([startTime.getTime(), endTime.getTime()])
-    .range([0, STATIC_WIDTH-OFFSET]);
+    .range([0, upperRange]);
 }
 
 
