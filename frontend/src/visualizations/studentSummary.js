@@ -65,7 +65,7 @@ export default function interactionTotals(data) {
     let entity = store.getState().entities[entityType][entityId];
     let entityName = entity ? entity.displayName : "Unknown";
     current[entityType] = current[entityType] || {totals: [], entities: []};
-    current[entityType].totals.push(data.totals[index]);
+    current[entityType].totals.push(data.obs[index]);
     current[entityType].entities.push(entityName);
     return current;
   }, {});
