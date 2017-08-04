@@ -1,8 +1,8 @@
 import * as d3 from "d3";
 import _ from 'lodash';
-import {entityInflections} from './../constants';
-import store from './../store/configureStore';
-import {selectEntity} from './../actions/insightsActions';
+import {entityInflections} from './../../constants';
+import store from './../../store/configureStore';
+import {selectEntity} from './../../actions/insightsActions';
 
 
 const defaultOpts = {
