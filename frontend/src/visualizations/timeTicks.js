@@ -3,17 +3,18 @@ import _ from 'lodash';
 import moment from 'moment';
 
 
-let defaultOpts = {
+const defaultOpts = {
   zoom: 1,
   id: 'bottom',
   offset: 205,
   chartHeight: 500,
-  dualLabel: true
+  hideLines: false,
+  y: 10
 }
 
 
 export default function timeTicks(selection, startTime, endTime, xScalar, opts = {}) {
-  opts = _.merge(defaultOpts, opts);
+  opts = _.merge({}, defaultOpts, opts);
 
 
   /*
@@ -46,22 +47,24 @@ export default function timeTicks(selection, startTime, endTime, xScalar, opts =
     .attr("class", "ticks")
 
   ticksContainer
+    .selectAll(`text.y-${opts.y}`)
+    .data(ticks)
+    .enter().append(`text`)
+    .attr('class', `y-${opts.y}`)
+    .attr("x", (tick, index) => { return xScalar(tick[1]) + opts.offset })
+    .attr("y", opts.y)
+    .text((tick, index) => { return tick[0] })
+
+  if (!opts.hideLines) return;
+
+  ticksContainer
     .selectAll("line")
     .data(ticks)
     .enter().append("line")
     .attr("x1", (tick, index) => { return xScalar(tick[1]) + opts.offset + 15 })
     .attr("x2", (tick, index) => { return xScalar(tick[1]) + opts.offset + 15 })
     .attr("y1", 20)
-    .attr("y2", opts.chartHeight)
-
-  ticksContainer
-    .selectAll(`text.y-${y}`)
-    .data(ticks)
-    .enter().append(`text`)
-    .attr('class', `y-${y}`)
-    .attr("x", (tick, index) => { return xScalar(tick[1]) + opts.offset })
-    .attr("y", y)
-    .text((tick, index) => { return tick[0] })
+    .attr("y2", opts.chartHeight-20)
 
 
 }

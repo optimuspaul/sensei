@@ -2,10 +2,10 @@ import * as d3 from "d3";
 import {entityInflections} from './../constants';
 import store from './../store/configureStore';
 import {selectEntity} from './../actions/insightsActions';
-import {startAndEndTimes} from './utils';
 import _ from 'lodash';
 
 const ROW_HEIGHT = 30; // how tall each row of data in timeline is
+const STATIC_WIDTH = 700; // how wide the width of the visualization is
 const OFFSET = 100; // how far to the right the totals should start being drawn from
 const VISUALIZATION_TEMPLATE = `
   <svg>
@@ -29,15 +29,30 @@ export default function interactionTotals(data) {
     return
   }
 
-  let zoom = _.get(store.getState(), "insights.ui.zoom") || 1;
-
-  const STATIC_WIDTH = 700 * zoom; // how wide the width of the visualization is
-
   /*
     Initializes the template into the DOM
    */
   document.querySelector("#visualization").innerHTML = VISUALIZATION_TEMPLATE;
 
+  /*
+    Creates array of pairs that determine where the vertical timeline ticks
+    are drawn and which hour label should be placed at the bottom of them to
+    be fed into d3
+   */
+  let startTime = new Date(d3.min(data.timestamps));
+  startTime.setMinutes(0);
+  startTime.setSeconds(0);
+  let endTime = new Date(d3.max(data.timestamps));
+  endTime.setHours(endTime.getHours() + 2);
+  endTime.setMinutes(0);
+  endTime.setSeconds(0);
+  let ticks = [0];
+  let seconds = 0;
+  let maxTotal = d3.max(data.totals);
+  while (seconds < maxTotal) {
+    seconds += 600;
+    ticks.push([seconds]);
+  }
 
   let currentEntityType = _.get(store.getState(), "insights.ui.currentEntityType");
 
@@ -60,7 +75,7 @@ export default function interactionTotals(data) {
     return current;
   }, {});
 
-  let {startTime, endTime} = startAndEndTimes(data.timestamps);
+
 
   /*
     Creates a scalar on the x axis that constrains all values to the
@@ -80,14 +95,6 @@ export default function interactionTotals(data) {
   let chartHeight = (ROW_HEIGHT * _.sumBy(_.toArray(segmentedData), (entityType) => { return _.size(entityType.entities) + 1 }));
 
 
-
-  timeTicks(startTime, endTime, {
-    offset: OFFSET,
-    chartHeight,
-    staticWidth: STATIC_WIDTH,
-    selector: '#visualization svg #ticks'
-  });
-
   /*
     Initializes the chart with d3 using the STATIC_WIDTH constant defined above
     and the calculated chartHeight from above
@@ -96,6 +103,32 @@ export default function interactionTotals(data) {
                   .attr("width", STATIC_WIDTH)
                   .attr("height", chartHeight + 20);
 
+
+
+  /*
+    Adds the dashed time tick lines and their appropriate 10-minute increment labels
+    using the ticks data array created above and scaled using the linear
+    scalar xScalar created above to ensure they stay within the SVG's width
+   */
+  let ticksContainer = chart.select('#ticks');
+
+  ticksContainer.selectAll("line")
+       .data(ticks)
+       .enter().append("line")
+       .attr("x1", (tick, index) => { return xScalar(tick) + OFFSET + 15 })
+       .attr("x2", (tick, index) => { return xScalar(tick) + OFFSET + 15 })
+       .attr("y1", 20)
+       .attr("y2", chartHeight);
+
+  [10, chartHeight+15].forEach((y) => {
+    ticksContainer.selectAll(`text.y-${y}`)
+         .data(ticks)
+         .enter().append(`text`)
+         .attr('class', `y-${y}`)
+         .attr("x", (tick, index) => { return xScalar(tick) + OFFSET })
+         .attr("y", y)
+         .text((tick, index) => { return `${tick/60} min` })
+  });
 
   // builds each entity type section using the segmentedData generated above
   _.each(segmentedData, buildSection);
@@ -139,11 +172,11 @@ export default function interactionTotals(data) {
           store.dispatch(selectEntity(entity.entityId, _.invert(entityInflections)[entity.entityType]))
         });
 
-
+ 
 
     /*
-      plots the total for each entity within the current entity type group. The total
-      is scaled linearly on the x-axis using xScalar defined above, and its timestamp
+      plots the total for each entity within the current entity type group. The total 
+      is scaled linearly on the x-axis using xScalar defined above, and its timestamp 
       is added as a data attribute for debugging purposes.
      */
     row.append("rect")

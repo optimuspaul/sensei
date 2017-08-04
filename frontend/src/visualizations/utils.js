@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-
+import _ from 'lodash';
 
 
 export const startAndEndTimes = (timestamps) => {
@@ -22,7 +22,7 @@ export const startAndEndTimes = (timestamps) => {
  */
 export const generateXScalar = (startTime, endTime, upperRange) => {
 
-  var xScalar = d3.scaleLinear()
+  return d3.scaleLinear()
     .domain([startTime.getTime(), endTime.getTime()])
     .range([0, upperRange]);
 }
@@ -34,9 +34,9 @@ export const generateXScalar = (startTime, endTime, upperRange) => {
   above, with an extra ROW_HEIGHT's worth of space added to the bottom to make
   space for the time tick labels
  */
-export const calcChartHeight = (segmentedData) => {
+export const calcChartHeight = (segmentedData, rowHeight = 30) => {
   let totalRows = _.sumBy(_.toArray(segmentedData), (entityType) => {
-    return _.size(entityType.entities) + 1
+    return _.size(entityType[1].entities) + 1
   });
-  let chartHeight = (ROW_HEIGHT * totalRows);
+  return rowHeight * totalRows;
 }

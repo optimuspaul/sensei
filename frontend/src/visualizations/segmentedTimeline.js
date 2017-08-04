@@ -1,9 +1,7 @@
 import * as d3 from "d3";
 import {entityInflections} from './../constants';
-import {selectEntity} from './../actions/insightsActions';
 import store from './../store/configureStore';
 import timeTicks from './timeTicks';
-import chart from './chart';
 import {startAndEndTimes, generateXScalar, calcChartHeight} from './utils';
 import entityTypeSection from './entityTypeSection';
 import entityRow from './entityRow';
@@ -29,33 +27,36 @@ const entitiesToShow = {
  */
 export default function segmentedTimeline(data) {
 
-  if (!data) {
-    return
-  }
+  if (!data) return;
 
+  document.querySelector("#visualization").innerHTML = "<svg>";
   let zoom = _.get(store.getState(), "insights.ui.zoom") || 1;
-  const chartWidth = 1260 * zoom; // how wide the width of the visualization is
-  let currentEntityType = _.get(store.getState(), "insights.ui.currentEntityType");
-  let segmentedData = segmentData(data.entities, store.getState().entitiesentitiesToShow);
+  let chartWidth = 1260 * zoom; // how wide the width of the visualization is
+  let segmentedData = segmentData(data, entitiesToShow);
   let {startTime, endTime} = startAndEndTimes(data.timestamps);
   let xScalar = generateXScalar(startTime, endTime, chartWidth-offset);
   let chartHeight = calcChartHeight(segmentedData);
 
+  let chart = d3.select("#visualization svg")
 
-  chart(chartWidth, chartHeight + 20)
-    .call(timeTicks, startTime, endTime, xScalar, {offset, y: 10, zoom})
-    .call(timeTicks, startTime, endTime, xScalar, {offset, y: chartHeight+15, zoom})
-    .selectAll("g")
+  chart.attr("width", chartWidth)
+    .attr("height", chartHeight + 20)
+    .call(timeTicks, startTime, endTime, xScalar, {offset, y: 10, zoom, id: 'top'})
+    .call(timeTicks, startTime, endTime, xScalar, {offset, y: chartHeight+20, zoom, hideLines: true})
+    .selectAll("g.segments")
     .data(segmentedData)
     .call(entityTypeSection, {className: 'segments'})
-    .selectAll("g.segments")
-    .data(d => d.entities)
-    .call(entityRow, 'row')
+
+  chart.selectAll("g.segments")
     .selectAll("g.row")
+    .data(d => d[1].entities)
+    .call(entityRow, 'row')
+
+  chart.selectAll("g.row")
     .call(entityRowLabel)
     .selectAll("rect")
-    .data((observation, index) => {
-      return entityData.obs[index]
+    .data((entity, index) => {
+      return entity.obs;
     })
     .enter().append("rect")
     .attr("x", (observation, index) => {
@@ -69,9 +70,6 @@ export default function segmentedTimeline(data) {
     })
     .attr('height', rowHeight*0.6)
     .attr("y", rowHeight*0.2)
-    .attr("data-timestamp", (observation, index) => {
-      return data.timestamps[index]
-    })
 
 
 }

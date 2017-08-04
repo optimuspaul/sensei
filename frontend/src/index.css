@@ -48,7 +48,7 @@
 
 
 
-#foundation #visualization #ticks line {
+#foundation #visualization .ticks line {
   stroke-linecap: round;
   stroke-width: 2;
   stroke-dasharray: 5,5;
@@ -57,12 +57,12 @@
 }
 
 
-#foundation #visualization #ticks text {
+#foundation #visualization .ticks text {
   fill: #bbb;
   font-size: 12px;
 }
 
-#foundation #visualization .student-summary #ticks text {
+#foundation #visualization .student-summary .ticks text {
   fill: #000;
   font-size: 12px;
 }
