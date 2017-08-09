@@ -19,9 +19,18 @@ import segmentedTimeline from './visualizations/segmentedTimeline';
 import interactionTotals from './visualizations/interactionTotals';
 import studentSummary from './visualizations/studentSummary';
 import unitSummary from './visualizations/unitSummary';
+import socialGraph from './visualizations/socialGraph';
 import key from 'keyboard-shortcut';
 
-setTimeout(function(){
+let intervalCode = setInterval(function(){
+
+  let foundationEl = document.querySelector("#foundation");
+
+  if (!foundationEl) {
+    return;
+  } else {
+    clearInterval(intervalCode);
+  }
 
   key('ctrl shift a', function (e) {
     store.dispatch(toggleAnonymizer());
@@ -60,7 +69,7 @@ setTimeout(function(){
         <Provider store={store}>
           <SensorMappingInterfaceContainer/>
         </Provider>,
-        document.getElementById('foundation')
+        foundationEl
       );
 
       store.dispatch(fetchChildren());
@@ -78,7 +87,7 @@ setTimeout(function(){
         <Provider store={store}>
           <ManageEntitiesInterfaceContainer/>
         </Provider>,
-        document.getElementById('foundation')
+        foundationEl
       );
 
       store.dispatch(fetchEntities('areas'));
@@ -90,7 +99,7 @@ setTimeout(function(){
 
 
 
-      let foundationEl = document.querySelector("#foundation");
+      
       foundationEl.innerHTML = `
         <div class='row'>
           <div class='col-md-2' id='insights-nav-container'></div>
@@ -155,6 +164,9 @@ setTimeout(function(){
                 case 'studentSummary':
                   studentSummary(observationsData);
                   break;
+                case 'socialGraph':
+                  socialGraph(observationsData);
+                  break;
               }
             } else {
               if (status === 'fetched') {
@@ -171,6 +183,8 @@ setTimeout(function(){
               case 'segmentedTimeline':
                 store.dispatch(fetchInteractionPeriods(entityId, entityType, date));
                 break;
+              case 'socialGraph':
+                store.dispatch(fetchInteractionTotals(null, null, date, endDate));
               case 'interactionTotals':
               case 'unitSummary':
               case 'studentSummary':
@@ -192,4 +206,4 @@ setTimeout(function(){
       })
     }
   }
-}, 500);
+}, 1000);

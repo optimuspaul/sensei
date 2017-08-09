@@ -18,7 +18,7 @@ SENSEI_SERVER = 'http://localhost:5000/'
 SENSEI_API = SENSEI_SERVER + 'api/v1/'
 SENSEI_USER = 'super@example.com'
 SENSEI_PASSWORD = 'password'
-CLASSROOM_ID = 1
+CLASSROOM_ID = 2
 
 def api_req(endpoint, params=None):
     url = SENSEI_API + endpoint
