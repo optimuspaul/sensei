@@ -104,4 +104,5 @@ export const timelineTicks = (startTime, endTime, xScalar, zoom) => {
       tmpTime.setHours(tmpTime.getHours() + 1);
     }
   }
+  return ticks;
 }

@@ -65,7 +65,7 @@ def interaction_totals_index():
     if len(output) > 0:
         timestamps = [ start_time, end_time ]
     return jsonify({
-        'totals': output,
+        'obs': output,
         'entities': entities,
         'timestamps': timestamps
     })
