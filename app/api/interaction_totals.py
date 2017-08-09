@@ -29,6 +29,7 @@ def interaction_totals_index():
     if not entity_id:
         abort(400, "Missing entity_type parameter")    
     
+    interaction_type = request.args.get('interaction_type')
     start_time = assert_iso8601_time_param('start_time')
     end_time = assert_iso8601_time_param('end_time')
 
@@ -36,12 +37,21 @@ def interaction_totals_index():
     entities = []
     timestamps = []
 
-    relationships = EntityRelationship.query.filter(
-            EntityRelationship.classroom_id==classroom_id,
-            EntityRelationship.entity1_type==entity_type,
-            EntityRelationship.entity1_id==entity_id
-        ).order_by(EntityRelationship.entity2_type.asc(),
-                   EntityRelationship.entity2_id.asc()).all()
+    if not interaction_type:
+        relationships = EntityRelationship.query.filter(
+                EntityRelationship.classroom_id==classroom_id,
+                EntityRelationship.entity1_type==entity_type,
+                EntityRelationship.entity1_id==entity_id
+            ).order_by(EntityRelationship.entity2_type.asc(),
+                       EntityRelationship.entity2_id.asc()).all()
+    else:
+        relationships = EntityRelationship.query.filter(
+                EntityRelationship.classroom_id==classroom_id,
+                EntityRelationship.entity1_type==entity_type,
+                EntityRelationship.entity1_id==entity_id,
+                EntityRelationship.entity2_type==interaction_type
+            ).order_by(EntityRelationship.entity2_type.asc(),
+                       EntityRelationship.entity2_id.asc()).all()
 
     for rel in relationships:
 

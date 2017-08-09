@@ -13,6 +13,7 @@ class ActivityTimelineControls extends React.Component {
     this.handleDateChange = this.handleDateChange.bind(this);
     this.handleEndDateChange = this.handleEndDateChange.bind(this);
     this.handleVisualizationSelect = this.handleVisualizationSelect.bind(this);
+    this.handleInteractionTypeSelect = this.handleInteractionTypeSelect.bind(this);
     this.handleZoomSet = this.handleZoomSet.bind(this);
     this.handleZoomChange = this.handleZoomChange.bind(this);
 
@@ -27,8 +28,6 @@ class ActivityTimelineControls extends React.Component {
     this.state = {
       date,
       endDate,
-      zoom: '1',
-      maxStartDate: (new Date()).toISOString(),
       maxEndDate: (new Date()).toISOString(),
       minEndDate: (new Date()).toISOString()
     }
@@ -48,12 +47,18 @@ class ActivityTimelineControls extends React.Component {
   }
 
   handleDateChange (date) {
-    let zeroDate = new Date((new Date(date)).toDateString());
-
+    let newStartDate = new Date(date);
+    let endDate = new Date(this.state.endDate);
+    let zeroDate = new Date(newStartDate.toDateString());
+    if (newStartDate > endDate) {
+      endDate = zeroDate;
+      this.props.dispatch(this.props.selectEndDate(endDate.toISOString()));
+    }
     if (date) {
       this.setState({
         date,
-        minEndDate: date
+        minEndDate: date,
+        endDate,
       });
       this.props.dispatch(this.props.selectDate(zeroDate.toISOString()));
     } else {
@@ -69,10 +74,9 @@ class ActivityTimelineControls extends React.Component {
     let zeroDate = new Date((new Date(endDate)).toDateString());
     if (endDate) {
       this.setState({
-        endDate,
-        maxStartDate: endDate
+        endDate
       });
-      zeroDate.setDate(zeroDate.getDate() + 1)
+      zeroDate.setDate(zeroDate.getDate())
       this.props.dispatch(this.props.selectEndDate(zeroDate.toISOString()));
     } else {
       this.setState({
@@ -91,9 +95,18 @@ class ActivityTimelineControls extends React.Component {
     }
   }
 
+  handleInteractionTypeSelect(event) {
+    if (event.target.value) {
+      this.props.dispatch(this.props.selectInteractionType(event.target.value));
+      this.setState({
+        selectedInteractionType: event.target.value
+      })
+    }
+  }
+
   componentWillReceiveProps(nextProps) {
     let params = QueryParams.decode(location.search.slice(1));
-    params = _.pick(params, ['currentDate', 'endDate', 'visualization', 'currentEntityType', 'currentEntityId', 'zoom'])
+    params = _.pick(params, ['currentDate', 'endDate', 'visualization', 'currentEntityType', 'currentEntityId', 'zoom', 'interactionType'])
     this.setState({zoom: params.zoom})
     if (!_.isEqual(this.props.insights.ui, nextProps.insights.ui) && !_.isEqual(params, nextProps.insights.ui)) {
       history.push({
@@ -152,15 +165,36 @@ class ActivityTimelineControls extends React.Component {
     })
 
 
-
     let selectedUid = this.props.insights.ui.currentEntityType ? `${this.props.insights.ui.currentEntityType}-${this.props.insights.ui.currentEntityId}` : '';
     let endDatePicker = '';
-    if (_.includes(['studentSummary', 'interactionTotals'], this.props.insights.ui.visualization)) {
+    if (_.includes(['studentSummary', 'interactionTotals', 'unitSummary'], this.props.insights.ui.visualization)) {
       endDatePicker = (
         <div className="row">
           <div className="col-md-12">
             <label>To: </label>
             <DatePicker maxDate={this.state.maxEndDate} minDate={this.state.minEndDate} showClearButton={false} value={this.props.insights.ui.endDate} onChange={this.handleEndDateChange.bind(this)} />
+          </div>
+        </div>
+      )
+    }
+
+    let interactionTypeSelector = '';
+    if (_.includes(['unitSummary'], this.props.insights.ui.visualization)) {
+      interactionTypeSelector = (
+        <div className="row">
+          <div className="col-md-12">
+            <form>
+              <div className="form-group">
+                <label>Interactions</label>
+                <select className="form-control" value={this.props.insights.ui.interactionType} name="select-entity" onChange={this.handleInteractionTypeSelect}>
+                  <option value="">Select interaction type..</option>
+                  <option key="children" value="children">Students</option>
+                  <option key="teachers" value="teachers">Teachers</option>
+                  <option key="areas" value="areas">Areas</option>
+                  <option key="materials" value="materials">Materials</option>
+                </select>
+              </div>
+            </form>
           </div>
         </div>
       )
@@ -179,6 +213,7 @@ class ActivityTimelineControls extends React.Component {
                   <option key={`segmented-timeline`} value={`segmentedTimeline`}>Segmented Timeline</option>
                   <option key={`interaction-totals`} value={`interactionTotals`}>Interaction Totals</option>
                   <option key={`student-summary`} value={`studentSummary`}>Student Summary</option>
+                  <option key={`unit-summary`} value={`unitSummary`}>Unit Summary</option>
                 </select>
               </div>
             </form>
@@ -208,6 +243,7 @@ class ActivityTimelineControls extends React.Component {
             </form>
           </div>
         </div>
+        {interactionTypeSelector}
         <div className="row" style={{marginBottom: '10px'}}>
           <div className="col-md-12">
             { _.includes(['studentSummary', 'interactionTotals'], this.props.insights.ui.visualization) ? <label>From: </label> : <label>On: </label>}

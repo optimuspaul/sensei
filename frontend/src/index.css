@@ -19,6 +19,7 @@
   z-index: 5;
 }
 
+
 #foundation #visualization .segments text.entity-label:hover {
   text-decoration: underline;
 }
@@ -75,4 +76,22 @@
 
 #foundation #visualization .student-summary .segments text {
   text-anchor: middle;
+  font-size: 11px;
+}
+
+#foundation #visualization .student-summary .segments g text.show-on-hover {
+  opacity: 0;
+}
+
+#foundation #visualization .student-summary .segments g:hover text.show-on-hover {
+  opacity: 1.0;
+  font-size: 15px;
+  font-weight: bold;
+  font-family: arial;
+  fill: black;
+  text-shadow: 1px 1px 1px white;
+}
+
+#foundation #visualization .student-summary .segments g:hover rect.show-on-hover {
+  /*stroke: white;*/
 }
