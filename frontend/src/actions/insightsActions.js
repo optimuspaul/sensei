@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import {getSenseiToken, getClassroomId, baseUrl} from './../constants';
+import {getSenseiToken, getClassroomId, baseUrl, entityInflections} from './../constants';
 
 export const ADD_OBSERVATIONS = 'ADD_OBSERVATIONS';
 export const addObservations = (entityId, entityType, observations) => {
@@ -63,7 +63,7 @@ export const fetchInteractionPeriods = (entityId, entityType, date) => {
   }
 }
 
-export const fetchInteractionTotals = (entityId, entityType, date) => {
+export const fetchInteractionTotals = (entityId, entityType, date, endDate, interactionType) => {
   return (dispatch, getState) => {
     let state = getState();
     date = date || _.get(state, 'insights.ui.currentDate');
@@ -72,11 +72,12 @@ export const fetchInteractionTotals = (entityId, entityType, date) => {
     let endDate = endDate || _.get(state, 'insights.ui.endDate');
     endDate = endDate ? new Date(endDate) : new Date();
 
+
     let startTime = encodeURIComponent(date.toISOString().split('.000Z')[0]);
     let endTime = encodeURIComponent(endDate.toISOString().split('.000Z')[0]);
+    let it = _.invert(entityInflections)[interactionType];
 
-
-    fetch(`${baseUrl()}/api/v1/interaction_totals?classroom_id=${getClassroomId()}&entity_id=${entityId}&entity_type=${entityType}&start_time=${startTime}&end_time=${endTime}`, {
+    fetch(`${baseUrl()}/api/v1/interaction_totals?classroom_id=${getClassroomId()}&entity_id=${entityId}&entity_type=${entityType}&start_time=${startTime}&end_time=${endTime}${it ? `&interaction_type=${it}` : ''}`, {
       headers: {
         'X-SenseiToken': getSenseiToken(),
         'Content-Type': 'application/json'
@@ -107,6 +108,16 @@ export const selectVisualization = (visualization) => {
     dispatch({
       type: SELECT_VISUALIZATION,
       visualization
+    });
+  }
+}
+
+export const SELECT_INTERACTION_TYPE = 'SELECT_INTERACTION_TYPE'
+export const selectInteractionType = (interactionType) => {
+  return (dispatch, getState) => {
+    dispatch({
+      type: SELECT_INTERACTION_TYPE,
+      interactionType
     });
   }
 }
