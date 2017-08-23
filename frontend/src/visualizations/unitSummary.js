@@ -18,7 +18,7 @@ const VISUALIZATION_TEMPLATE = `
 `
 
 
-export default function interactionTotals(data) {
+export default function unitSummary(data) {
 
   if (!data) {
     return

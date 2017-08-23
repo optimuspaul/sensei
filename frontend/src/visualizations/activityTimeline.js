@@ -13,7 +13,7 @@ export default function activityTimeline(data) {
 
   if (!data) return;
 
-  document.querySelector("#visualization").innerHTML = "<svg>";
+  document.querySelector("#visualization").innerHTML = "<svg></svg>";
   let zoom = _.get(store.getState(), "insights.ui.zoom") || 1;
   let chartWidth = 1260 * zoom; // how wide the width of the visualization is
   let segmentedData = segmentData(data);
