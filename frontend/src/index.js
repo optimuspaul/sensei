@@ -8,7 +8,7 @@ import ReactDOM from 'react-dom';
 import store from './store/configureStore';
 import { Provider } from 'react-redux';
 import {fetchMappings} from './actions/sensorMappingActions';
-import {fetchChildren, fetchTeachers, fetchEntities} from './actions/entityActions';
+import {fetchChildren, fetchTeachers, fetchEntities, fetchMaterials} from './actions/entityActions';
 import {getClassroomId, isProduction, entityInflections, getSchoolId} from './constants';
 import {fetchObservations, fetchInteractionPeriods, fetchInteractionTotals} from './actions/insightsActions';
 import {toggleAnonymizer} from './actions/entityActions';
@@ -112,13 +112,13 @@ import key from 'keyboard-shortcut';
         store.dispatch(fetchChildren());
         store.dispatch(fetchTeachers());
         store.dispatch(fetchEntities('areas'));
-        store.dispatch(fetchEntities('materials'));
+        store.dispatch(fetchMaterials());
         store.dispatch(fetchMappings());
 
       }
 
       if (location.pathname.indexOf('wf/events/entities') !== -1) {
-        document.title = 'Manage Materials & Areas';
+        document.title = 'Manage Areas';
 
         ReactDOM.render(
           <Provider store={store}>
@@ -127,8 +127,8 @@ import key from 'keyboard-shortcut';
           foundationEl
         );
 
+        store.dispatch(fetchMaterials());
         store.dispatch(fetchEntities('areas'));
-        store.dispatch(fetchEntities('materials'));
 
       }
 
@@ -159,7 +159,7 @@ import key from 'keyboard-shortcut';
         store.dispatch(fetchChildren());
         store.dispatch(fetchTeachers());
         store.dispatch(fetchEntities('areas'));
-        store.dispatch(fetchEntities('materials'));
+        store.dispatch(fetchMaterials());
 
         let prevEntityUid, prevDate, prevEndDate, prevVisualization, prevInteractionType, prevZoom;
 
