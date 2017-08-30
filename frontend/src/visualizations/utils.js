@@ -31,12 +31,12 @@ export const segmentData = (data, entitiesToShow = ENTITIES_TO_SHOW) => {
   let state = store.getState();
   let storeEntities = state.entities;
   let currentEntityType = state.insights.ui.currentEntityType;
-  let segmentedData = _.reduce(data.entities, (current, entity_data, index) => {
-    let entityType = entityInflections[entity_data[0]];
+  let segmentedData = _.reduce(data.entities, (current, entityData, index) => {
+    let entityType = entityInflections[entityData[0]];
     if (entitiesToShow && !_.includes(entitiesToShow[currentEntityType], entityType)) {
       return current
     }
-    let entityId = entity_data[1];
+    let entityId = entityData[1];
     let entity = storeEntities[entityType][entityId];
     let entityName = entity ? entity.displayName : "Unknown";
     current[entityType] = current[entityType] || {entities: []};

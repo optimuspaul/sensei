@@ -16,7 +16,6 @@ import _ from 'lodash';
 import './index.css';
 import activityTimeline from './visualizations/activityTimeline';
 import segmentedTimeline from './visualizations/segmentedTimeline';
-import interactionTotals from './visualizations/interactionTotals';
 import studentSummary from './visualizations/studentSummary';
 import unitSummary from './visualizations/unitSummary';
 import socialGraph from './visualizations/socialGraph';
@@ -175,7 +174,7 @@ import key from 'keyboard-shortcut';
           let zoom = _.get(state, 'insights.ui.zoom');
           let status = _.get(state, 'insights.status');
 
-          if (entityId && entityType && date && visualization && (endDate && _.includes(['studentSummary', 'interactionTotals'], visualization) || !_.includes(['studentSummary', 'interactionTotals'], visualization))) {
+          if (entityId && entityType && date && visualization && (endDate && _.includes(['studentSummary', 'unitSummary'], visualization) || !_.includes(['studentSummary', 'unitSummary'], visualization))) {
             if (entityUid === prevEntityUid && date === prevDate && endDate === prevEndDate && prevVisualization === visualization && prevInteractionType === interactionType && prevZoom === zoom) {
               let entity = _.get(state, `entities.${entityInflections[entityType]}.${entityId}`);
               let dateString = (new Date(date)).toDateString();
@@ -192,9 +191,7 @@ import key from 'keyboard-shortcut';
                   case 'segmentedTimeline':
                     segmentedTimeline(observationsData);
                     break;
-                  case 'interactionTotals':
-                    interactionTotals(observationsData);
-                    break;
+
                   case 'unitSummary':
                     unitSummary(observationsData);
                     break;
@@ -222,7 +219,6 @@ import key from 'keyboard-shortcut';
                   break;
                 case 'socialGraph':
                   store.dispatch(fetchInteractionTotals(null, null, date, endDate));
-                case 'interactionTotals':
                 case 'unitSummary':
                 case 'studentSummary':
                   if (endDate && !(visualization === 'unitSummary' && !interactionType)) {
