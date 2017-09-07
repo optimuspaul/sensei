@@ -77,7 +77,7 @@ export const fetchInteractionTotals = (entityId, entityType, date, endDate, inte
     let endTime = encodeURIComponent(endDate.toISOString().split('.000Z')[0]);
     let it = _.invert(entityInflections)[interactionType];
 
-    fetch(`${baseUrl()}/api/v1/interaction_totals?classroom_id=${getClassroomId()}&entity_id=${entityId}&entity_type=${entityType}&start_time=${startTime}&end_time=${endTime}${it ? `&interaction_type=${it}` : ''}`, {
+    fetch(`${baseUrl()}/api/v1/interaction_totals?classroom_id=${getClassroomId()}${entityId ? `&entity_id=${entityId}` : ''}${entityType ? `&entity_type=${entityType}` : ''}&start_time=${startTime}&end_time=${endTime}${it ? `&interaction_type=${it}` : ''}`, {
       headers: {
         'X-SenseiToken': getSenseiToken(),
         'Content-Type': 'application/json'
@@ -148,6 +148,16 @@ export const refreshFromParams = (params) => {
     dispatch({
       type: REFRESH_FROM_PARAMS,
       params
+    });
+  }
+}
+
+export const SET_ZOOM = 'SET_ZOOM'
+export const setZoom = (zoom) => {
+  return (dispatch, getState) => {
+    dispatch({
+      type: SET_ZOOM,
+      zoom
     });
   }
 }

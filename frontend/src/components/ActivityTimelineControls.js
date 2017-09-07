@@ -4,6 +4,7 @@ import DatePicker from 'react-bootstrap-date-picker';
 import QueryParams from 'query-params';
 import { history } from '../utils';
 
+
 class ActivityTimelineControls extends React.Component {
 
   constructor(props) {
@@ -13,6 +14,8 @@ class ActivityTimelineControls extends React.Component {
     this.handleEndDateChange = this.handleEndDateChange.bind(this);
     this.handleVisualizationSelect = this.handleVisualizationSelect.bind(this);
     this.handleInteractionTypeSelect = this.handleInteractionTypeSelect.bind(this);
+    this.handleZoomSet = this.handleZoomSet.bind(this);
+    this.handleZoomChange = this.handleZoomChange.bind(this);
 
     let params = QueryParams.decode(location.search.slice(1));
 
@@ -65,7 +68,7 @@ class ActivityTimelineControls extends React.Component {
     }
   }
 
-  
+
 
   handleEndDateChange (endDate) {
     let zeroDate = new Date((new Date(endDate)).toDateString());
@@ -80,9 +83,9 @@ class ActivityTimelineControls extends React.Component {
         endDate: this.state.endDate
       });
     }
-    
+
   }
-  
+
   handleVisualizationSelect(event) {
     if (event.target.value) {
       this.props.dispatch(this.props.selectVisualization(event.target.value));
@@ -103,12 +106,22 @@ class ActivityTimelineControls extends React.Component {
 
   componentWillReceiveProps(nextProps) {
     let params = QueryParams.decode(location.search.slice(1));
-    params = _.pick(params, ['currentDate', 'endDate', 'visualization', 'currentEntityType', 'currentEntityId', 'interactionType'])
+    params = _.pick(params, ['currentDate', 'endDate', 'visualization', 'currentEntityType', 'currentEntityId', 'zoom', 'interactionType'])
+    this.setState({zoom: params.zoom})
     if (!_.isEqual(this.props.insights.ui, nextProps.insights.ui) && !_.isEqual(params, nextProps.insights.ui)) {
       history.push({
         search: QueryParams.encode(_.merge(params, nextProps.insights.ui))
       });
     }
+  }
+
+  handleZoomChange(event) {
+    this.setState({zoom:event.target.value});
+  }
+
+  handleZoomSet(event) {
+    this.setState({zoom:event.target.value});
+    this.props.dispatch(this.props.setZoom(event.target.value));
   }
 
   handleEntitySelect(event) {
@@ -117,7 +130,7 @@ class ActivityTimelineControls extends React.Component {
       this.entityType = event.target.value.split("-")[0];
       this.setState({
         params: {
-          entityId: this.entityId, 
+          entityId: this.entityId,
           entityType: this.entityType
         }
       });
@@ -154,7 +167,7 @@ class ActivityTimelineControls extends React.Component {
 
     let selectedUid = this.props.insights.ui.currentEntityType ? `${this.props.insights.ui.currentEntityType}-${this.props.insights.ui.currentEntityId}` : '';
     let endDatePicker = '';
-    if (_.includes(['studentSummary', 'interactionTotals', 'unitSummary'], this.props.insights.ui.visualization)) {
+    if (_.includes(['studentSummary', 'unitSummary', 'socialGraph'], this.props.insights.ui.visualization)) {
       endDatePicker = (
         <div className="row">
           <div className="col-md-12">
@@ -198,9 +211,9 @@ class ActivityTimelineControls extends React.Component {
                   <option value="">Select visualization..</option>
                   <option key={`activity-timeline`} value={`activityTimeline`}>Activity Timeline</option>
                   <option key={`segmented-timeline`} value={`segmentedTimeline`}>Segmented Timeline</option>
-                  <option key={`interaction-totals`} value={`interactionTotals`}>Interaction Totals</option>
                   <option key={`student-summary`} value={`studentSummary`}>Student Summary</option>
                   <option key={`unit-summary`} value={`unitSummary`}>Unit Summary</option>
+                  <option key={`social-graph`} value={`socialGraph`}>Social Graph</option>
                 </select>
               </div>
             </form>
@@ -233,11 +246,27 @@ class ActivityTimelineControls extends React.Component {
         {interactionTypeSelector}
         <div className="row" style={{marginBottom: '10px'}}>
           <div className="col-md-12">
-            { _.includes(['studentSummary', 'interactionTotals'], this.props.insights.ui.visualization) ? <label>From: </label> : <label>On: </label>}
+            { _.includes(['studentSummary', 'unitSummary'], this.props.insights.ui.visualization) ? <label>From: </label> : <label>On: </label>}
             <DatePicker maxDate={this.state.maxStartDate} showClearButton={false} value={this.props.insights.ui.currentDate} onChange={this.handleDateChange.bind(this)} />
           </div>
         </div>
         {endDatePicker}
+        <div className="row" style={{marginBottom: '10px'}}>
+          <div className="col-md-12">
+            <h6> Zoom level: {this.state.zoom} </h6>
+            <input
+              id="zoom-slider"
+              type="range"
+              defaultValue={this.props.insights.ui.zoom}
+              onChange={this.handleZoomChange}
+              min="1"
+              max="5"
+              step="1"
+              onMouseUp={this.handleZoomSet}
+            />
+          </div>
+        </div>
+
       </div>
     )
   }

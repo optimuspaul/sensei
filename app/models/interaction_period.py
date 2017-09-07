@@ -32,9 +32,7 @@ class InteractionPeriod(db.Model):
     def bulk_store(obs):
         insert_stmt = insert(InteractionPeriod.__table__)
 
-        do_nothing_stmt = insert_stmt.on_conflict_do_nothing(
-            index_elements=['classroom_id', 'started_at', 'ended_at', 'relationship_id']
-        )
+        do_nothing_stmt = insert_stmt.on_conflict_do_nothing()
         obs_values = [o.as_dict_for_bulk_insert() for o in obs]
         print "obs_values %s" % obs_values
         db.session.execute(do_nothing_stmt, obs_values)

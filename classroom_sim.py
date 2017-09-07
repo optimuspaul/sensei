@@ -253,7 +253,7 @@ sensors = children + teachers + areas + materials
 
 
 # Start sim at 8am yesterday
-sim_time = datetime.now(get_localzone())
+sim_time = datetime.now(get_localzone()) - timedelta(hours=48)
 sim_time = sim_time.replace(hour=8, minute=0, second=0, microsecond=0)
 end_time = sim_time + timedelta(hours=7)
 
