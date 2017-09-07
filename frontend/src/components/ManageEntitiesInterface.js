@@ -48,14 +48,14 @@ class ManageEntitiesInterface extends React.Component {
   render() {
 
 
-    let entityTypes = _.map(['areas', 'materials'], (entityType) => {
+    let entityTypes = _.map(['areas'], (entityType) => {
       return (
         <div className="col-md-6" key={`manage-${entityType}`}>
           <h2>{entityType}
             { this.state.showingForm !== entityType ? <small><a href="#" onClick={() => { this.showEntityForm(entityType)} }> add new..</a></small> : "" }
           </h2>
 
-          { this.state.showingForm === entityType ? <div style={{margin: "20px 0px"}}><EntityForm requests={this.props.requests} entityType={entityType} onCancel={this.handleCancel} onSave={this.handleSave}/></div> : "" }
+          { this.state.showingForm === entityType ? <div style={{margin: "20px 0px"}}><EntityForm requests={this.props.requests} availableMaterials={this.props.entities.availableMaterials} entityType={entityType} onCancel={this.handleCancel} onSave={this.handleSave}/></div> : "" }
 
           <ul className="list-group">
             {
