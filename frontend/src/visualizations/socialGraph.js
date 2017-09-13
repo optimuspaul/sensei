@@ -35,8 +35,6 @@ export default function socialGraph(data) {
   let canvas = document.querySelector("#visualization canvas");
   let context = canvas.getContext("2d");
 
-
-
   let simulation = d3.forceSimulation()
     .force("link", d3.forceLink().id(function(d) { return d.id; }))
     .force("charge", d3.forceManyBody())
