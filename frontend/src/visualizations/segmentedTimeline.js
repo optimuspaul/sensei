@@ -1,199 +1,62 @@
 import * as d3 from "d3";
 import {entityInflections} from './../constants';
-import {selectEntity} from './../actions/insightsActions';
 import store from './../store/configureStore';
+import {startAndEndTimes, generateXScalar, calcChartHeight, segmentData, timelineTicks} from './utils';
+import {entityRow, entityRowLabel, entityTypeSection, timeTicks} from './components';
 import _ from 'lodash';
 
-const ROW_HEIGHT = 30; // how tall each row of data in timeline is
-const STATIC_WIDTH = 1260; // how wide the width of the visualization is
-const OFFSET = 205; // how far to the right the interaction segments should start being drawn from
-const VISUALIZATION_TEMPLATE = `
-  <svg>
-    <g id='ticks'></g>
-    <g id='children' class='segments'></g>
-    <g id='areas' class='segments'></g>
-    <g id='materials' class='segments'></g>
-    <g id='teachers' class='segments'></g>
-  </svg>
-`
-const ENTITIES_TO_SHOW = {
-  child: ['children', 'areas', 'materials', 'teachers'],
-  teacher: ['children', 'areas'],
-  area: ['children', 'teachers'],
-  material:  ['children']
-}
+const rowHeight = 30; // how tall each row of data in timeline is
+const offset = 205; // how far to the right the interaction segments should start being drawn from
 
-export default function activityTimeline(data) {
+/*
+  plots the interaction segments for each entity within the current entity type group. The
+  segments are based on a running average of radio observations between the current entity
+  and any other given entity. Each segment is scaled linearly on the x-axis using xScalar
+  defined above, and its timestamp is added as a data attribute for debugging purposes.
+ */
+export default function segmentedTimeline(data) {
 
-  if (!data) {
-    return
-  }
+  if (!data) return;
 
-  /*
-    Initializes the template into the DOM
-   */
-  document.querySelector("#visualization").innerHTML = VISUALIZATION_TEMPLATE;
-
-  /*
-    Creates array of pairs that determine where the vertical timeline ticks
-    are drawn and which hour label should be placed at the bottom of them to
-    be fed into d3
-   */
-  let startTime = new Date(d3.min(data.timestamps));
-  startTime.setMinutes(0);
-  startTime.setSeconds(0);
-  let endTime = new Date(d3.max(data.timestamps));
-  endTime.setHours(endTime.getHours() + 2);
-  endTime.setMinutes(0);
-  endTime.setSeconds(0);
-  let tmpTime = new Date(startTime.getTime());
-  let ticks = []
-  while (tmpTime < endTime) {
-    ticks.push([tmpTime.getHours(), tmpTime.getTime()])
-    tmpTime.setHours(tmpTime.getHours() + 1);
-  }
-
-  let currentEntityType = _.get(store.getState(), "insights.ui.currentEntityType");
-
-  /*
-    Creates an object containing the data necessary for drawing the interaction segments
-    provided for each entity
-   */
-  let segmentedData = _.reduce(data.entities, (current, entity_data, index) => {
-    let entityType = entityInflections[entity_data[0]];
-    if (!_.includes(ENTITIES_TO_SHOW[currentEntityType], entityType)) {
-      return current
-    }
-    let entityId = entity_data[1];
-    let entity = store.getState().entities[entityType][entityId];
-    let entityName = entity ? entity.displayName : "Unknown";
-    current[entityType] = current[entityType] || {obs: [], entities: []};
-    current[entityType].obs.push(data.obs[index]);
-    current[entityType].entities.push(entityName);
-    current[entityType].y = current[entityType].y || index + _.size(current);
-    return current;
-  }, {});
-
-
-
-  /*
-    Creates a scalar on the x axis that constrains all values to the
-    fixed width of the visualization, specified by the STATIC_WIDTH
-    constant defined above
-   */
-  var xScalar = d3.scaleLinear()
-    .domain([startTime.getTime(), endTime.getTime()])
-    .range([0, STATIC_WIDTH-OFFSET]);
-
-  /*
-    Determines the height of the chart based on the number of entities included
-    with the segment data and the predetermined ROW_HEIGHT constant defined
-    above, with an extra ROW_HEIGHT's worth of space added to the bottom to make
-    space for the time tick labels
-   */
-  let chartHeight = (ROW_HEIGHT * _.sumBy(_.toArray(segmentedData), (entityType) => { return _.size(entityType.entities) + 1 }));
-
-
-  /*
-    Initializes the chart with d3 using the STATIC_WIDTH constant defined above
-    and the calculated chartHeight from above
-   */
+  document.querySelector("#visualization").innerHTML = "<svg>";
+  let zoom = _.get(store.getState(), "insights.ui.zoom") || 1;
+  let chartWidth = 1260 * zoom; // how wide the width of the visualization is
+  let segmentedData = segmentData(data);
+  let {startTime, endTime} = startAndEndTimes(data.timestamps);
+  let xScalar = generateXScalar(startTime, endTime, chartWidth-offset);
+  let chartHeight = calcChartHeight(segmentedData);
+  let ticks = timelineTicks(startTime, endTime, xScalar, zoom);
   let chart = d3.select("#visualization svg")
-                  .attr("width", STATIC_WIDTH)
-                  .attr("height", chartHeight + 20);
 
+  chart.attr("width", chartWidth)
+    .attr("height", chartHeight + 20)
+    .call(timeTicks, startTime, endTime, {offset, y: 10, zoom, id: 'top'})
+    .call(timeTicks, startTime, endTime, {offset, y: chartHeight+20, zoom, hideLines: true})
+    .selectAll("g.segments")
+    .data(segmentedData)
+    .call(entityTypeSection, {className: 'segments'})
 
+  chart.selectAll("g.segments")
+    .selectAll("g.row")
+    .data(d => d[1].entities)
+    .call(entityRow, 'row')
 
-  /*
-    Adds the dashed time tick lines and their appropriate hour labels
-    using the ticks data array created above and scaled using the linear
-    scalar xScalar created above to ensure they stay within the SVG's width
-   */
-  let ticksContainer = chart.select('#ticks');
+  chart.selectAll("g.row")
+    .call(entityRowLabel)
+    .selectAll("rect")
+    .data(d => d.obs)
+    .enter().append("rect")
+    .attr("x", (d) => {
+      let timestamp = new Date(d[0]);
+      return xScalar(timestamp.getTime()) + offset
+    })
+    .attr('width', (d) => {
+      let startTimestamp = new Date(d[0]);
+      let endTimestamp = new Date(d[1]);
+      return xScalar(endTimestamp.getTime()) - xScalar(startTimestamp.getTime());
+    })
+    .attr('height', rowHeight*0.6)
+    .attr("y", rowHeight*0.2)
 
-  ticksContainer.selectAll("line")
-       .data(ticks)
-       .enter().append("line")
-       .attr("x1", (tick, index) => { return xScalar(tick[1]) + OFFSET + 15 })
-       .attr("x2", (tick, index) => { return xScalar(tick[1]) + OFFSET + 15 })
-       .attr("y1", 20)
-       .attr("y2", chartHeight);
-
-  [10, chartHeight+15].forEach((y) => {
-    ticksContainer.selectAll(`text.y-${y}`)
-         .data(ticks)
-         .enter().append(`text`)
-         .attr('class', `y-${y}`)
-         .attr("x", (tick, index) => { return xScalar(tick[1]) + OFFSET })
-         .attr("y", y)
-         .text((tick, index) => { return parseInt(tick[0], 10) > 12 ? `${parseInt(tick[0], 10) - 12}:00pm` : `${tick[0]}:00${tick[0] === '12' ? 'pm' : 'am'}` })
-  });
-
-  // builds each entity type section using the segmentedData generated above
-  _.each(segmentedData, buildSection);
-
-  /*
-    Builds each entity row in the timeline visualization by taking the entity data
-    and entity type provided and creating a label and plotting the interaction segments using
-    d3 and scaled linearly to fit the SVG's fixed width
-   */
-  function buildSection(entityData, entityType) {
-
-    // selects group tag that corresponds to the current entity type
-    let section = chart.select(`#${entityType}`);
-
-    // sets the y displacement for the current entity type group
-    section.attr("transform", "translate(0," + ((entityData.y * ROW_HEIGHT)) + ")");
-
-    // adds the entity type label for the current entity group
-    section.append("text")
-           .attr("x", 0)
-           .attr("y", 0)
-           .attr("style", "font-weight: bold")
-           .text(entityType);
-
-    /*
-      adds a row for each entity included in the current entity type group and sets
-      its correct y displacement
-     */
-    let row = section.selectAll("g")
-              .data(entityData.entities)
-              .enter().append("g")
-              .attr("transform", function(entity, index) { return "translate(0," + index * ROW_HEIGHT + ")"; });
-
-    // adds the entity display names as labels for each entity row within the current group
-    row.append("text")
-        .attr("x", 5)
-        .attr("y", ROW_HEIGHT / 1.5)
-        .attr("dy", ".35em")
-        .text(function(entity) { return entity })
-        .on('click', (entity) => {
-          store.dispatch(selectEntity(entity.entityId, _.invert(entityInflections)[entity.entityType]))
-        });
-
- 
-
-    /*
-      plots the interaction segments for each entity within the current entity type group. The
-      segments are based on a running average of radio observations between the current entity 
-      and any other given entity. Each segment is scaled linearly on the x-axis using xScalar 
-      defined above, and its timestamp is added as a data attribute for debugging purposes.
-     */
-    row.selectAll("rect")
-       .data((observation, index) => { return entityData.obs[index]})
-       .enter().append("rect")
-       .attr("x", (observation, index) => {
-          let timestamp = new Date(observation[0]);
-          return xScalar(timestamp.getTime()) + OFFSET
-        })
-       .attr('width', (observation, index) => {
-          let startTimestamp = new Date(observation[0]);
-          let endTimestamp = new Date(observation[1]);
-          return xScalar(endTimestamp.getTime()) - xScalar(startTimestamp.getTime());
-        })
-       .attr('height', ROW_HEIGHT*0.6)
-       .attr("y", ROW_HEIGHT*0.2)
-       .attr("data-timestamp", (observation, index) => { return data.timestamps[index] })
-  }
 
 }

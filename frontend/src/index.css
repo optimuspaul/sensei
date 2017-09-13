@@ -1,4 +1,12 @@
 
+#foundation #visualization {
+  overflow: scroll;
+  width: 100%;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 5px;
+  padding: 10px;
+  box-shadow: inset 0px 0px 4px 0px rgba(0,0,0,0.1);
+}
 
 #foundation #visualization .segments text {
   text-anchor: start;
@@ -21,19 +29,19 @@
 }
 
 #foundation #visualization .segments rect {
-  stroke-width: 2; 
+  stroke-width: 2;
   fill: #f9e9e9;
   stroke: red;
 }
 
 #foundation #visualization .segments.total rect {
-  stroke-width: 0; 
+  stroke-width: 0;
   fill: red;
   stroke: red;
 }
 
 #foundation #visualization .student-summary .segments.total rect {
-  stroke-width: 2; 
+  stroke-width: 2;
   fill: white;
   stroke: red;
   z-index: 0;
@@ -41,28 +49,28 @@
 
 
 
-#foundation #visualization #ticks line {
-  stroke-linecap: round; 
-  stroke-width: 2; 
-  stroke-dasharray: 5,5; 
+#foundation #visualization .ticks line {
+  stroke-linecap: round;
+  stroke-width: 2;
+  stroke-dasharray: 5,5;
   fill: none;
   stroke: #ddd;
 }
 
 
-#foundation #visualization #ticks text {
+#foundation #visualization .ticks text {
   fill: #bbb;
   font-size: 12px;
 }
 
-#foundation #visualization .student-summary #ticks text {
+#foundation #visualization .student-summary .ticks text {
   fill: #000;
   font-size: 12px;
 }
 
 #foundation #visualization line.axis {
-  stroke-linecap: square; 
-  stroke-width: 2; 
+  stroke-linecap: square;
+  stroke-width: 2;
   stroke: black;
 }
 

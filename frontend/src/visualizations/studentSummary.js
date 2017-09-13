@@ -29,7 +29,7 @@ export default function interactionTotals(data) {
     return
   }
 
-  _.forEach(_.orderBy(_.zip(data.totals, data.entities), '0', 'desc'), (pair, index) => { data.entities[index] = pair[1]; data.totals[index] = pair[0]; });
+  _.forEach(_.orderBy(_.zip(data.obs, data.entities), '0', 'desc'), (pair, index) => { data.entities[index] = pair[1]; data.obs[index] = pair[0]; });
   
 
   /*
@@ -60,7 +60,7 @@ export default function interactionTotals(data) {
     let entity = store.getState().entities[entityType][entityId];
     let entityName = entity ? entity.displayName : "Unknown";
     current[entityType] = current[entityType] || {totals: [], entities: []};
-    current[entityType].totals.push(data.totals[index]);
+    current[entityType].totals.push(data.obs[index]);
     current[entityType].entities.push(entityName);
     return current;
   }, {});

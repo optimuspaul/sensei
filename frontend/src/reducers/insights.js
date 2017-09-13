@@ -70,10 +70,18 @@ export default function sensorMappings(state = initialState, action) {
         },
         status: 'fetching'
       }
+    case 'SET_ZOOM':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          zoom: parseInt(action.zoom)
+        }
+      }
     case 'REFRESH_FROM_PARAMS':
       return {
         observations: {},
-        ui: _.pick(action.params, ['currentDate', 'endDate', 'visualization', 'interactionType', 'currentEntityType', 'currentEntityId']),
+        ui: _.pick(action.params, ['currentDate', 'endDate', 'visualization', 'interactionType', 'currentEntityType', 'currentEntityId', 'zoom']),
         status: 'fetching'
       }
     default:
