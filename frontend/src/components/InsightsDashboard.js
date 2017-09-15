@@ -2,7 +2,7 @@ import React from 'react';
 import _ from 'lodash';
 import d3 from 'd3';
 import {Grid, Row, Col, Thumbnail, Button, ButtonToolbar} from 'react-bootstrap';
-import {frontendBaseUrl} from './../constants';
+import {frontendBaseUrl, getClassroomId, getSchoolId} from './../constants';
 import './InsightsDashboard.css';
 
 class InsightsDashboard extends React.Component {
@@ -19,46 +19,57 @@ class InsightsDashboard extends React.Component {
     return true;
   }
 
+  handleClick = (event) => {
+    debugger
+  }
+
   render() {
 
+    let yesterday = (new Date((new Date()).toDateString())).toISOString();
+    let today = (new Date((new Date()).toDateString()));
+    today.setDate(today.getDate() - 1);
+    today = today.toISOString();
+    let lastMonth = (new Date((new Date()).toDateString()));
+    lastMonth.setDate(lastMonth.getMonth() - 1);
+    lastMonth = lastMonth.toISOString();
+
     return (
-      <Grid fluid="true" className="insights-dashboard">
+      <Grid className="insights-dashboard">
         <Row>
           <Col md={8}><h2>Classroom Insights</h2>
             <p>This section provides various tools for gaining insights about your classroom, your students, and their progress.</p>
           </Col>
         </Row>
         <Row>
-        <Col xs={6} md={4}>
-          <Thumbnail className="insight-thumbnail" src={`${frontendBaseUrl()}/segmentedGraph.png`} alt="242x200">
-            <h4>What interactions happened in my classroom yesterday?</h4>
+        <Col className="insight-card" xs={6} md={4}>
+          <Thumbnail onClick={() => {window.location=`/s/${getSchoolId()}/networks/wf/events/insights?currentDate=${yesterday}&endDate=${today}&visualization=activityTimeline&currentEntityType=child&currentEntityId=${this.props.defaultEntity.id}`}} className="insight-thumbnail" src={`${frontendBaseUrl()}/activityTimeline.png`} alt="242x200">
+            <h4>Activity Timeline</h4>
             <p>
-              <ButtonToolbar>
-                <Button bsSize="small" bsStyle="primary">View</Button> {' '}
-                <Button bsSize="small" bsStyle="default">Customize</Button>
-              </ButtonToolbar>
+              Shows who a given student or teacher interacted with throughout the day
             </p>
           </Thumbnail>
         </Col>
-        <Col xs={6} md={4}>
-          <Thumbnail className="insight-thumbnail" src={`${frontendBaseUrl()}/studentSummary.png`} alt="242x200">
-            <h4>What did Billy spend his time doing last week?</h4>
+        <Col className="insight-card" xs={6} md={4}>
+          <Thumbnail onClick={() => {window.location=`/s/${getSchoolId()}/networks/wf/events/insights?currentDate=${lastMonth}&endDate=${today}&visualization=studentSummary&currentEntityType=child&currentEntityId=${this.props.defaultEntity.id}`}} className="insight-thumbnail" src={`${frontendBaseUrl()}/studentSummary.png`} alt="242x200">
+            <h4>Activity Summary</h4>
             <p>
-              <ButtonToolbar>
-                <Button bsSize="small" bsStyle="primary">View</Button> {' '}
-                <Button bsSize="small" bsStyle="default">Customize</Button>
-              </ButtonToolbar>
+              Shows the relative times spent with materials, in areas, or interacting with other kids for a given time period
             </p>
           </Thumbnail>
         </Col>
-        <Col xs={6} md={4}>
-          <Thumbnail className="insight-thumbnail" src={`${frontendBaseUrl()}/socialGraph.png`} alt="242x200">
-            <h4>What groups are forming among the students?</h4>
+        <Col className="insight-card" xs={6} md={4}>
+          <Thumbnail onClick={() => {window.location=`/s/${getSchoolId()}/networks/wf/events/insights?currentDate=${lastMonth}&endDate=${today}&visualization=unitSummary&currentEntityType=child&currentEntityId=${this.props.defaultEntity.id}`}} className="insight-thumbnail" src={`${frontendBaseUrl()}/unitSummary.png`} alt="242x200">
+            <h4>Activity Totals</h4>
             <p>
-              <ButtonToolbar>
-                <Button bsSize="small" bsStyle="primary">View</Button> {' '}
-                <Button bsSize="small" bsStyle="default">Customize</Button>
-              </ButtonToolbar>
+              Shows how much time a student has spent interacting with others over a given time period
+            </p>
+          </Thumbnail>
+        </Col>
+        <Col className="insight-card" xs={6} md={4}>
+          <Thumbnail onClick={() => {window.location=`/s/${getSchoolId()}/networks/wf/events/insights?currentDate=${yesterday}&endDate=${today}&visualization=socialGraph&currentEntityType=child&currentEntityId=${this.props.defaultEntity.id}`}} className="insight-thumbnail" src={`${frontendBaseUrl()}/socialGraph.png`} alt="242x200">
+            <h4>Social Graph</h4>
+            <p>
+              Shows how a student is linked to their classmates based on the level of interaction over a given period of time
             </p>
           </Thumbnail>
         </Col>

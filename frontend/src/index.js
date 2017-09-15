@@ -9,7 +9,7 @@ import ReactDOM from 'react-dom';
 import store from './store/configureStore';
 import { Provider } from 'react-redux';
 import {fetchMappings} from './actions/sensorMappingActions';
-import {fetchChildren, fetchTeachers, fetchEntities} from './actions/entityActions';
+import {fetchChildren, fetchTeachers, fetchEntities, fetchMaterials} from './actions/entityActions';
 import {getClassroomId, isProduction, entityInflections, getSchoolId} from './constants';
 import {fetchObservations, fetchInteractionPeriods, fetchInteractionTotals} from './actions/insightsActions';
 import {toggleAnonymizer} from './actions/entityActions';
@@ -112,13 +112,13 @@ import key from 'keyboard-shortcut';
         store.dispatch(fetchChildren());
         store.dispatch(fetchTeachers());
         store.dispatch(fetchEntities('areas'));
-        store.dispatch(fetchEntities('materials'));
+        store.dispatch(fetchMaterials());
         store.dispatch(fetchMappings());
 
       }
 
       if (location.pathname.indexOf('wf/events/entities') !== -1) {
-        document.title = 'Manage Materials & Areas';
+        document.title = 'Manage Areas';
 
         ReactDOM.render(
           <Provider store={store}>
@@ -127,12 +127,17 @@ import key from 'keyboard-shortcut';
           foundationEl
         );
 
+        store.dispatch(fetchMaterials());
         store.dispatch(fetchEntities('areas'));
-        store.dispatch(fetchEntities('materials'));
 
       }
 
       if (location.pathname.indexOf('wf/events/insights/dashboard') !== -1) {
+
+        store.dispatch(fetchChildren());
+        store.dispatch(fetchTeachers());
+        store.dispatch(fetchEntities('areas'));
+        store.dispatch(fetchMaterials());
 
         ReactDOM.render(
           <Provider store={store}>
@@ -167,7 +172,7 @@ import key from 'keyboard-shortcut';
           store.dispatch(fetchChildren());
           store.dispatch(fetchTeachers());
           store.dispatch(fetchEntities('areas'));
-          store.dispatch(fetchEntities('materials'));
+          store.dispatch(fetchMaterials());
 
           let prevEntityUid, prevDate, prevEndDate, prevVisualization, prevInteractionType, prevZoom;
 
@@ -182,15 +187,16 @@ import key from 'keyboard-shortcut';
             let endDate = _.get(state, 'insights.ui.endDate');
             let zoom = _.get(state, 'insights.ui.zoom');
             let status = _.get(state, 'insights.status');
+            let entity = _.get(state, `entities.${entityInflections[entityType]}.${entityId}`);
+            let entityName = entity && entity.displayName;
 
             if (entityId && entityType && date && visualization && (endDate && _.includes(['studentSummary', 'unitSummary'], visualization) || !_.includes(['studentSummary', 'unitSummary'], visualization))) {
               if (entityUid === prevEntityUid && date === prevDate && endDate === prevEndDate && prevVisualization === visualization && prevInteractionType === interactionType && prevZoom === zoom) {
-                let entity = _.get(state, `entities.${entityInflections[entityType]}.${entityId}`);
                 let dateString = (new Date(date)).toDateString();
                 if (endDate) {
                   dateString += ` to ${(new Date(endDate)).toDateString()}`
                 }
-                document.querySelector("#visualization-title").innerHTML = `${entity.displayName} <small>${dateString}</small>`
+                document.querySelector("#visualization-title").innerHTML = `${entityName} <small>${dateString}</small>`
                 let observationsData = state.insights.observations[entityUid];
                 if (observationsData && (!_.isEmpty(observationsData.entities) && !_.isEmpty(observationsData.timestamps))) {
                   switch(visualization) {

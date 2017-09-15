@@ -145,6 +145,7 @@ paths:
           description: The type of the entity to retrieve observations for.
           required: true
           type: string
+          enum: [ "child", "teacher", "material", "area"]
         - name: start_time
           in: query
           type: string
@@ -210,6 +211,7 @@ paths:
           description: The type of the entity to retrieve events for.
           required: true
           type: string
+          enum: [ "child", "teacher", "material", "area"]
         - name: start_time
           in: query
           type: string
@@ -231,7 +233,8 @@ paths:
           description: Unauthorized
   /interaction_periods:
     get:
-      summary: Returns interaction periods between a given entity and all other entities in a given classroom. Interaction periods are determined by taking a running average of radio observation points within a given period of time to get a start and end time to be visualized as one continuous interaction.
+      summary: Fetch interaction periods
+      description: Returns interaction periods between a given entity and all other entities in a given classroom. Interaction periods are determined by taking a running average of radio observation points within a given period of time to get a start and end time to be visualized as one continuous interaction.
       produces:
         - application/json
       parameters:
@@ -250,11 +253,19 @@ paths:
           description: The type of the entity to retrieve interaction periods for.
           required: true
           type: string
+          enum: [ "child", "teacher", "material", "area"]
         - name: start_time
           in: query
           type: string
+          format: date-time
           required: true
-          description: Determines the date after which all interaction periods will be summed. iso8601 format. Example '2002-12-25T12:15:05'.
+          description: Filters out periods that end before this date. iso8601 format. Example '2002-12-25T12:15:05'.
+        - name: end_time
+          in: query
+          type: string
+          format: date-time
+          required: true
+          description: Filters out periods that start after this date. iso8601 format. Example '2002-12-25T12:15:05'.
       tags:
         - InteractionPeriods
       security:
@@ -285,6 +296,7 @@ paths:
           description: The type of the entity to retrieve interaction totals for.
           required: true
           type: string
+          enum: [ "child", "teacher", "material", "area"]
         - name: start_time
           in: query
           type: string

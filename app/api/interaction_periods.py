@@ -105,8 +105,8 @@ def interaction_periods_index():
             interaction_periods = InteractionPeriod.query.filter(
                     InteractionPeriod.classroom_id==classroom_id,
                     InteractionPeriod.relationship_id==rel.id,
-                    InteractionPeriod.started_at >= start_time,
-                    InteractionPeriod.ended_at <= end_time
+                    InteractionPeriod.ended_at >= start_time,
+                    InteractionPeriod.started_at <= end_time
                 ).order_by(InteractionPeriod.started_at.asc()).all()
 
         for ip in interaction_periods:
