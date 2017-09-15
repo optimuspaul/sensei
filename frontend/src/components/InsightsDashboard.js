@@ -25,12 +25,12 @@ class InsightsDashboard extends React.Component {
 
   render() {
 
-    let yesterday = (new Date((new Date()).toDateString())).toISOString();
-    let today = (new Date((new Date()).toDateString()));
-    today.setDate(today.getDate() - 1);
-    today = today.toISOString();
+    let today = (new Date((new Date()).toDateString())).toISOString();
+    let yesterday = (new Date((new Date()).toDateString()));
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday = yesterday.toISOString();
     let lastMonth = (new Date((new Date()).toDateString()));
-    lastMonth.setDate(lastMonth.getMonth() - 1);
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
     lastMonth = lastMonth.toISOString();
 
     return (
@@ -42,7 +42,7 @@ class InsightsDashboard extends React.Component {
         </Row>
         <Row>
         <Col className="insight-card" xs={6} md={4}>
-          <Thumbnail onClick={() => {window.location=`/s/${getSchoolId()}/networks/wf/events/insights?currentDate=${yesterday}&endDate=${today}&visualization=activityTimeline&currentEntityType=child&currentEntityId=${this.props.defaultEntity.id}`}} className="insight-thumbnail" src={`${frontendBaseUrl()}/activityTimeline.png`} alt="242x200">
+          <Thumbnail onClick={() => {window.location=`/s/${getSchoolId()}/networks/wf/events/insights?currentDate=${yesterday}&visualization=activityTimeline&currentEntityType=child&currentEntityId=${this.props.defaultEntity.id}`}} className="insight-thumbnail" src={`${frontendBaseUrl()}/activityTimeline.png`} alt="242x200">
             <h4>Activity Timeline</h4>
             <p>
               Shows who a given student or teacher interacted with throughout the day
