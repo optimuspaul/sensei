@@ -96,7 +96,7 @@ export const fetchEntities = (entityType) => {
 
 export const fetchMaterials = () => {
   return (dispatch) => {
-    fetch(`/api/v1/lesson_sets.json?&school_id=${getSchoolId()}`, {
+    fetch(`/api/v1/lesson_sets.json?school_id=${getSchoolId()}`, {
       credentials: 'include',
       headers: {
         "X-CSRF-Token": getCrsfToken()
