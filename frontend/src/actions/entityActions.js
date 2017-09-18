@@ -94,9 +94,10 @@ export const fetchEntities = (entityType) => {
   }
 }
 
+
 export const fetchMaterials = () => {
   return (dispatch) => {
-    fetch(`/api/v1/lesson_sets.json?school_id=${getSchoolId()}`, {
+    fetch(`/api/v1/classrooms.json?school_id=${getSchoolId()}`, {
       credentials: 'include',
       headers: {
         "X-CSRF-Token": getCrsfToken()
@@ -104,9 +105,9 @@ export const fetchMaterials = () => {
     }).then(function(response) {
       return response.text()
     }).then(function(body) {
-      let lessonSets = JSON.parse(body)
-      return Promise.all(_.map(lessonSets, (lessonSet) => {
-        return fetch(`/api/v1/lesson_sets/${lessonSet.id}.json?school_id=${getSchoolId()}`, {
+      let classrooms = JSON.parse(body)
+      return Promise.all(_.map(classrooms, (classroom) => {
+        return fetch(`/api/v1/lesson_sets/${classroom.lesson_set_id}.json?school_id=${getSchoolId()}`, {
           credentials: 'include',
           headers: {
             "X-CSRF-Token": getCrsfToken()
