@@ -3,7 +3,6 @@ import {getCrsfToken, getSenseiToken, getClassroomId, getSchoolId, baseUrl} from
 import {handleRequest} from './requestActions';
 import {changeCase} from './../utils';
 import {fakeNames} from './../constants';
-import jsonQuery from 'json-query';
 
 const ADD_ENTITIES = 'ADD_ENTITIES';
 export const addEntities = (entityType, entities) => {
@@ -106,20 +105,26 @@ export const fetchMaterials = () => {
       return response.text()
     }).then(function(body) {
       let classrooms = JSON.parse(body)
-      return Promise.all(_.map(classrooms, (classroom) => {
+      let classroom = _.find(classrooms, (classroom) => {
+        return classroom.id === parseInt(getClassroomId(),10);
+      });
+      if (classroom) {
         return fetch(`/api/v1/lesson_sets/${classroom.lesson_set_id}.json?school_id=${getSchoolId()}`, {
           credentials: 'include',
           headers: {
             "X-CSRF-Token": getCrsfToken()
           }
-        })
-      }));
+        });
+      }
     }).then(function(response) {
-      return Promise.all(_.map(response, (r) => r.text()));
-    }).then((lessonSets) => {
-      lessonSets = _.map(lessonSets, (ls) => JSON.parse(ls));
-      let rawMaterials = jsonQuery('[**]children[**]children[**][*type=material]', {data: lessonSets}).value;
-      let materials = _.map(rawMaterials, (m) => { return {name: m.name, id: m.id, displayName: m.name, classroom_id: getClassroomId()} });
+      return response.text();
+    }).then((body) => {
+      let lessonSet = JSON.parse(body);
+      let getMaterials = (obj) => {
+        let objs = obj.type === 'material' ? [{name: obj.name, id: obj.id, displayName: obj.name, classroom_id: getClassroomId()}] : [];
+        return obj.children ? _.flatten(_.concat(objs, _.map(obj.children, getMaterials))) : obj;
+      }
+      let materials = getMaterials(lessonSet);
       dispatch(addEntities('materials', materials));
     })
   }

@@ -15,3 +15,4 @@ app/static/*.map
 .ipynb_checkpoints
 .DS_Store
 npm-debug.log
+*.orig
