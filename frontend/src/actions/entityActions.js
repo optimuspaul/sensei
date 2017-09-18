@@ -106,7 +106,7 @@ export const fetchMaterials = () => {
     }).then(function(body) {
       let lessonSets = JSON.parse(body)
       return Promise.all(_.map(lessonSets, (lessonSet) => {
-        return fetch(`/api/v1/lesson_sets/${lessonSet.id}.json?&school_id=${getSchoolId()}`, {
+        return fetch(`/api/v1/lesson_sets/${lessonSet.id}.json?school_id=${getSchoolId()}`, {
           credentials: 'include',
           headers: {
             "X-CSRF-Token": getCrsfToken()
