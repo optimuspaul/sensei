@@ -8,3 +8,4 @@ from sensor_mappings import *
 from areas import *
 from materials import *
 from classrooms import *
+from camera_data import *

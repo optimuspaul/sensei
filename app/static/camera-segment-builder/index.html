@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Camera Segment Builder</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <link rel="stylesheet" href="./static/camera-segment-builder/index.css">
+    <link rel="stylesheet" id="shapely-fonts-css" href="https://fonts.googleapis.com/css?family=Raleway%3A100%2C300%2C400%2C500%2C600%2C700%7COpen+Sans%3A400%2C500%2C600&amp;ver=4.7.5" type="text/css" media="all">
+  </head>
+  <body>
+    <nav class="navbar navbar-default">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="/">Wildflower Schools: Camera Segment Builder</a>
+        </div>
+        <form class="navbar-form navbar-left" role="search">
+          <div class="form-group">
+            <select class="form-control classroom-select hidden" name="camera-select"></select>
+          </div>
+          <div class="form-group">
+            <select class="form-control camera-select hidden" name="camera-select"></select>
+          </div>
+          <div class="form-group">
+            <select class="form-control date-select hidden" name="date-select"></select>
+          </div>
+        </form>
+        <ul id="logout-actions" class="hidden nav navbar-nav navbar-right">
+          <li><a id="logout" href="#">Sign out</a></li>
+        </ul>
+      </div>
+    </nav>
+    <div class="container-fluid login-container">
+      <div class="row">
+        <div class="col-xs-12 col-md-6 col-md-offset-3 login-column">
+          <div class="panel panel-primary">
+            <div class="panel-heading">
+              Get Started
+            </div>
+            <div class="panel-body">
+              <p class="text-muted">The <strong>Camera Segment Builder</strong> is a tool for Wildflower Schools to use in coding camera data to create training sets to compare against sensor data. It expects an S3 bucket with data in the format <code>&lt;classroom&gt;/&lt;camera #&gt;/&lt;date&gt;/still_&lt;utc-time-stamp&gt;.jpg</code> and outputs a CSV of the format <code>1st Sensor,2nd Sensor,Start,End</code>. Log in with the S3 credentials for the bucket you want to use.</p>
+              <form class="login-form">
+                <div class="form-group">
+                  <label for="bucketName">Bucket Name</label>
+                  <input type="text" name="bucketName" id="bucketName" class="form-control" placeholder="s3-bucket-name" required>
+                </div>
+                <div class="form-group">
+                  <label for="region">Region</label>
+                  <input type="text" name="region" id="region" class="form-control" placeholder="us-west-2" required>
+                </div>
+                <div class="form-group">
+                  <label for="accessKey">Access Key ID</label>
+                  <input type="text" name="accessKey" id="accessKey" class="form-control" placeholder="AFASA7O8978A8DFJFJF6" required>
+                </div>
+                <div class="form-group">
+                  <label for="secretKey">Secret Access Key</label>
+                  <input type="text" name="secretKey" id="secretKey" class="form-control" placeholder="ba8e32688cd99e17/a6fac3a004bb04aa" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg">Submit</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="photo-container container-fluid">
+      <div class="row">
+        <div class="col-xs-12 col-sm-6 col-lg-8">
+          <div class="photo-viewer">
+          </div>
+        </div>
+        <div class="col-xs-12 col-sm-6 col-lg-4">
+          <h2>Proximity Segments <i class="glyphicon glyphicon-question-sign" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="What Are Segments?" data-content="A segment occurs when 2 sensors are within 3 feet of each other. Start the segment in the first image in which they are within 3 feet and stop it in the first image in which they are > 3 feet apart."></i></h2>
+          <p>
+            <button class="btn btn-block btn-default export-segments" data-toggle="modal" data-target="#export-modal">Export</button>
+          </p>
+          <table class="sensors-list table table-striped">
+            <thead>
+              <th>1st Sensor</th>
+              <th>2nd Sensor</th>
+              <th>Start</th>
+              <th>End</th>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <input type="text" name="sensor1" id="sensor1" class="form-control" placeholder="1st Sensor#" required>
+                </td>
+                <td>
+                  <input type="text" name="sensor2" id="sensor2" class="form-control"  placeholder="2nd Sensor #"  required>
+                </td>
+                <td>
+                  <button class="btn btn-sm btn-primary start-segment">Start</button>
+                </td>
+                <td>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <h4>Instructions</h4>
+          <p class="text-muted">Scan through the photos using the right/left arrow keys (use shift for 10 at a time). When two sensors appear to be within three feet of each other enter the sensor numbers and click <strong>Start</strong>. When you reach a photo where they are more than three feet apart click <strong>End</strong> to record the end of that proximity segment. When you are finished click <strong>Export</strong> to download the data in CSV format.</p>
+        </div>
+      </div>
+    </div>
+    <div id="export-modal" class="modal fade" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Sensor Segments</h4>
+          </div>
+          <div class="modal-body">
+            <p class="text-muted">Copy and paste from the content below to export data.</p>
+            <div class="form-group">
+              <textarea class="form-control" readonly></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.77.0.min.js"></script>
+    <script src="./static/camera-segment-builder/index.js"></script>
+  </body>
+</html>

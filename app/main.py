@@ -13,6 +13,17 @@ def create_app(config_obj):
     db.init_app(app)
     migrate.init_app(app,db)
     app.register_blueprint(api)
+    @app.route('/camera-segment-builder')
+    def camera_segment_builder():
+        return app.send_static_file('index.html')
+    @app.route('/static/js/<filename>')
+    def main_js(filename):
+        path = 'static/' + filename
+        print(path)
+        return app.send_static_file('bundle.js')
+    @app.route('/static/css/<filename>')
+    def main_css(filename):
+        return app.send_static_file('bundle.css')
     with app.app_context():
         db.create_all()
 

@@ -1,10 +1,8 @@
 import _ from 'lodash';
-import {getCrsfToken, getSenseiToken, getClassroomId, getSchoolId, baseUrl} from './../constants';
+import {getCrsfToken, getSenseiToken, getClassroomId, getSchoolId, baseUrl, tcBaseUrl} from './../constants';
 import {handleRequest} from './requestActions';
 import {changeCase} from './../utils';
 import {fakeNames} from './../constants';
-import jsonQuery from 'json-query';
-import treeSearch from 'tree-search';
 
 const ADD_ENTITIES = 'ADD_ENTITIES';
 export const addEntities = (entityType, entities) => {
@@ -39,7 +37,7 @@ export const fetchChildren = () => {
   return (dispatch, getState) => {
     let state = getState();
 
-    fetch(`/api/v1/children.json?classroom_id=${getClassroomId()}&school_id=${getSchoolId()}`, {
+    fetch(`${tcBaseUrl()}/api/v1/children.json?classroom_id=${getClassroomId()}&school_id=${getSchoolId()}`, {
       credentials: 'include',
       headers: {
         "X-CSRF-Token": getCrsfToken()
@@ -59,7 +57,7 @@ export const fetchChildren = () => {
 
 export const fetchTeachers = () => {
   return (dispatch) => {
-    fetch(`/api/v1/users.json?classroom_id=${getClassroomId()}&school_id=${getSchoolId()}&roles[]=teacher`, {
+    fetch(`${tcBaseUrl()}/api/v1/users.json?classroom_id=${getClassroomId()}&school_id=${getSchoolId()}&roles[]=teacher`, {
       credentials: 'include',
       headers: {
         "X-CSRF-Token": getCrsfToken()
@@ -98,7 +96,7 @@ export const fetchEntities = (entityType) => {
 
 export const fetchMaterials = () => {
   return (dispatch) => {
-    fetch(`/api/v1/classrooms.json?school_id=${getSchoolId()}`, {
+    fetch(`${tcBaseUrl()}/api/v1/classrooms.json?school_id=${getSchoolId()}`, {
       credentials: 'include',
       headers: {
         "X-CSRF-Token": getCrsfToken()
@@ -111,7 +109,7 @@ export const fetchMaterials = () => {
         return classroom.id === parseInt(getClassroomId(),10);
       });
       if (classroom) {
-        return fetch(`/api/v1/lesson_sets/${classroom.lesson_set_id}.json?school_id=${getSchoolId()}`, {
+        return fetch(`${tcBaseUrl()}/api/v1/lesson_sets/${classroom.lesson_set_id}.json?school_id=${getSchoolId()}`, {
           credentials: 'include',
           headers: {
             "X-CSRF-Token": getCrsfToken()

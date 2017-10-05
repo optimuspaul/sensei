@@ -1,0 +1,64 @@
+html, body {
+  height: 100%;
+}
+body {
+  font-family: "Raleway", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.panel-primary {
+  border-color: #20a79f;
+}
+.panel-primary > .panel-heading {
+  background-image: none;
+  background-color: #20a79f;
+  border-color: #20a79f;
+}
+.btn-primary {
+  background-image: none;
+  background-color: #20a79f;
+  border-color: #20a79f;
+}
+.btn-primary:hover,.btn-primary:focus,.btn-primary:active,.btn-primary:active:focus {
+  background-image: none;
+  border-color: #20a79f;
+  background-color: #20a79f;
+}
+.navbar-default {
+  background-image: none;
+  background-color: #f5f5f5;
+  border-radius: 0;
+  box-shadow: none;
+}
+.navbar-default .navbar-brand {
+  color: #20a79f;
+}
+.login-container {
+  height: 100%;
+  margin-top: -20px;
+  background-image: url(./HeroImage.jpg);
+  background-size: cover;
+}
+.login-column {
+  margin-top: 50px;
+}
+.carousel-caption {
+  opacity: 0.7;
+}
+.sensors-list th, .sensors-list td {
+  text-align: center;
+  width: 25%;
+}
+.sensors-list input {
+  text-align: center;
+  display: inline;
+  min-width: 115px;
+}
+#export-modal .form-control {
+  border-radius: 0;
+  box-shadow: none;
+  height: 200px;
+  resize: none;
+}
+#export-modal .form-control:focus {
+  border-color: #ccc;
+  box-shadow: none;
+}
