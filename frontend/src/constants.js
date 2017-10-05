@@ -19,6 +19,8 @@ export const isProduction = () => {
   return (window.tc && window.sensei.env && window.sensei.env.production);
 }
 
+
+
 export const getSenseiToken = () => {
   return (window.TCPlugins && window.TCPlugins.userApiToken) || (window.tc && window.tc.env.userApiToken);
 }
@@ -38,6 +40,14 @@ export const getSchoolId = () => {
 
 export const baseUrl = () => {
   return _.get(window, 'sensei.env.baseUrl');
+}
+
+export const frontendBaseUrl = () => {
+  if (isProduction()) {
+    return baseUrl();
+  } else {
+    return 'http://localhost:3002'
+  }
 }
 
 
