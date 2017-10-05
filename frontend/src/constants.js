@@ -43,7 +43,7 @@ export const baseUrl = () => {
 }
 
 export const tcBaseUrl = () => {
-  return _.get(window, 'sensei.env.tcBaseUrl');
+  return _.get(window, 'sensei.env.tcBaseUrl', '');
 }
 
 export const frontendBaseUrl = () => {
