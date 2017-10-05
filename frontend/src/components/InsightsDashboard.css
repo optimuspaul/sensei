@@ -1,0 +1,4 @@
+.insights-dashboard .insight-card .insight-thumbnail {
+  cursor: pointer;
+  min-height: 350px;
+}

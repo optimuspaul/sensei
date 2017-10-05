@@ -14,6 +14,9 @@ export default function socialGraph(data) {
   let storeEntities = state.entities;
   let canvasWidth = 800;
   let canvasHeight = 500;
+  let currentEntityId = _.get(state, 'insights.ui.currentEntityId');
+  let currentEntityType = _.get(state, 'insights.ui.currentEntityType');
+
 
   document.querySelector("#visualization").innerHTML = `<canvas height=${canvasHeight} width=${canvasWidth}></canvas>`;
   let totalTime = _.sum(data.obs);
@@ -30,7 +33,7 @@ export default function socialGraph(data) {
     return current;
    }, {nodes:[], links: []})
 
-  graphData.nodes.push({id: 'child-1', group: 1});
+  graphData.nodes.push({id: `${currentEntityType}-${currentEntityId}`, group: 1});
 
   let canvas = document.querySelector("#visualization canvas");
   let context = canvas.getContext("2d");
