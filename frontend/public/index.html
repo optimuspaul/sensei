@@ -16,22 +16,43 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
 
-    <script>
+    <% if (process.env.NODE_ENV === 'production') { %>
+      <script>
       window.sensei = {
         env: {
           baseUrl: 'https://sensei-server.herokuapp.com',
+          tcBaseUrl: 'https://transparentclassroom.com/',
+          production: true
+        }
+      }
+      window.tc = {
+        env: {
+          currentClassroomId: 725,
+          currentSchoolId: 300,
+          userApiToken: ''
+        }
+      }
+    </script>
+    <% } else { %>
+      <script>
+      window.sensei = {
+        env: {
+          baseUrl: 'http://localhost:3002',
           tcBaseUrl: 'http://localhost:3000/',
-
+          production: false
         }
       }
       window.tc = {
         env: {
           currentClassroomId: 2,
           currentSchoolId: 2,
-          userApiToken: 'd3N9xjVQhFcF4bzLudyC'
+          userApiToken: ''
         }
       }
     </script>
+    <% } %>
+
+    
     <title></title>
   </head>
   <body>

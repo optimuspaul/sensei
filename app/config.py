@@ -13,6 +13,7 @@ class Base(object):
     TC_URL = os.getenv('TC_URL', 'http://localhost:3000')
     API_AUTH_SERVICE = TCAuthService(TC_URL)
     TC_SERVICE = TCService(TC_URL)
+    SENSEI_AWS_PROFILE = os.getenv('SENSEI_AWS_PROFILE', '')
 
 class TestConfig(Base):
     SQLALCHEMY_DATABASE_URI = "postgresql://localhost/sensei_test"

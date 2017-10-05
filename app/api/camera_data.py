@@ -8,7 +8,8 @@ from ..models import *
 # @api_auth.requires_auth
 def camera_data_image(key):
 
-  session = boto3.Session()
+  profile = current_app.config.get("SENSEI_AWS_PROFILE")
+  session = boto3.Session(profile_name=profile)
   s3 = session.client('s3')
 
   url = s3.generate_presigned_url(
@@ -26,7 +27,8 @@ def camera_data_image(key):
 # @api_auth.requires_auth
 def camera_data_index():
 
-  session = boto3.Session()
+  profile = current_app.config.get("SENSEI_AWS_PROFILE")
+  session = boto3.Session(profile_name=profile)
   s3 = session.client('s3')
 
   output = {}
