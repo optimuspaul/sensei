@@ -26,7 +26,7 @@ def camera_data_image(key):
 # @api_auth.requires_auth
 def camera_data_index():
 
-  session = boto3.Session(profile_name='sensei')
+  session = boto3.Session()
   s3 = session.client('s3')
 
   output = {}
