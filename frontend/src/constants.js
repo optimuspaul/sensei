@@ -42,6 +42,10 @@ export const baseUrl = () => {
   return _.get(window, 'sensei.env.baseUrl');
 }
 
+export const tcBaseUrl = () => {
+  return _.get(window, 'sensei.env.tcBaseUrl');
+}
+
 export const frontendBaseUrl = () => {
   if (isProduction()) {
     return baseUrl();

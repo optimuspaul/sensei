@@ -1,4 +1,5 @@
 import './index.css';
+import CameraSegmentBuilderContainer from './containers/CameraSegmentBuilderContainer';
 import SensorMappingInterfaceContainer from './containers/SensorMappingInterfaceContainer';
 import ManageEntitiesInterfaceContainer from './containers/ManageEntitiesInterfaceContainer';
 import ActivityTimelineControlsContainer from './containers/ActivityTimelineControlsContainer';
@@ -28,6 +29,15 @@ import key from 'keyboard-shortcut';
     store.dispatch(toggleAnonymizer());
     store.dispatch(fetchChildren());
   });
+
+  if (document.querySelector("#sensei")) {
+    ReactDOM.render(
+      <Provider store={store}>
+        <CameraSegmentBuilderContainer/>
+      </Provider>,
+      document.querySelector("#sensei")
+    );
+  }
 
   // check to see if school is using sensors. hard coded to classroom ID 725 for now
   let classroomId = getClassroomId();

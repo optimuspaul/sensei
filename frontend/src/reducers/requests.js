@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
 
-export default function sensorMappings(state = {}, action) {
+export default function requests(state = {}, action) {
   switch (action.type) {
     case 'HANDLE_REQUEST':
       return {

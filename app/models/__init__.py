@@ -11,3 +11,4 @@ from material import *
 from classroom import *
 from child import *
 from teacher import *
+from camera_segment import *
