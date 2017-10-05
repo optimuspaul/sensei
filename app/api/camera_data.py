@@ -8,7 +8,7 @@ from ..models import *
 # @api_auth.requires_auth
 def camera_data_image(key):
 
-  session = boto3.Session(profile_name='sensei')
+  session = boto3.Session()
   s3 = session.client('s3')
 
   url = s3.generate_presigned_url(
