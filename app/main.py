@@ -18,13 +18,14 @@ def create_app(config_obj):
         return app.send_static_file('index.html')
     @app.route('/static/js/<filename>')
     def main_js(filename):
-        path = 'static/' + filename
-        print(path)
         return app.send_static_file('bundle.js')
     @app.route('/static/css/<filename>')
     def main_css(filename):
         return app.send_static_file('bundle.css')
+    @app.route('/assets/<filename>')
+    def main_assets(filename):
+        path = 'static/' + filename
+        return app.send_static_file(path)
     with app.app_context():
         db.create_all()
-
     return app

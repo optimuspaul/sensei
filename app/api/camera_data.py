@@ -8,9 +8,7 @@ from ..models import *
 # @api_auth.requires_auth
 def camera_data_image(key):
 
-  profile = current_app.config.get("SENSEI_AWS_PROFILE")
-  session = boto3.Session(profile_name=profile)
-  s3 = session.client('s3')
+  s3 = get_s3_client()
 
   url = s3.generate_presigned_url(
       ClientMethod='get_object',
@@ -27,9 +25,7 @@ def camera_data_image(key):
 # @api_auth.requires_auth
 def camera_data_index():
 
-  profile = current_app.config.get("SENSEI_AWS_PROFILE")
-  session = boto3.Session(profile_name=profile)
-  s3 = session.client('s3')
+  s3 = get_s3_client()
 
   output = {}
 
@@ -148,3 +144,13 @@ def assert_iso8601_time(datestring):
     if timestamp.tzinfo != None:
         timestamp = timestamp.astimezone(pytz.utc).replace(tzinfo=None)
     return timestamp
+
+def get_s3_client():
+  profile = current_app.config.get("SENSEI_AWS_PROFILE")
+  print('profile: ' + profile)
+  if profile:
+    session = boto3.Session(profile_name=profile)
+  else:
+    session = boto3.Session()
+  s3 = session.client('s3')
+  return s3
