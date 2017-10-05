@@ -16,7 +16,7 @@ class SubNav extends React.Component {
           <a href={`/s/${getSchoolId()}/networks/wf/events/entities?classroom_id=${getClassroomId()}`}>Manage Areas</a>
         </div>
         <div className={`secondary-nav-link ${location.pathname.indexOf('events/insights') !== -1 ? 'active' : ''}`}>
-          <a href={`/s/${getSchoolId()}/networks/wf/events/insights?classroom_id=${getClassroomId()}`}>Insights</a>
+          <a href={`/s/${getSchoolId()}/networks/wf/events/insights/dashboard`}>Insights</a>
         </div>
       </div>
     )
