@@ -16,5 +16,6 @@
   "engines": {
     "node": "8.4.0",
     "npm": "5.4.1"
-  }
+  },
+  "homepage": "https://sensei-server.herokuapp.com"
 }
