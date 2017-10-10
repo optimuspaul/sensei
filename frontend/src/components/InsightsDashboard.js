@@ -42,7 +42,7 @@ class InsightsDashboard extends React.Component {
         </Row>
         <Row>
         <Col className="insight-card" xs={6} md={4}>
-          <Thumbnail onClick={() => {window.location=`/s/${getSchoolId()}/networks/wf/events/insights?classroom_id=${getClassroomId()}&currentDate=${yesterday}&visualization=activityTimeline&currentEntityType=child&currentEntityId=${this.props.defaultEntity.id}`}} className="insight-thumbnail" src={`${frontendBaseUrl()}/assets/activityTimeline.png`} alt="242x200">
+          <Thumbnail onClick={() => {window.location=`/s/${getSchoolId()}/networks/wf/events/insights?classroom_id=${getClassroomId()}&currentDate=${yesterday}&visualization=activityTimeline&currentEntityType=child&currentEntityId=${this.props.defaultEntity.id}`}} className="insight-thumbnail" src={`${process.env.PUBLIC_URL}/assets/activityTimeline.png`} alt="242x200">
             <h4>Activity Timeline</h4>
             <p>
               Shows who a given student or teacher interacted with throughout the day
@@ -50,7 +50,7 @@ class InsightsDashboard extends React.Component {
           </Thumbnail>
         </Col>
         <Col className="insight-card" xs={6} md={4}>
-          <Thumbnail onClick={() => {window.location=`/s/${getSchoolId()}/networks/wf/events/insights?classroom_id=${getClassroomId()}&currentDate=${lastMonth}&endDate=${today}&visualization=studentSummary&currentEntityType=child&currentEntityId=${this.props.defaultEntity.id}`}} className="insight-thumbnail" src={`${frontendBaseUrl()}/assets/studentSummary.png`} alt="242x200">
+          <Thumbnail onClick={() => {window.location=`/s/${getSchoolId()}/networks/wf/events/insights?classroom_id=${getClassroomId()}&currentDate=${lastMonth}&endDate=${today}&visualization=studentSummary&currentEntityType=child&currentEntityId=${this.props.defaultEntity.id}`}} className="insight-thumbnail" src={`${process.env.PUBLIC_URL}/assets/studentSummary.png`} alt="242x200">
             <h4>Activity Summary</h4>
             <p>
               Shows the relative times spent with materials, in areas, or interacting with other kids for a given time period
@@ -58,7 +58,7 @@ class InsightsDashboard extends React.Component {
           </Thumbnail>
         </Col>
         <Col className="insight-card" xs={6} md={4}>
-          <Thumbnail onClick={() => {window.location=`/s/${getSchoolId()}/networks/wf/events/insights?classroom_id=${getClassroomId()}&currentDate=${lastMonth}&endDate=${today}&visualization=unitSummary&currentEntityType=child&currentEntityId=${this.props.defaultEntity.id}`}} className="insight-thumbnail" src={`${frontendBaseUrl()}/assets/unitSummary.png`} alt="242x200">
+          <Thumbnail onClick={() => {window.location=`/s/${getSchoolId()}/networks/wf/events/insights?classroom_id=${getClassroomId()}&currentDate=${lastMonth}&endDate=${today}&visualization=unitSummary&currentEntityType=child&currentEntityId=${this.props.defaultEntity.id}`}} className="insight-thumbnail" src={`${process.env.PUBLIC_URL}/assets/unitSummary.png`} alt="242x200">
             <h4>Activity Totals</h4>
             <p>
               Shows how much time a student has spent interacting with others over a given time period
@@ -66,7 +66,7 @@ class InsightsDashboard extends React.Component {
           </Thumbnail>
         </Col>
         <Col className="insight-card" xs={6} md={4}>
-          <Thumbnail onClick={() => {window.location=`/s/${getSchoolId()}/networks/wf/events/insights?classroom_id=${getClassroomId()}&currentDate=${yesterday}&endDate=${today}&visualization=socialGraph&currentEntityType=child&currentEntityId=${this.props.defaultEntity.id}`}} className="insight-thumbnail" src={`${frontendBaseUrl()}/assets/socialGraph.png`} alt="242x200">
+          <Thumbnail onClick={() => {window.location=`/s/${getSchoolId()}/networks/wf/events/insights?classroom_id=${getClassroomId()}&currentDate=${yesterday}&endDate=${today}&visualization=socialGraph&currentEntityType=child&currentEntityId=${this.props.defaultEntity.id}`}} className="insight-thumbnail" src={`${process.env.PUBLIC_URL}/assets/socialGraph.png`} alt="242x200">
             <h4>Social Graph</h4>
             <p>
               Shows how a student is linked to their classmates based on the level of interaction over a given period of time

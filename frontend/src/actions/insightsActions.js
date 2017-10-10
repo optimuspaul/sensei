@@ -31,7 +31,13 @@ export const fetchObservations = (entityId, entityType, date) => {
     }).then(function(response) {
       return response.text()
     }).then((body) => {
-      let observations = JSON.parse(body);
+      let observations = _.reduce(JSON.parse(body), (current, obs, index) => {
+        if (_.sum(_.map(obs, _.sum)) !== 0) {
+          current.obs.push(observations.obs[index]);
+          current.entities.push(observations.entities[index]);
+        }
+        return current;
+      }, {obs: [], entities: [], timestamps: observations.timestamps});
       dispatch(addObservations(entityId, entityType, observations));
     })
   }
