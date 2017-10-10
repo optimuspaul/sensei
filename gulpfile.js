@@ -6,7 +6,7 @@ gulp.task('default', function() {
              .pipe(rename(function(path) {
               console.log('path', path);
               console.log('path.extname', path.extname);
-                if (path.extname !== '.map' && path.extname !== '.html') {
+                if (path.extname !== '.map' && path.extname !== '.html' && path.extname !== '.png') {
                   path.basename = "bundle";
                 }
               }))

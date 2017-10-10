@@ -12,6 +12,8 @@ sensei/.Python
 app/static/bundle.js
 app/static/bundle.css
 app/static/*.map
+app/static/*.png
+app/static/*.html
 .ipynb_checkpoints
 .DS_Store
 npm-debug.log

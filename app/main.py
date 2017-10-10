@@ -24,8 +24,8 @@ def create_app(config_obj):
         return app.send_static_file('bundle.css')
     @app.route('/assets/<filename>')
     def main_assets(filename):
-        path = 'static/' + filename
-        return app.send_static_file(path)
+        print "filename: %s" % filename
+        return app.send_static_file(filename)
     with app.app_context():
         db.create_all()
     return app
