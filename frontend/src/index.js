@@ -44,12 +44,12 @@ import key from 'keyboard-shortcut';
   let schoolId = getSchoolId();
   if (classroomId === "725" || classroomId === "676" || classroomId === "1289" || !isProduction()) {
 
-    
+
 
     let attempts = 0;
     let foundationEl, insertionPoint;
 
-    
+
     setupDom('#foundation')
       .then(setupSensei)
       .catch(console.log);
@@ -156,10 +156,10 @@ import key from 'keyboard-shortcut';
           foundationEl
         );
 
-      } else { 
+      } else {
 
         if (location.pathname.indexOf('wf/events/insights') !== -1) {
-  
+
           foundationEl.innerHTML = `
             <div class='row'>
               <div class='col-md-2' id='insights-nav-container'></div>
@@ -243,7 +243,8 @@ import key from 'keyboard-shortcut';
                     store.dispatch(fetchInteractionPeriods(entityId, entityType, date));
                     break;
                   case 'socialGraph':
-                    store.dispatch(fetchInteractionTotals(null, null, date, endDate));
+                    store.dispatch(fetchInteractionTotals(entityId, entityType, date, endDate, visualization));
+                    break;
                   case 'unitSummary':
                   case 'studentSummary':
                     if (endDate && !(visualization === 'unitSummary' && !interactionType)) {
@@ -266,7 +267,7 @@ import key from 'keyboard-shortcut';
       }
     }
 
-    
+
   }
 
 

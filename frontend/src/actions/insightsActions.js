@@ -84,7 +84,7 @@ export const fetchInteractionTotals = (entityId, entityType, date, endDate, inte
     let endTime = encodeURIComponent(endDate.toISOString().split('.000Z')[0]);
     let it = _.invert(entityInflections)[interactionType];
 
-    fetch(`${baseUrl()}/api/v1/interaction_totals?classroom_id=${getClassroomId()}${entityId ? `&entity_id=${entityId}` : ''}${entityType ? `&entity_type=${entityType}` : ''}&start_time=${startTime}&end_time=${endTime}${it ? `&interaction_type=${it}` : ''}`, {
+    fetch(`${baseUrl()}/api/v1/interaction_totals?classroom_id=${getClassroomId()}${entityId && interactionType !== 'socialGraph' ? `&entity_id=${entityId}` : ''}${entityType ? `&entity_type=${entityType}` : ''}&start_time=${startTime}&end_time=${endTime}${it ? `&interaction_type=${it}` : ''}`, {
       headers: {
         'X-SenseiToken': getSenseiToken(),
         'Content-Type': 'application/json'
