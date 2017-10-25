@@ -10,6 +10,8 @@ export default function socialGraph(data) {
     return
   }
 
+  
+
   let state = store.getState();
   let storeEntities = state.entities;
   let canvasWidth = 1000;
@@ -26,10 +28,14 @@ export default function socialGraph(data) {
   let graphData = _.reduce(data.entities, (current, val, index) => {
     let force = parseInt(scalar(data.obs[index]), 10);
     let entity = storeEntities.children[val[1]];
-    let entityName = entity ? entity.displayName : "Unknown";
-    current.nodes.push({id: `${val[0]}-${val[1]}`, group: 1, label: entityName});
-    if (_.find(current.links, {source: `${val[2]}-${val[3]}` , target: `${val[0]}-${val[1]}`, value: force})) return current;
-    current.links.push({source: `${val[0]}-${val[1]}`, target: `${val[2]}-${val[3]}`, value: force});
+    let entityName = entity ? entity.displayName : `${val[0]}-${val[1]}`;
+    let node = {id: `${val[0]}-${val[1]}`, group: 1, label: entityName};
+    if (!_.find(current.nodes, node)) {
+      current.nodes.push(node);
+    }
+    if (!_.find(current.links, {source: `${val[2]}-${val[3]}` , target: `${val[0]}-${val[1]}`, value: force})) {
+      current.links.push({source: `${val[0]}-${val[1]}`, target: `${val[2]}-${val[3]}`, value: force});
+    }
     return current;
    }, {nodes:[], links: [], bilinks: []})
 
@@ -40,10 +46,10 @@ export default function socialGraph(data) {
 
   var mb = d3.forceManyBody();
 
-  mb.strength(() => { return -50 });
+  mb.strength(() => { return -200 });
 
   var simulation = d3.forceSimulation()
-      .force("link", d3.forceLink().distance(50).strength(0.2))
+      .force("link", d3.forceLink().distance(10).strength(0.03))
       .force("charge", mb)
       .force("center", d3.forceCenter(canvasWidth / 2, canvasHeight / 2));
 
@@ -115,7 +121,7 @@ export default function socialGraph(data) {
     });
 
     label.attr("transform", (d) => {
-      return "translate(" + d.x+5 + "," + d.y+3 + ")";
+      return "translate(" + d.x+10 + "," + d.y+6 + ")";
     });
   }
 
