@@ -8,20 +8,21 @@ from numpy.linalg import norm
 import random
 from transitions import Machine
 import time
+import os
 from datetime import datetime, timedelta
 from tzlocal import get_localzone
 
 
 # This should be updated to use the sensei client library
 
-SENSEI_SERVER = 'http://localhost:5000/'
-SENSEI_API = SENSEI_SERVER + 'api/v1/'
-SENSEI_USER = 'super@example.com'
-SENSEI_PASSWORD = 'password'
-CLASSROOM_ID = 2
+
+SENSEI_SERVER = os.environ.get("SENSEI_SERVER", 'http://localhost:5000/')
+SENSEI_USER = os.environ.get("SENSEI_USER", 'super@example.com')
+SENSEI_PASSWORD = os.environ.get("SENSEI_PASSWORD", 'password')
+CLASSROOM_ID = int(os.environ.get("CLASSROOM_ID", "2"))
 
 def api_req(endpoint, params=None):
-    url = SENSEI_API + endpoint
+    url = SENSEI_SERVER + 'api/v1/' + endpoint
     if params:
         url += '?' + urllib.urlencode(params)
     req = urllib2.Request(url)
