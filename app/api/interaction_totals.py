@@ -25,11 +25,11 @@ def interaction_totals_index():
     entity_type = request.args.get('entity_type')
     if entity_id:
         entity_id = int(entity_id)
-    # else: 
+    # else:
     #     abort(400, "Missing entity_id parameter")
     # if not entity_type:
-    #     abort(400, "Missing entity_type parameter")    
-    
+    #     abort(400, "Missing entity_type parameter")
+
     interaction_type = request.args.get('interaction_type')
     start_time = assert_iso8601_time_param('start_time')
     end_time = assert_iso8601_time_param('end_time')
@@ -39,7 +39,9 @@ def interaction_totals_index():
     timestamps = []
     if not entity_id:
         relationships = EntityRelationship.query.filter(
-                    EntityRelationship.classroom_id==classroom_id
+                    EntityRelationship.classroom_id==classroom_id,
+                    EntityRelationship.entity1_type==entity_type,
+                    EntityRelationship.entity2_type==entity_type
                 ).all()
     else:
         if not interaction_type:
@@ -76,7 +78,7 @@ def interaction_totals_index():
         if it > 0:
             output.append(it)
             entities.append([rel.entity2_type.value,rel.entity2_id, rel.entity1_type.value, rel.entity1_id])
-    
+
     if len(output) > 0:
         timestamps = [ start_time, end_time ]
     return jsonify({

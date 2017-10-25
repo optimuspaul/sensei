@@ -12,98 +12,131 @@ export default function socialGraph(data) {
 
   let state = store.getState();
   let storeEntities = state.entities;
-  let canvasWidth = 800;
-  let canvasHeight = 500;
+  let canvasWidth = 1000;
+  let canvasHeight = 800;
   let currentEntityId = _.get(state, 'insights.ui.currentEntityId');
   let currentEntityType = _.get(state, 'insights.ui.currentEntityType');
 
-
-  document.querySelector("#visualization").innerHTML = `<canvas height=${canvasHeight} width=${canvasWidth}></canvas>`;
-  let totalTime = _.sum(data.obs);
+  document.querySelector("#visualization").innerHTML = `<svg id="social-graph" height=${canvasHeight} width=${canvasWidth}></svg>`;
 
   let scalar = d3.scaleLinear()
     .domain([0, d3.max(data.obs)])
     .range([0, 20]);
 
-  let graphData = _.reduce(data.entities, (current, val, index) => { 
+  let graphData = _.reduce(data.entities, (current, val, index) => {
     let force = parseInt(scalar(data.obs[index]), 10);
-    current.nodes.push({id: `${val[0]}-${val[1]}`, group: 1});
+    let entity = storeEntities.children[val[1]];
+    let entityName = entity ? entity.displayName : "Unknown";
+    current.nodes.push({id: `${val[0]}-${val[1]}`, group: 1, label: entityName});
+    if (_.find(current.links, {source: `${val[2]}-${val[3]}` , target: `${val[0]}-${val[1]}`, value: force})) return current;
     current.links.push({source: `${val[0]}-${val[1]}`, target: `${val[2]}-${val[3]}`, value: force});
-    current.links.push({source: `${val[2]}-${val[3]}`, target: `${val[0]}-${val[1]}`, value: force});
     return current;
-   }, {nodes:[], links: []})
+   }, {nodes:[], links: [], bilinks: []})
 
-  graphData.nodes.push({id: `${currentEntityType}-${currentEntityId}`, group: 1});
 
-  let canvas = document.querySelector("#visualization canvas");
-  let context = canvas.getContext("2d");
+  var svg = d3.select("#visualization svg");
 
-  let simulation = d3.forceSimulation()
-    .force("link", d3.forceLink().id(function(d) { return d.id; }))
-    .force("charge", d3.forceManyBody())
-    .force("center", d3.forceCenter(canvasWidth / 2, canvasHeight / 2));
+  var color = d3.scaleOrdinal(d3.schemeCategory20);
+
+  var mb = d3.forceManyBody();
+
+  mb.strength(() => { return -50 });
+
+  var simulation = d3.forceSimulation()
+      .force("link", d3.forceLink().distance(50).strength(0.2))
+      .force("charge", mb)
+      .force("center", d3.forceCenter(canvasWidth / 2, canvasHeight / 2));
+
+  var nodeById = d3.map(graphData.nodes, function(d) { return d.id; });
+
+  graphData.links.forEach(function(link) {
+    var s = link.source = nodeById.get(link.source),
+        t = link.target = nodeById.get(link.target),
+        i = {}; // intermediate node
+    graphData.nodes.push(i);
+    graphData.links.push({source: s, target: i}, {source: i, target: t});
+    graphData.bilinks.push([s, i, t]);
+  });
+
+  var link = svg.selectAll(".link")
+    .data(graphData.bilinks)
+    .enter().append("path")
+      .attr("class", "link");
+
+
+
+  var node = svg.selectAll(".node")
+    .data(graphData.nodes.filter(function(d) { return d.id; }))
+    .enter().append("circle")
+      .attr("class", "node")
+      .attr("r", 5)
+      .attr("fill", function(d) { return color(d.group); })
+      .call(d3.drag()
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended));
+
+
+  var label = svg.append("g")
+      .attr("class", "labels")
+      .selectAll("text")
+      .append("text")
+      .data(graphData.nodes)
+      .enter().append("text")
+      .text(node => node.label)
+      .attr('font-size', 15)
+      .call(d3.drag()
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended));
 
   simulation
-    .nodes(graphData.nodes)
-    .on("tick", ticked);
+      .nodes(graphData.nodes)
+      .on("tick", ticked);
 
   simulation.force("link")
-    .links(graphData.links);
+      .links(graphData.links);
 
-  d3.select(canvas)
-    .call(d3.drag()
-      .container(canvas)
-      .subject(dragsubject)
-      .on("start", dragstarted)
-      .on("drag", dragged)
-      .on("end", dragended));
+  function positionLink(d) {
+  return "M" + d[0].x + "," + d[0].y
+       + "S" + d[1].x + "," + d[1].y
+       + " " + d[2].x + "," + d[2].y;
+  }
+
+  function positionNode(d) {
+    return "translate(" + d.x + "," + d.y + ")";
+  }
 
   function ticked() {
-    context.clearRect(0, 0, canvasWidth, canvasHeight);
+    link.attr("d", positionLink);
 
-    context.beginPath();
-    graphData.links.forEach(drawLink);
-    context.strokeStyle = "#aaa";
-    context.stroke();
+    node.attr("transform", (d) => {
+      return "translate(" + d.x + "," + d.y + ")";
+    });
 
-    context.beginPath();
-    graphData.nodes.forEach(drawNode);
-    context.fill();
-    context.strokeStyle = "#fff";
-    context.stroke();
+    label.attr("transform", (d) => {
+      return "translate(" + d.x+5 + "," + d.y+3 + ")";
+    });
   }
 
-  function dragsubject() {
-    return simulation.find(d3.event.x, d3.event.y);
-  }
 
-  function dragstarted() {
+  function dragstarted(d) {
     if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-    d3.event.subject.fx = d3.event.subject.x;
-    d3.event.subject.fy = d3.event.subject.y;
+    d.fx = d.x;
+    d.fy = d.y;
   }
 
-  function dragged() {
-    d3.event.subject.fx = d3.event.x;
-    d3.event.subject.fy = d3.event.y;
+  function dragged(d) {
+    d.fx = d3.event.x;
+    d.fy = d3.event.y;
   }
 
-  function dragended() {
+  function dragended(d) {
     if (!d3.event.active) simulation.alphaTarget(0);
-    d3.event.subject.fx = null;
-    d3.event.subject.fy = null;
+    d.fx = null;
+    d.fy = null;
   }
 
-  function drawLink(d) {
-    context.moveTo(d.source.x, d.source.y);
-    context.lineTo(d.target.x, d.target.y);
-  }
 
-  function drawNode(d) {
-    context.moveTo(d.x + 3, d.y);
-    context.arc(d.x, d.y, 3, 0, 2 * Math.PI);
-  }
-
-  
 
 }
