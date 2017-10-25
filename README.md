@@ -39,6 +39,9 @@ Getting started:
 <script src="http://localhost:5000/static/bundle.js"></script>
 <link rel="stylesheet" type="text/css" href="http://localhost:5000/static/bundle.css">
 ```
+## Running the classroom simulator
+
+`env $(cat .sim.env | xargs) ./classroom_sim.py`
 
 ## Running migrations
 
