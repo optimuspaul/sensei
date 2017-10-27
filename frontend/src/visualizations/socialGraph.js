@@ -23,7 +23,7 @@ export default function socialGraph(data) {
   document.querySelector("#visualization").innerHTML = `<svg id="social-graph" height=${canvasHeight} width=${canvasWidth}><g id="container"></g></svg>`;
 
   let scalar = d3.scaleLinear()
-    .domain([d3.min(data.obs), d3.max(data.obs)+d3.deviation(data.obs)])
+    .domain([d3.min(data.obs)-d3.deviation(data.obs), d3.max(data.obs)+d3.deviation(data.obs)])
     .range([0, 20]).clamp(true);
 
   let scaleTwenty = d3.scaleLinear().domain([0, 20])
@@ -81,8 +81,8 @@ export default function socialGraph(data) {
     .enter().append("path")
       .attr("style", function(d) { 
         
-        return `stroke-width: ${scaleTwenty.range([scaleZoom.range([1,0.3])(zoom), scaleZoom.range([5,3])(zoom)])(d[0].value)};
-                stroke: rgba(24,140,99,${scaleTwenty.range([-0.1,1.5])(d[0].value)})`; 
+        return `stroke-width: ${scaleTwenty.range([scaleZoom.range([1,0.01])(zoom), scaleZoom.range([3,2])(zoom)])(d[0].value)};
+                stroke: rgba(${d3.scaleQuantize().domain([0, 20]).range([130,255])(d[0].value)},0,${d3.scaleQuantize().domain([0, 20]).range([130,0])(d[0].value)},${scaleTwenty.range([-0.1,1])(d[0].value)})`; 
       })
       .attr("class", "link");
 
