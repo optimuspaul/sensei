@@ -10,7 +10,7 @@ export default function socialGraph(data) {
     return
   }
 
-  data = JSON.parse(`{"entities":[["child",10642,"child",35273],["child",35271,"child",35273],["child",35272,"child",35273],["child",35268,"child",35273],["child",35270,"child",35273],["child",35273,"child",10642],["child",35271,"child",35269],["child",10642,"child",35269],["child",35268,"child",35269],["child",35272,"child",35269],["child",35270,"child",35269],["child",35273,"child",35271],["child",10642,"child",35271],["child",35272,"child",35271],["child",35268,"child",35271],["child",35269,"child",35271],["child",35270,"child",35271],["child",10642,"child",35272],["child",35271,"child",35272],["child",10642,"child",35268],["child",35271,"child",35268],["child",35272,"child",35268],["child",35269,"child",35268],["child",35273,"child",35268],["child",35270,"child",35268],["child",35271,"child",35270],["child",10642,"child",35270],["child",35272,"child",35270],["child",35273,"child",35270],["child",35268,"child",35270],["child",35269,"child",35270],["child",35268,"child",10642],["child",35272,"child",10642],["child",35271,"child",10642],["child",35270,"child",10642],["child",35269,"child",10642],["child",35268,"child",35272],["child",35269,"child",35272],["child",35273,"child",35272],["child",35270,"child",35272]],"obs":[1810,940,5560,880,330,1810,1730,1560,1710,3310,960,940,2080,1110,730,1730,860,2940,1110,1020,730,3060,1710,880,1520,860,1000,1670,330,1520,960,1020,2940,2080,1000,1560,3060,3310,5560,1670],"timestamps":["2017-07-01T05:00:00Z","2017-10-25T05:00:00Z"]}`)
+  
 
   let state = store.getState();
   let storeEntities = state.entities;
