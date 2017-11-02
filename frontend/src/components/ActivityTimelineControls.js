@@ -200,6 +200,27 @@ class ActivityTimelineControls extends React.Component {
       )
     }
 
+    let zoomControl = '';
+    if (this.props.insights.ui.visualization !== 'unitSummary') {
+      zoomControl = (
+        <div className="row" style={{marginBottom: '10px'}}>
+          <div className="col-md-12">
+            <h6> Zoom level: {this.state.zoom} </h6>
+            <input
+              id="zoom-slider"
+              type="range"
+              defaultValue={this.props.insights.ui.zoom}
+              onChange={this.handleZoomChange}
+              min="1"
+              max="5"
+              step="1"
+              onMouseUp={this.handleZoomSet}
+            />
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div>
         <div className="row">
@@ -211,7 +232,6 @@ class ActivityTimelineControls extends React.Component {
                   <option value="">Select visualization..</option>
                   <option key={`activity-timeline`} value={`activityTimeline`}>Activity Timeline</option>
                   <option key={`segmented-timeline`} value={`segmentedTimeline`}>Segmented Timeline</option>
-                  <option key={`student-summary`} value={`studentSummary`}>Student Summary</option>
                   <option key={`unit-summary`} value={`unitSummary`}>Unit Summary</option>
                   <option key={`social-graph`} value={`socialGraph`}>Social Graph</option>
                 </select>
@@ -251,21 +271,7 @@ class ActivityTimelineControls extends React.Component {
           </div>
         </div>
         {endDatePicker}
-        <div className="row" style={{marginBottom: '10px'}}>
-          <div className="col-md-12">
-            <h6> Zoom level: {this.state.zoom} </h6>
-            <input
-              id="zoom-slider"
-              type="range"
-              defaultValue={this.props.insights.ui.zoom}
-              onChange={this.handleZoomChange}
-              min="1"
-              max="5"
-              step="1"
-              onMouseUp={this.handleZoomSet}
-            />
-          </div>
-        </div>
+        {zoomControl}
 
       </div>
     )
