@@ -30,8 +30,8 @@ export default function segmentedTimeline(data) {
 
   chart.attr("width", chartWidth)
     .attr("height", chartHeight + 20)
-    .call(timeTicks, startTime, endTime, {offset, y: 10, zoom, id: 'top'})
-    .call(timeTicks, startTime, endTime, {offset, y: chartHeight+20, zoom, hideLines: true})
+    .call(timeTicks, ticks, {offset, y: 10, zoom, id: 'top'})
+    .call(timeTicks, ticks, {offset, y: chartHeight+20, zoom, hideLines: true})
     .selectAll("g.segments")
     .data(segmentedData)
     .call(entityTypeSection, {className: 'segments'})

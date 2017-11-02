@@ -21,8 +21,6 @@ export default function activityTimeline(data) {
   let xScalar = generateXScalar(startTime, endTime, chartWidth-offset);
   let ticks = timelineTicks(startTime, endTime, xScalar, zoom);
   let chartHeight = calcChartHeight(segmentedData);
-
-
   let chart = d3.select("#visualization svg")
 
   chart.attr("width", chartWidth)
