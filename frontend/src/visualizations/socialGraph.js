@@ -47,20 +47,7 @@ export default function socialGraph(data) {
 
 
 
-  graphData = {nodes:[], links: []}
-  _.times(30, (index) => {
-    graphData.nodes.push({id: `child-${index+1}`, group: 1, label: `child-${index+1}`})
-  });
 
-  _.times(30, () => {
-      let value = _.random(1,20),
-          source = `child-${_.random(1,30)}`,
-          target = `child-${_.random(1,30)}`;
-
-      if (!_.find(graphData.links, {source: target , target: source, value})) {
-        graphData.links.push({source, target, value});
-      }
-  });
 
 
 
@@ -162,6 +149,7 @@ export default function socialGraph(data) {
     d.fx = null;
     d.fy = null;
   }
+
 
 
 
