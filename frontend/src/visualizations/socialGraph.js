@@ -10,7 +10,7 @@ export default function socialGraph(data) {
     return
   }
 
-  
+
 
   let state = store.getState();
   let storeEntities = state.entities;
@@ -25,12 +25,9 @@ export default function socialGraph(data) {
   let scalar = d3.scaleLinear()
     .domain([d3.min(data.obs)-d3.deviation(data.obs), d3.max(data.obs)+d3.deviation(data.obs)])
     .range([0, 20]).clamp(true);
-
   let scaleTwenty = d3.scaleLinear().domain([0, 20])
   let scaleZoom = d3.scaleLinear().domain([1,5])
-
   let zoomLevel = scaleZoom.range([2,5])(zoom);
-
 
   let graphData = _.reduce(data.entities, (current, val, index) => {
     let force = parseInt(scalar(data.obs[index]), 10);
@@ -44,7 +41,16 @@ export default function socialGraph(data) {
       current.links.push({source: `${val[0]}-${val[1]}`, target: `${val[2]}-${val[3]}`, value: force});
     }
     return current;
-   }, {nodes:[], links: [], bilinks: []})
+   }, {nodes:[], links: []})
+
+
+
+
+
+
+
+
+
 
 
   var svg = d3.select("#visualization svg g#container")
@@ -54,39 +60,26 @@ export default function socialGraph(data) {
 
   var mb = d3.forceManyBody();
 
-  mb.strength((d) => { 
+  mb.strength((d) => {
     return d3.scaleLinear().domain([0, 20]).range([-300,0])(d.value)
   });
 
   var simulation = d3.forceSimulation()
-      .force("link", d3.forceLink().distance(calcDistance).strength(calcStrength))
+      .force("link", d3.forceLink().distance(calcDistance).strength(calcStrength).id(d => d.id ))
       .force("charge", mb)
       .force("center", d3.forceCenter(canvasWidth / (2*zoomLevel), canvasHeight / (2*zoomLevel)));
 
   var nodeById = d3.map(graphData.nodes, function(d) { return d.id; });
 
-  graphData.links.forEach(function(link) {
-    var s = link.source = nodeById.get(link.source),
-        t = link.target = nodeById.get(link.target),
-        i = {value: link.value}; // intermediate node
-        s.value = link.value;
-        t.value = link.value;
-    graphData.nodes.push(i);
-    graphData.links.push({source: s, target: i, value: link.value}, {source: i, target: t, value: link.value});
-    graphData.bilinks.push([s, i, t]);
-  });
-
-  var link = svg.selectAll(".link")
-    .data(graphData.bilinks)
-    .enter().append("path")
-      .attr("style", function(d) { 
-        
-        return `stroke-width: ${scaleTwenty.range([scaleZoom.range([1,0.01])(zoom), scaleZoom.range([3,2])(zoom)])(d[0].value)};
-                stroke: rgba(${d3.scaleQuantize().domain([0, 20]).range([130,255])(d[0].value)},0,${d3.scaleQuantize().domain([0, 20]).range([130,0])(d[0].value)},${scaleTwenty.range([-0.1,1])(d[0].value)})`; 
-      })
-      .attr("class", "link");
-
-
+  var link = svg.append("g")
+      .attr("class", "links")
+    .selectAll("line")
+    .data(graphData.links)
+    .enter().append("line")
+    .attr("style", function(d) {
+      return `stroke-width: ${scaleTwenty.range([scaleZoom.range([1,0.01])(zoom), scaleZoom.range([3,2])(zoom)])(d.value)};
+              stroke: rgba(${d3.scaleQuantize().domain([0, 20]).range([130,255])(d.value)},0,${d3.scaleQuantize().domain([0, 20]).range([130,0])(d.value)},${scaleTwenty.range([-0.1,1])(d.value)})`;
+    });
 
   var node = svg.selectAll(".node")
     .data(graphData.nodes.filter(function(d) { return d.id; }))
@@ -120,28 +113,16 @@ export default function socialGraph(data) {
   simulation.force("link")
       .links(graphData.links);
 
-  function positionLink(d) {
-  return "M" + d[0].x + "," + d[0].y
-       + "S" + d[1].x + "," + d[1].y
-       + " " + d[2].x + "," + d[2].y;
-  }
-
-  function positionNode(d) {
-    return "translate(" + d.x + "," + d.y + ")";
-  }
-
   function ticked() {
-    link.attr("d", positionLink);
+    link
+        .attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
 
-    
-
-    node.attr("transform", (d) => {
-      return "translate(" + d.x + "," + d.y + ")";
-    });
-
-    label.attr("transform", (d) => {
-      return "translate(" + d.x+30 + "," + d.y+20 + ")";
-    });
+    node
+        .attr("cx", function(d) { return d.x; })
+        .attr("cy", function(d) { return d.y; });
   }
 
   function calcStrength(d) {
@@ -168,6 +149,7 @@ export default function socialGraph(data) {
     d.fx = null;
     d.fy = null;
   }
+
 
 
 
