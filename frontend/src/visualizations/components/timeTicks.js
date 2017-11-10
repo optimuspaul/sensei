@@ -30,7 +30,7 @@ export default function timeTicks(selection, ticks, opts = {}) {
     .data(ticks)
     .enter().append(`text`)
     .attr('class', `y-${opts.y}`)
-    .attr("x", (tick, index) => { debugger; return tick[1] + opts.offset })
+    .attr("x", (tick, index) => { return tick[1] + opts.offset })
     .attr("y", opts.y)
     .text((tick, index) => { return tick[0] })
 

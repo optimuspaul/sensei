@@ -9,32 +9,37 @@ import _ from 'lodash';
 const rowHeight = 30; // how tall each row of data in timeline is
 const offset = 205; // how far to the right the observation points start being drawn
 
-export default function activityTimeline(rawData) {
+export default function activityTimeline(data) {
 
-  if (!rawData) return;
+  if (!data) return;
+
+  let firstDay = _.toArray(data)[0];
+
+  let color = d3.scaleOrdinal(d3.schemeCategory10).domain([0,3])
 
   document.querySelector("#visualization").innerHTML = "<svg></svg>";
   let zoom = _.get(store.getState(), "insights.ui.zoom") || 1;
   let chartWidth = 1260 * zoom; // how wide the width of the visualization is
 
-  _.each(_.toArray(rawData), (data) => {
+   _.each(_.toArray(data), (day, index) => {
+
+    let {startTime, endTime} = startAndEndTimes(day.timestamps);
+    let chart = d3.select("#visualization svg")
 
 
-
-    let segmentedData = segmentData(data);
-    let {startTime, endTime} = startAndEndTimes(data.timestamps);
     let xScalar = generateXScalar(startTime, endTime, chartWidth-offset);
     let ticks = timelineTicks(startTime, endTime, xScalar, zoom);
+
+    let segmentedData = segmentData(day);
+
     let chartHeight = calcChartHeight(segmentedData);
-
-
-    let chart = d3.select("#visualization svg")
 
     chart.attr("width", chartWidth)
       .attr("height", chartHeight + 20)
       .call(timeTicks, ticks, {offset, y: 10, zoom, id: 'top'})
       .call(timeTicks, ticks, {offset, y: chartHeight+20, zoom, hideLines: true})
-      .selectAll("g.segments")
+
+    chart.selectAll(`g.segments`)
       .data(segmentedData)
       .call(entityTypeSection, {className: 'segments'})
 
@@ -42,6 +47,7 @@ export default function activityTimeline(rawData) {
       .selectAll("g.row")
       .data(d => d[1].entities)
       .call(entityRow, 'row')
+
 
     chart.selectAll("g.row")
       .call(entityRowLabel)
@@ -51,9 +57,10 @@ export default function activityTimeline(rawData) {
       })
       .enter().append("circle")
       .attr("cx", (observation, index) => {
-        let timestamp = new Date(data.timestamps[index]);
+        let timestamp = new Date(day.timestamps[index]);
         return xScalar(timestamp.getTime()) + offset
       })
+      .attr("style", function(d) { debugger; return `fill:${color(d.group)}`; })
       .attr("cy", rowHeight / 1.5)
       .attr("r", (observation, index) => { return (observation[0] ? 1 : 0) + (observation[1] ? 1 : 0) })
 
