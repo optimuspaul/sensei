@@ -3,6 +3,7 @@ import QueryParams from 'query-params';
 
 let params = QueryParams.decode(location.search.slice(1));
 params.currentDate = params.currentDate || (new Date((new Date()).toDateString())).toISOString();
+params.selectedDays = [new Date(params.currentDate)];
 params.endDate = params.endDate || (new Date((new Date()).toDateString())).toISOString();
 const initialState = {
   observations: {
@@ -13,14 +14,19 @@ const initialState = {
 };
 
 export default function sensorMappings(state = initialState, action) {
+  let selectedDays;
   switch (action.type) {
     case 'ADD_OBSERVATIONS':
       let entityUid = `${action.entityType}-${action.entityId}`
+      let dateKey = state.ui.currentDate
       return {
         ...state,
         observations: {
           ...state.observations,
-          [entityUid]: action.observations
+          [entityUid]: {
+            ...state.observations[entityUid],
+            [state.ui.currentDate]: action.observations
+          }
         },
         status: 'fetched'
       }
@@ -70,6 +76,31 @@ export default function sensorMappings(state = initialState, action) {
         },
         status: 'fetching'
       }
+    case 'ADD_DAY':
+      selectedDays = state.ui.selectedDays;
+      selectedDays.push(action.date);
+      return {
+        observations: state.observations,
+        ui: {
+          ...state.ui,
+          selectedDays,
+          currentDate: action.date.toISOString()
+        },
+        status: 'fetching'
+      }
+    case 'REMOVE_DAY':
+      selectedDays = state.ui.selectedDays;
+      _.remove(selectedDays, (day) => {
+        return _.isEqual(action.date, day);
+      });
+      return {
+        observations: state.observations,
+        ui: {
+          ...state.ui,
+          selectedDays
+        },
+        status: 'fetching'
+      }
     case 'SET_ZOOM':
       return {
         ...state,
@@ -79,9 +110,13 @@ export default function sensorMappings(state = initialState, action) {
         }
       }
     case 'REFRESH_FROM_PARAMS':
+      let params = _.pick(action.params, ['currentDate', 'endDate', 'visualization', 'interactionType', 'currentEntityType', 'currentEntityId', 'zoom']);
       return {
-        observations: {},
-        ui: _.pick(action.params, ['currentDate', 'endDate', 'visualization', 'interactionType', 'currentEntityType', 'currentEntityId', 'zoom']),
+        observations: state.observations,
+        ui: {
+          ...state.ui,
+          ...params
+        },
         status: 'fetching'
       }
     default:

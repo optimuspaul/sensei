@@ -19,6 +19,7 @@
     "react-bootstrap": "^0.30.8",
     "react-bootstrap-date-picker": "^5.0.1",
     "react-csv": "^1.0.8",
+    "react-day-picker": "^6.2.1",
     "react-dom": "^15.6.1",
     "react-key-handler": "^1.0.0",
     "react-preload": "^0.5.1",

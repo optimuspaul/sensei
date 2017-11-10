@@ -149,6 +149,26 @@ export const selectEndDate = (endDate) => {
   }
 }
 
+export const ADD_DAY = 'ADD_DAY'
+export const addDay = (date) => {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ADD_DAY,
+      date
+    });
+  }
+}
+
+export const REMOVE_DAY = 'REMOVE_DAY'
+export const removeDay = (date) => {
+  return (dispatch, getState) => {
+    dispatch({
+      type: REMOVE_DAY,
+      date
+    });
+  }
+}
+
 export const REFRESH_FROM_PARAMS = 'REFRESH_FROM_PARAMS'
 export const refreshFromParams = (params) => {
   return (dispatch, getState) => {

@@ -3,7 +3,8 @@ import _ from 'lodash';
 import DatePicker from 'react-bootstrap-date-picker';
 import QueryParams from 'query-params';
 import { history } from '../utils';
-
+import DayPicker from 'react-day-picker';
+import 'react-day-picker/lib/style.css';
 
 class ActivityTimelineControls extends React.Component {
 
@@ -29,7 +30,8 @@ class ActivityTimelineControls extends React.Component {
       date,
       endDate,
       maxEndDate: (new Date()).toISOString(),
-      minEndDate: (new Date()).toISOString()
+      minEndDate: (new Date()).toISOString(),
+      selectedDays: []
     }
   }
 
@@ -138,6 +140,16 @@ class ActivityTimelineControls extends React.Component {
     }
   }
 
+  handleDayClick = (clickedDay, { selected }) => {
+    let selectedDays = this.state.selectedDays;
+    if (selected) {
+      this.props.dispatch(this.props.removeDay(clickedDay));
+    } else {
+      this.props.dispatch(this.props.addDay(clickedDay));
+    }
+
+  };
+
   render() {
 
     let children = _.map(this.props.entities.children, (child) => {
@@ -175,6 +187,26 @@ class ActivityTimelineControls extends React.Component {
             <DatePicker maxDate={this.state.maxEndDate} minDate={this.state.minEndDate} showClearButton={false} value={this.props.insights.ui.endDate} onChange={this.handleEndDateChange.bind(this)} />
           </div>
         </div>
+      )
+    }
+
+    let datePicker;
+
+    if (_.includes(['activityTimeline', 'segmentedTimeline'], this.props.insights.ui.visualization)) {
+      datePicker = (
+        <DayPicker
+          onDayClick={this.handleDayClick}
+          selectedDays={this.props.insights.ui.selectedDays}
+        />
+      )
+    } else {
+      datePicker = (
+        <DatePicker 
+          maxDate={this.state.maxStartDate} 
+          showClearButton={false} 
+          value={this.props.insights.ui.currentDate} 
+          onChange={this.handleDateChange.bind(this)} 
+        />
       )
     }
 
@@ -247,7 +279,7 @@ class ActivityTimelineControls extends React.Component {
         <div className="row" style={{marginBottom: '10px'}}>
           <div className="col-md-12">
             { _.includes(['studentSummary', 'unitSummary'], this.props.insights.ui.visualization) ? <label>From: </label> : <label>On: </label>}
-            <DatePicker maxDate={this.state.maxStartDate} showClearButton={false} value={this.props.insights.ui.currentDate} onChange={this.handleDateChange.bind(this)} />
+            {datePicker}
           </div>
         </div>
         {endDatePicker}

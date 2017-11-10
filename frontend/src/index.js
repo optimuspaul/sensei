@@ -162,8 +162,8 @@ import key from 'keyboard-shortcut';
 
           foundationEl.innerHTML = `
             <div class='row'>
-              <div class='col-md-2' id='insights-nav-container'></div>
-              <div class='col-md-10'>
+              <div class='col-md-3' id='insights-nav-container'></div>
+              <div class='col-md-9'>
                 <h2 id='visualization-title'></h2>
                 <hr />
                 <div id='visualization'><svg></svg></div>
@@ -208,7 +208,7 @@ import key from 'keyboard-shortcut';
                 }
                 document.querySelector("#visualization-title").innerHTML = `${entityName} <small>${dateString}</small>`
                 let observationsData = state.insights.observations[entityUid];
-                if (observationsData && (!_.isEmpty(observationsData.entities) && !_.isEmpty(observationsData.timestamps))) {
+                if (observationsData && observationsData[date] && (!_.isEmpty(observationsData[date].entities) && !_.isEmpty(observationsData[date].timestamps))) {
                   switch(visualization) {
                     case 'activityTimeline':
                       activityTimeline(observationsData);
