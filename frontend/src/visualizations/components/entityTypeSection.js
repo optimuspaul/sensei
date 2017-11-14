@@ -9,11 +9,10 @@ const defaultOpts = {
 export default function entityTypeSection(selection, opts = {}) {
   opts = _.merge({}, defaultOpts, opts);
 
+  selection.exit().remove();
+
   // selects group tag that corresponds to the current entity type
-  let section = selection
-    .enter()
-    .append("g")
-    .attr("class", opts.className)
+  selection
     .attr("id", (d) => { 
       return d[0];
     })
@@ -21,12 +20,17 @@ export default function entityTypeSection(selection, opts = {}) {
     .attr("transform", (d) => {
       return `translate(0,${d[1].y * opts.rowHeight})`
     })
-  if (!opts.hideLabels) {
-    section.append("text")
+
+  selection
+    .enter()
+    .append("g")
+    .attr("class", opts.className)
+    .merge(selection)
+    .append("text")
      .attr("x", 0)
      .attr("y", 0)
-     .attr("style", "font-weight: bold")
+     .attr("style", `font-weight: bold; opacity: ${opts.hideLabels ? 0 : 1}`)
      .text(d => d[0]);
-  }
+
 }
 

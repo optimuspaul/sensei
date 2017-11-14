@@ -28,6 +28,8 @@ export default function segmentedTimeline(data) {
   let ticks = timelineTicks(startTime, endTime, xScalar, zoom);
   let chart = d3.select("#visualization svg")
 
+  console.log("segmentedData", segmentedData)
+
   chart.attr("width", chartWidth)
     .attr("height", chartHeight + 20)
     .call(timeTicks, startTime, endTime, {offset, y: 10, zoom, id: 'top'})
@@ -38,7 +40,7 @@ export default function segmentedTimeline(data) {
 
   chart.selectAll("g.segments")
     .selectAll("g.row")
-    .data(d => d[1].entities)
+    .data(d => d[1].entities || [])
     .call(entityRow, 'row')
 
   chart.selectAll("g.row")

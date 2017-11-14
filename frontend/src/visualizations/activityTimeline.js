@@ -21,7 +21,7 @@ export default function activityTimeline(data) {
   let zoom = _.get(store.getState(), "insights.ui.zoom") || 1;
   let chartWidth = 1260 * zoom; // how wide the width of the visualization is
 
-   _.each(_.toArray(data), (day, index) => {
+   _.each(_.toArray(data), (day, dayIndex) => {
 
     let {startTime, endTime} = startAndEndTimes(day.timestamps);
     let chart = d3.select("#visualization svg")
@@ -60,7 +60,7 @@ export default function activityTimeline(data) {
         let timestamp = new Date(day.timestamps[index]);
         return xScalar(timestamp.getTime()) + offset
       })
-      .attr("style", function(d) { debugger; return `fill:${color(d.group)}`; })
+      .attr("style", function(d) { return `fill:${color(dayIndex)}`; })
       .attr("cy", rowHeight / 1.5)
       .attr("r", (observation, index) => { return (observation[0] ? 1 : 0) + (observation[1] ? 1 : 0) })
 

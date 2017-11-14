@@ -3,6 +3,7 @@ import QueryParams from 'query-params';
 
 let params = QueryParams.decode(location.search.slice(1));
 params.currentDate = params.currentDate || (new Date((new Date()).toDateString())).toISOString();
+params.currentDate = params.currentDate.split('T')[0]
 params.selectedDays = [new Date(params.currentDate)];
 params.endDate = params.endDate || (new Date((new Date()).toDateString())).toISOString();
 const initialState = {

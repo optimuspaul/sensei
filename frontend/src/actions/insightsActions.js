@@ -134,7 +134,7 @@ export const selectDate = (date) => {
   return (dispatch, getState) => {
     dispatch({
       type: SELECT_DATE,
-      date
+      date: date.split("T")[0]
     });
   }
 }
@@ -154,7 +154,7 @@ export const addDay = (date) => {
   return (dispatch, getState) => {
     dispatch({
       type: ADD_DAY,
-      date
+      date: date.split("T")[0]
     });
   }
 }

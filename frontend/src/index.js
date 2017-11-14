@@ -16,11 +16,7 @@ import {fetchObservations, fetchInteractionPeriods, fetchInteractionTotals} from
 import {toggleAnonymizer} from './actions/entityActions';
 import _ from 'lodash';
 import './index.css';
-import activityTimeline from './visualizations/activityTimeline';
-import segmentedTimeline from './visualizations/segmentedTimeline';
-import studentSummary from './visualizations/studentSummary';
-import unitSummary from './visualizations/unitSummary';
-import socialGraph from './visualizations/socialGraph';
+import * as visualizations from './visualizations';
 import key from 'keyboard-shortcut';
 
 
@@ -166,7 +162,7 @@ import key from 'keyboard-shortcut';
               <div class='col-md-9'>
                 <h2 id='visualization-title'></h2>
                 <hr />
-                <div id='visualization'><svg></svg></div>
+                <div id='visualization'></div>
               </div>
             </div>
           `;
@@ -190,15 +186,16 @@ import key from 'keyboard-shortcut';
             let state = store.getState();
             let entityId = _.get(state, 'insights.ui.currentEntityId');
             let entityType = _.get(state, 'insights.ui.currentEntityType');
+            let entityUid = `${entityType}-${entityId}`
             let visualization = _.get(state, 'insights.ui.visualization');
             let interactionType = _.get(state, 'insights.ui.interactionType');
-            let entityUid = `${entityType}-${entityId}`
             let date = _.get(state, 'insights.ui.currentDate');
             let endDate = _.get(state, 'insights.ui.endDate');
             let zoom = _.get(state, 'insights.ui.zoom');
             let status = _.get(state, 'insights.status');
             let entity = _.get(state, `entities.${entityInflections[entityType]}.${entityId}`);
             let entityName = entity && entity.displayName;
+            let visualizationFunction;
 
             if (entityId && entityType && date && visualization && (endDate && _.includes(['studentSummary', 'unitSummary'], visualization) || !_.includes(['studentSummary', 'unitSummary'], visualization))) {
               if (entityUid === prevEntityUid && date === prevDate && endDate === prevEndDate && prevVisualization === visualization && prevInteractionType === interactionType && prevZoom === zoom) {
@@ -206,35 +203,35 @@ import key from 'keyboard-shortcut';
                 if (endDate) {
                   dateString += ` to ${(new Date(endDate)).toDateString()}`
                 }
-                document.querySelector("#visualization-title").innerHTML = `${entityName} <small>${dateString}</small>`
-                let observationsData = state.insights.observations[entityUid];
-                if (observationsData && observationsData[date] && (!_.isEmpty(observationsData[date].entities) && !_.isEmpty(observationsData[date].timestamps))) {
-                  switch(visualization) {
-                    case 'activityTimeline':
-                      activityTimeline(observationsData);
-                      break;
-                    case 'segmentedTimeline':
-                      segmentedTimeline(observationsData);
-                      break;
-
-                    case 'unitSummary':
-                      unitSummary(observationsData);
-                      break;
-                    case 'studentSummary':
-                      studentSummary(observationsData);
-                      break;
-                    case 'socialGraph':
-                      socialGraph(observationsData);
-                      break;
-                  }
+                if (_.isEmpty(_.get(observationsData, `${date}.entities`)) || _.isEmpty(_.get(observationsData, `${date}.timestamps`))) {
+                  document.querySelector("#visualization-title").innerHTML = "No data..."
                 } else {
-                  if (status === 'fetched') {
-                    document.querySelector("#visualization").innerHTML = '<h3>No data</h3>';
-                  }
+                  document.querySelector("#visualization-title").innerHTML = `${entityName} <small>${dateString}</small>`
                 }
+                
+                let observationsData = state.insights.observations[entityUid];
+                // if (observationsData && observationsData[date] && (!_.isEmpty(observationsData[date].entities) && !_.isEmpty(observationsData[date].timestamps))) {
+                if (status === 'fetched' && !_.isEmpty(observationsData)) {
+                  console.log("FETCHED AND NOT EMPTY")
+                  let svg = document.querySelector("#visualization svg");
+                  let vizElement = document.querySelector("#visualization");
+                  if (!svg) {
+                    vizElement.removeEventListener('dataChanged', visualizationFunction);
+                    document.querySelector("#visualization").innerHTML = '';
+                    visualizationFunction = visualizations[visualization](observationsData[date]);
+                    
+                  }
+                  var event = new CustomEvent('dataChanged', { detail: observationsData[date] });
+                  vizElement.dispatchEvent(event);
+                }
+                // } else {
+                //   if (status === 'fetched') {
+                //     document.querySelector("#visualization-title").innerHTML = '<h3>No data</h3>';
+                //   }
+                // }
               } else {
-                document.querySelector("#visualization").innerHTML = '<h3>loading...</h3>';
-                document.querySelector("#visualization-title").innerHTML = '';
+                
+                document.querySelector("#visualization-title").innerHTML = '<h3>loading...</h3>';
                 switch(visualization) {
                   case 'activityTimeline':
                     store.dispatch(fetchObservations(entityId, entityType, date, interactionType));
@@ -247,10 +244,11 @@ import key from 'keyboard-shortcut';
                     break;
                   case 'unitSummary':
                   case 'studentSummary':
+                  case 'interactionTotals':
                     if (endDate && !(visualization === 'unitSummary' && !interactionType)) {
                       store.dispatch(fetchInteractionTotals(entityId, entityType, date, endDate, visualization === 'unitSummary' && interactionType));
                     } else {
-                      document.querySelector("#visualization").innerHTML = '';
+                      // document.querySelector("#visualization").innerHTML = '';
                     }
                     break;
                 }

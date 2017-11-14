@@ -21,11 +21,7 @@ const defaultOpts = {
 export default function timeTicks(selection, ticks, opts = {}) {
   opts = _.merge({}, defaultOpts, opts);
 
-  let ticksContainer = selection.append("g")
-    .attr("id", opts.id)
-    .attr("class", "ticks")
-
-  ticksContainer
+  selection
     .selectAll(`text.y-${opts.y}`)
     .data(ticks)
     .enter().append(`text`)
@@ -36,7 +32,7 @@ export default function timeTicks(selection, ticks, opts = {}) {
 
   if (!opts.hideLines) return;
 
-  ticksContainer
+  selection
     .selectAll("line")
     .data(ticks)
     .enter().append("line")

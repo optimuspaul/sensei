@@ -179,7 +179,7 @@ class ActivityTimelineControls extends React.Component {
 
     let selectedUid = this.props.insights.ui.currentEntityType ? `${this.props.insights.ui.currentEntityType}-${this.props.insights.ui.currentEntityId}` : '';
     let endDatePicker = '';
-    if (_.includes(['studentSummary', 'unitSummary', 'socialGraph'], this.props.insights.ui.visualization)) {
+    if (_.includes(['studentSummary', 'interactionTotals', 'unitSummary', 'socialGraph'], this.props.insights.ui.visualization)) {
       endDatePicker = (
         <div className="row">
           <div className="col-md-12">
@@ -244,6 +244,7 @@ class ActivityTimelineControls extends React.Component {
                   <option key={`activity-timeline`} value={`activityTimeline`}>Activity Timeline</option>
                   <option key={`segmented-timeline`} value={`segmentedTimeline`}>Segmented Timeline</option>
                   <option key={`student-summary`} value={`studentSummary`}>Student Summary</option>
+                  <option key={`interaction-totals`} value={`interactionTotals`}>InteractionTotals</option>
                   <option key={`unit-summary`} value={`unitSummary`}>Unit Summary</option>
                   <option key={`social-graph`} value={`socialGraph`}>Social Graph</option>
                 </select>
