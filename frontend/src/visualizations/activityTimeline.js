@@ -84,7 +84,7 @@ export default function activityTimeline(data) {
         timestamp.setMonth(startTime.getMonth());
         return xScalar(timestamp.getTime()) + offset
       })
-      .attr("style", function(d, i) { return `fill:${color(index)};opacity:0.2;`; })
+      .attr("style", function(d, i) { return `fill:${color(index)};opacity:0.05;`; })
       .attr("class", `day-${index}`)
       .attr("date", (observation, index) => {
         let timestamp = new Date(day.timestamps[index]);
