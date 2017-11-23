@@ -13,7 +13,7 @@ def camera_data_image(key):
   url = s3.generate_presigned_url(
       ClientMethod='get_object',
       Params={
-          'Bucket': 'wf-camera',
+          'Bucket': 'wf-classroom-data',
           'Key': key
       }
   )
@@ -29,43 +29,49 @@ def camera_data_index():
 
   output = {}
 
+  cameras = ['camera','overlays']
+
   s3_folder_name = request.args.get('s3_folder_name')
   if not s3_folder_name:
-    result = s3.list_objects(Bucket='wf-camera', Delimiter='/')
+    result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/')
     
     for o in result.get('CommonPrefixes'):
       s3_folder_name = o.get('Prefix')[:-1]
       if not output.get(s3_folder_name):
         output[s3_folder_name] = {}
-      result = s3.list_objects(Bucket='wf-camera', Delimiter='/', Prefix=o.get('Prefix'))
+      result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/', Prefix=o.get('Prefix'))
       for o in result.get('CommonPrefixes'):
         camera = o.get('Prefix').split('/')[1]
-        if not output[s3_folder_name].get(camera):
-          output[s3_folder_name][camera] = {}
-        result = s3.list_objects(Bucket='wf-camera', Delimiter='/', Prefix=o.get('Prefix'))
-        for o in result.get('CommonPrefixes'):
-          date = o.get('Prefix').split('/')[2]
-          output[s3_folder_name][camera][date] = {}
+        if camera != '2D-pose':
+          if not output[s3_folder_name].get(camera):
+            output[s3_folder_name][camera] = {}
+          result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/', Prefix=o.get('Prefix'))
+          for o in result.get('CommonPrefixes'):
+            date = o.get('Prefix').split('/')[2]
+            output[s3_folder_name][camera][date] = {}
     return jsonify(output)
 
   date = request.args.get('date')
   if not date:
     date = '2017-08-10'
 
+# https://s3.amazonaws.com/wf-classroom-data/camera-wildflower/camera/2017-11-21/camera01/still_2017-11-21-09-06-20.jpg
 
-
-  cameras = ['1','2']
 
   output[s3_folder_name] = {}
   for camera in cameras:
 
+    prefix = s3_folder_name + '/' + camera + '/' + date + '/camera01'
+    print(prefix)
+
     paginator = s3.get_paginator('list_objects')
-    operation_parameters = {'Bucket':'wf-camera', 
-                            'Prefix': s3_folder_name + '/' + camera + '/' + date}
+    operation_parameters = {'Bucket':'wf-classroom-data', 
+                            'Prefix': prefix}
     pageresponse = paginator.paginate(**operation_parameters)
     
     for page in pageresponse:
-      for file in page["Contents"]:
+      print(page);
+      for file in page.get("Contents", []):
         print(file["Key"])
         parts = file["Key"].split("/")
         if not output[s3_folder_name].get(parts[1]):
@@ -79,7 +85,7 @@ def camera_data_index():
 
 # Sensor Mapping - index #
 @api.route('/api/v1/camera_data/segments', methods = ['GET'])
-@api_auth.requires_auth
+# @api_auth.requires_auth
 def camera_segments_index():
   s3_folder_name = request.args.get('s3_folder_name')
   if not s3_folder_name:

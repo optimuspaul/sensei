@@ -40,6 +40,9 @@ class CameraSegmentBuilderCarousel extends React.Component {
       this.toggleImage(this.props.camera, false);
       return false;
     } else {
+      if (!_.isEqual(nextProps.page, this.props.page)) {
+        this.setState({index:0})
+      }
       return true;
     }
   }
@@ -49,8 +52,7 @@ class CameraSegmentBuilderCarousel extends React.Component {
     let index = this.state.index;
     index += (event.key === 'ArrowLeft' ? -1 : 1) * (event.shiftKey ? 10 : 1);
     if (index < (_.size(this.props.photos[this.props.camera])-1) && index >= 0 ) {
-      this.props.onCarouselChange(index);
-      this.setState({index})
+      this.setState({index: this.props.onCarouselChange(index) ? 0 : index})
     }
   }
 
