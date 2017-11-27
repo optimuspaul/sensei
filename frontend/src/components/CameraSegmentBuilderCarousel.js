@@ -1,7 +1,7 @@
 import React from 'react';
 import _ from 'lodash';
 import { Carousel } from 'react-bootstrap';
-import {getSenseiToken,  baseUrl} from './../constants';
+import {getSenseiToken,  baseUrl, vantagePoints} from './../constants';
 import { Preload } from 'react-preload';
 import KeyHandler, {KEYDOWN} from 'react-key-handler';
 
@@ -23,10 +23,14 @@ class CameraSegmentBuilderCarousel extends React.Component {
     });
   }
 
-  toggleImage(camera, show) {
-    let elements = document.querySelectorAll(`.item.active .camera-${camera}`)
+  toggleSubItems(camera, vantagePoint) {
+    let elements = document.querySelectorAll(`.item .sub-item`);
     if (!_.isEmpty(elements)) {
-      elements.forEach((el) => { el.style.display = show ? 'inline' : 'none'; });
+      elements.forEach((el) => { el.style.display = 'none'; });
+    }
+    elements = document.querySelectorAll(`.item.active .camera-${camera}.vantage-point-${vantagePoint}`)
+    if (!_.isEmpty(elements)) {
+      elements.forEach((el) => { el.style.display = 'inline'; });
     }
   }
 
@@ -36,16 +40,14 @@ class CameraSegmentBuilderCarousel extends React.Component {
 
 
   shouldComponentUpdate(nextProps, nextState) {
-    if (this.props.camera !== nextProps.camera && _.isEqual(nextProps.photos, this.props.photos)) {
-      this.toggleImage(nextProps.camera, true);
-      this.toggleImage(this.props.camera, false);
-      return false;
-    } else {
-      if (!_.isEqual(nextProps.page, this.props.page)) {
-        this.setState({index: (nextProps.page > this.props.page ? 15 : 34)})
-      }
-      return true;
+    if ((this.props.vantagePoint !== nextProps.vantagePoint || this.props.camera !== nextProps.camera) && _.isEqual(nextProps.photos, this.props.photos)) {
+      this.toggleSubItems(nextProps.camera, nextProps.vantagePoint);
+      return false
     }
+    if (!_.isEqual(nextProps.page, this.props.page)) {
+      this.setState({index: (nextProps.page > this.props.page ? 15 : 34)})
+    }
+    return true;
   }
 
   moveCarousel = (event) => {
@@ -71,16 +73,19 @@ class CameraSegmentBuilderCarousel extends React.Component {
     if (_.isEmpty(this.props.photos) || !this.props.camera)  return null
     let carouselItems = _.map(this.props.photos[this.props.camera], (key, index) => {
       let content = _.reduce(_.keys(this.props.photos), (current, camera) => {
-        current.images.push(<img key={`camera-${camera}-image`}
-                             className={`camera-${camera}`}
-                             style={{display: camera === this.props.camera ? 'inline' : 'none'}}
-                             src={((this.state.index > (index-3)) || this.state.index === (index-10)) ? `${baseUrl()}/api/v1/camera_data/signed_url/${this.props.photos[camera][index]}` : ''}/>)
-        current.captions.push(<Carousel.Caption key={`camera-${camera}-caption`}
-                                className={`camera-${camera}`}
-                                style={{display: camera === this.props.camera ? 'inline' : 'none'}}>
-                                <h3>camera {camera}</h3>
-                                <p>{this.props.photos[camera][index]}</p>
-                              </Carousel.Caption>)
+        _.each(vantagePoints, (vantagePoint) => {
+          let url = this.props.photos[camera][index].replace('camera01', vantagePoint);
+          current.images.push(<img key={`camera-${camera}-${vantagePoint}-image`}
+                               className={`sub-item camera-${camera} vantage-point-${vantagePoint}`}
+                               style={{display: (camera === this.props.camera && vantagePoint === this.props.vantagePoint) ? 'inline' : 'none'}}
+                               src={((this.state.index > (index-3)) || this.state.index === (index-10)) ? `${baseUrl()}/api/v1/camera_data/signed_url/${url}` : ''}/>)
+          current.captions.push(<Carousel.Caption key={`camera-${camera}-${vantagePoint}-caption`}
+                                  className={`sub-item camera-${camera} vantage-point-${vantagePoint}`}
+                                  style={{display: (camera === this.props.camera && vantagePoint === this.props.vantagePoint) ? 'inline' : 'none'}}>
+                                  <h3>camera {camera}</h3>
+                                  <p>{url}</p>
+                                </Carousel.Caption>)
+        })
         return current;
       }, {images: [], captions: []});
 

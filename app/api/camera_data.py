@@ -34,7 +34,7 @@ def camera_data_index():
   s3_folder_name = request.args.get('s3_folder_name')
   if not s3_folder_name:
     result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/')
-    
+
     for o in result.get('CommonPrefixes'):
       s3_folder_name = o.get('Prefix')[:-1]
       if not output.get(s3_folder_name):
@@ -65,10 +65,10 @@ def camera_data_index():
     print(prefix)
 
     paginator = s3.get_paginator('list_objects')
-    operation_parameters = {'Bucket':'wf-classroom-data', 
+    operation_parameters = {'Bucket':'wf-classroom-data',
                             'Prefix': prefix}
     pageresponse = paginator.paginate(**operation_parameters)
-    
+
     for page in pageresponse:
       print(page);
       for file in page.get("Contents", []):
@@ -79,7 +79,7 @@ def camera_data_index():
         if not output[s3_folder_name].get(parts[1]).get(parts[2]):
           output[s3_folder_name][parts[1]][parts[2]] = []
         output[s3_folder_name][parts[1]][parts[2]].append(file["Key"])
-    
+
   return jsonify(output)
 
 
@@ -93,7 +93,7 @@ def camera_segments_index():
 
   start_time = assert_iso8601_time_param('start_time')
   end_time = assert_iso8601_time_param('end_time')
-  
+
   segments = CameraSegment.query.filter(
         CameraSegment.s3_folder_name==s3_folder_name,
         CameraSegment.start_time >= start_time,
@@ -126,7 +126,7 @@ def create_camera_segment():
   if not end_time:
     abort(400, "Missing end_time parameter")
   classroom_id = segment_data.get('classroom_id')
-  
+
   start_time = assert_iso8601_time(start_time)
   end_time = assert_iso8601_time(end_time)
 
@@ -136,7 +136,7 @@ def create_camera_segment():
     start_time,
     end_time,
     sensor1_id,
-    sensor2_id 
+    sensor2_id
   )
   db.session.add(new_camera_segment)
 
