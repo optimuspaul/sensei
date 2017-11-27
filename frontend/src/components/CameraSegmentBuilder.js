@@ -3,7 +3,7 @@ import _ from 'lodash';
 import * as d3 from "d3";
 import './CameraSegmentBuilder.css';
 import { Carousel, FormGroup, FormControl } from 'react-bootstrap';
-import {getSenseiToken,  baseUrl} from './../constants';
+import {getSenseiToken,  baseUrl, vantagePoints} from './../constants';
 import CameraSegmentBuilderCarousel from './CameraSegmentBuilderCarousel';
 import KeyHandler, {KEYDOWN} from 'react-key-handler';
 import ProximitySegmentsEditor from './ProximitySegmentsEditor';
@@ -15,6 +15,7 @@ class CameraSegmentBuilder extends React.Component {
     this.state = {
       currentLocation: '',
       currentCamera: '',
+      currentVantagePoint: '',
       currentDate: '',
       index: 0,
       page: 0,
@@ -40,8 +41,8 @@ class CameraSegmentBuilder extends React.Component {
     let currentPhoto = this.getCurrentPhoto();
     if (currentPhoto) {
       let key = currentPhoto.split('/')[4]
-      key = key.replace(/.*still_/, '').replace(/\..*/, '').split('/').slice(-1)[0].match(/[0-9]{4}(.*(?=_)|.*(?=\.))/)[0];
-      let timestamp = new Date(`${key.split('-').splice(0,3).join('-')} ${key.split('-').splice(3,3).join(':')}`);
+      let keyTime = key.match(/[0-9]{4}(.*(?=_)|.*(?=\.))/)[0];
+      let timestamp = new Date(`${keyTime.split('-').splice(0,3).join('-')} ${keyTime.split('-').splice(3,3).join(':')}`);
       return timestamp;
     }
 
@@ -105,6 +106,10 @@ class CameraSegmentBuilder extends React.Component {
     this.setState({currentCamera: event.target.value});
   }
 
+  handleVantagePointChange = (event) => {
+    this.setState({currentVantagePoint: event.target.value});
+  }
+
   handleDateChange = (event) => {
     this.props.fetchPhotos(this.state.currentLocation, this.state.currentCamera, event.target.value);
     this.props.fetchCameraSegments(this.state.currentLocation, event.target.value);
@@ -127,11 +132,19 @@ class CameraSegmentBuilder extends React.Component {
     event.preventDefault();
     let cameras = this.getCameras();
     let currentCameraIndex = cameras.indexOf(this.state.currentCamera);
-    if (event.key === 'ArrowDown' && currentCameraIndex > 0) {
+
+    let currentVantagePointIndex = vantagePoints.indexOf(this.state.currentVantagePoint);
+    if (event.key === 'ArrowDown' && event.shiftKey && currentCameraIndex > 0) {
       this.setState({currentCamera: cameras[currentCameraIndex-1] });
     }
-    if (event.key === 'ArrowUp' && currentCameraIndex < (_.size(cameras)-1)) {
+    if (event.key === 'ArrowUp' && event.shiftKey && currentCameraIndex < (_.size(cameras)-1)) {
       this.setState({currentCamera: cameras[currentCameraIndex+1] });
+    }
+    if (event.key === 'ArrowDown' && !event.shiftKey && currentVantagePointIndex > 0) {
+      this.setState({currentVantagePoint: vantagePoints[currentVantagePointIndex-1] });
+    }
+    if (event.key === 'ArrowUp' && !event.shiftKey && currentVantagePointIndex < (_.size(vantagePoints)-1)) {
+      this.setState({currentVantagePoint: vantagePoints[currentVantagePointIndex+1] });
     }
   }
 
@@ -157,8 +170,14 @@ class CameraSegmentBuilder extends React.Component {
               </FormGroup>
               <FormGroup controlId="formControlsSelect">
                 <FormControl onChange={this.handleCameraChange} value={this.state.currentCamera} componentClass="select">
-                  <option value="select">select a camera</option>
+                  <option value="select">select a mode</option>
                   {_.map(this.getCameras(), (camera) => { return <option key={camera} value={camera}>{camera}</option> } ) }
+                </FormControl>
+              </FormGroup>
+              <FormGroup controlId="formControlsSelect">
+                <FormControl onChange={this.handleVantagePointChange} value={this.state.currentVantagePoint} componentClass="select">
+                  <option value="select">select a camera</option>
+                  {_.map(vantagePoints, (vantagePoint) => { return <option key={vantagePoint} value={vantagePoint}>{vantagePoint.replace("0", " ")}</option> } ) }
                 </FormControl>
               </FormGroup>
               <FormGroup controlId="formControlsSelect">
@@ -177,7 +196,7 @@ class CameraSegmentBuilder extends React.Component {
           <div className="row">
             <div className="col-xs-12 col-sm-6 col-lg-8">
               <div className="photo-viewer">
-                <CameraSegmentBuilderCarousel page={this.state.page} photos={this.state.photos} camera={this.state.currentCamera} onCarouselChange={this.handleCarouselChange} />
+                <CameraSegmentBuilderCarousel page={this.state.page} photos={this.state.photos} camera={this.state.currentCamera} vantagePoint={this.state.currentVantagePoint} onCarouselChange={this.handleCarouselChange} />
               </div>
             </div>
             <div className="col-xs-12 col-sm-6 col-lg-4">

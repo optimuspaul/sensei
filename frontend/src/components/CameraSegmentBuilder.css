@@ -62,3 +62,7 @@ body {
   border-color: #ccc;
   box-shadow: none;
 }
+
+.carousel-inner .item {
+  min-height: 700px;
+}
