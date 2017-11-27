@@ -21,8 +21,16 @@ export default function cameraSegmentBuilder(state = initialState, action) {
           }
         }
       }
-      _.each(_.keys(_.get(action.cameraData, `${action.location}`, {})), (camera) => {
-        let images = _.get(action.cameraData, `${action.location}.${camera}.${action.date}`);
+      let cameras = _.keys(_.get(action.cameraData, `${action.location}`, {}));
+      let masters = _.get(action.cameraData, `${action.location}.${cameras[0]}.${action.date}`);
+
+      _.each(cameras, (camera) => {
+        let myUrl = _.get(action.cameraData, `${action.location}.${camera}.${action.date}.0`);
+        let myDatetime = myUrl.split('/').slice(-1)[0].match(/[0-9]{4}(.*(?=_)|.*(?=\.))/)[0];
+        let images = _.map(masters, (url) => {
+          let commonDatetime = url.split('/').slice(-1)[0].match(/[0-9]{4}(.*(?=_)|.*(?=\.))/)[0];
+          return myUrl.replace(myDatetime,commonDatetime);
+        });
         if (images) {
           _.set(state.locations, `${action.location}.${camera}.${action.date}`, images);
         }

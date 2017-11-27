@@ -34,12 +34,16 @@ class CameraSegmentBuilderCarousel extends React.Component {
     console.log(...args);
   }
 
+
   shouldComponentUpdate(nextProps, nextState) {
     if (this.props.camera !== nextProps.camera && _.isEqual(nextProps.photos, this.props.photos)) {
       this.toggleImage(nextProps.camera, true);
       this.toggleImage(this.props.camera, false);
       return false;
     } else {
+      if (!_.isEqual(nextProps.page, this.props.page)) {
+        this.setState({index: (nextProps.page > this.props.page ? 15 : 34)})
+      }
       return true;
     }
   }
@@ -47,9 +51,14 @@ class CameraSegmentBuilderCarousel extends React.Component {
   moveCarousel = (event) => {
     event.preventDefault();
     let index = this.state.index;
-    index += (event.key === 'ArrowLeft' ? -1 : 1) * (event.shiftKey ? 10 : 1);
+    let delta = (event.key === 'ArrowLeft' ? -1 : 1) * (event.shiftKey ? 10 : 1);
+    console.log('moveCarousel::delta::' + delta + '::index::' + index + '::index+delta::' + (index+delta) + '::page::' + this.props.page);
+    index += delta;
     if (index < (_.size(this.props.photos[this.props.camera])-1) && index >= 0 ) {
-      this.props.onCarouselChange(index);
+      let result = this.props.onCarouselChange(delta, index);
+      if (result) {
+        result === 'forward' ? index = 16 : index = 34;
+      }
       this.setState({index})
     }
   }
@@ -57,16 +66,16 @@ class CameraSegmentBuilderCarousel extends React.Component {
   render() {
 
     let loadingIndicator = (<div>Loading...</div>)
-    
+
 
     if (_.isEmpty(this.props.photos) || !this.props.camera)  return null
     let carouselItems = _.map(this.props.photos[this.props.camera], (key, index) => {
-      let content = _.reduce(_.keys(this.props.photos), (current, camera) => { 
-        current.images.push(<img key={`camera-${camera}-image`} 
-                             className={`camera-${camera}`} 
-                             style={{display: camera === this.props.camera ? 'inline' : 'none'}} 
+      let content = _.reduce(_.keys(this.props.photos), (current, camera) => {
+        current.images.push(<img key={`camera-${camera}-image`}
+                             className={`camera-${camera}`}
+                             style={{display: camera === this.props.camera ? 'inline' : 'none'}}
                              src={((this.state.index > (index-3)) || this.state.index === (index-10)) ? `${baseUrl()}/api/v1/camera_data/signed_url/${this.props.photos[camera][index]}` : ''}/>)
-        current.captions.push(<Carousel.Caption key={`camera-${camera}-caption`} 
+        current.captions.push(<Carousel.Caption key={`camera-${camera}-caption`}
                                 className={`camera-${camera}`}
                                 style={{display: camera === this.props.camera ? 'inline' : 'none'}}>
                                 <h3>camera {camera}</h3>
@@ -88,13 +97,13 @@ class CameraSegmentBuilderCarousel extends React.Component {
       <div>
         <KeyHandler keyEventName={KEYDOWN} keyValue="ArrowRight" onKeyHandle={this.moveCarousel} />
         <KeyHandler keyEventName={KEYDOWN} keyValue="ArrowLeft" onKeyHandle={this.moveCarousel} />
-        
-        <Carousel 
+
+        <Carousel
           slide={false}
           wrap={false}
-          activeIndex={this.state.index} 
-          indicators={false} 
-          direction={this.state.direction} 
+          activeIndex={this.state.index}
+          indicators={false}
+          direction={this.state.direction}
           onSelect={this.handleSelect}>
           {carouselItems}
         </Carousel>
