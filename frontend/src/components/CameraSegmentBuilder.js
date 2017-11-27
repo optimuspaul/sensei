@@ -29,18 +29,18 @@ class CameraSegmentBuilder extends React.Component {
   }
 
   getCameras() {
-    return _.keys(_.get(this.props.cameraData.locations, this.state.currentLocation, [])); 
+    return _.keys(_.get(this.props.cameraData.locations, this.state.currentLocation, []));
   }
 
   getDates() {
-    return _.keys(_.get(this.props.cameraData.locations, `${this.state.currentLocation}.${this.state.currentCamera}`, [])); 
+    return _.keys(_.get(this.props.cameraData.locations, `${this.state.currentLocation}.${this.state.currentCamera}`, []));
   }
 
   getCurrentTime() {
     let currentPhoto = this.getCurrentPhoto();
     if (currentPhoto) {
-      let key = currentPhoto.split('/')[3]
-      key = key.replace(/.*still_/, '').replace(/\..*/, '');
+      let key = currentPhoto.split('/')[4]
+      key = key.replace(/.*still_/, '').replace(/\..*/, '').split('/').slice(-1)[0].match(/[0-9]{4}(.*(?=_)|.*(?=\.))/)[0];
       let timestamp = new Date(`${key.split('-').splice(0,3).join('-')} ${key.split('-').splice(3,3).join(':')}`);
       return timestamp;
     }
@@ -59,21 +59,35 @@ class CameraSegmentBuilder extends React.Component {
     return _.get(this.state, `photos.${this.state.currentCamera}.${this.state.index}`);
   }
 
-  handleCarouselChange = (index) => {
+  getAllPhotos() {
+    return  _.get(this.props.cameraData.locations, `${this.state.currentLocation}.${this.state.currentCamera}.${this.state.currentDate}`, []);
+  }
+
+  handleCarouselChange = (delta, carouselIndex) => {
+    let currentIndex = this.state.index;
     let page = this.state.page;
-    let newIndex = (page*50)+index;
-    if ((newIndex+15) >= (page+1)*50) {
+    if (page < 0) return false;
+    let newIndex = currentIndex + delta;
+    let pageForward = delta > 0 && _.size(this.getAllPhotos()) > (newIndex+15) && carouselIndex > 35;
+    let pageBack = delta < 0 && 0 < (newIndex-15) && carouselIndex <= 15;
+    if (pageForward || pageBack) {
       let photos;
-      // if (index > this.state.index) {
-        page++
-        photos = this.getPhotos(newIndex-15)
-      // } 
+      let newIndexModified;
+        if (pageBack) {
+          page--
+          newIndexModified = newIndex - 49 + 15;
+        } else {
+          newIndexModified = newIndex - 15;
+          page++;
+        }
+        photos = this.getPhotos(newIndexModified);
+      // }
       this.setState({
         photos,
-        index,
+        index: newIndex,
         page
       })
-      return true;
+      return pageForward ? 'forward' : 'back';
     } else {
       this.setState({
         index: newIndex
