@@ -21,6 +21,7 @@ import segmentedTimeline from './visualizations/segmentedTimeline';
 import studentSummary from './visualizations/studentSummary';
 import unitSummary from './visualizations/unitSummary';
 import socialGraph from './visualizations/socialGraph';
+import locations from './visualizations/locations';
 import key from 'keyboard-shortcut';
 
 
@@ -139,6 +140,26 @@ import key from 'keyboard-shortcut';
 
         store.dispatch(fetchMaterials());
         store.dispatch(fetchEntities('areas'));
+
+      }
+
+      if (location.pathname.indexOf('wf/events/locations') !== -1) {
+
+        store.dispatch(fetchChildren());
+        store.dispatch(fetchTeachers());
+        store.dispatch(fetchEntities('areas'));
+        store.dispatch(fetchMaterials());
+        store.dispatch(fetchMappings());
+
+        foundationEl.innerHTML = `
+          <div class='row'>
+            <div class='col-md-12' id='locations-viz-container'>
+              <div id='visualization' class='locations'><svg></svg></div>
+            </div>
+          </div>
+        `;
+
+        locations();
 
       }
 
