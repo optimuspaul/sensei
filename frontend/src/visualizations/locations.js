@@ -17,9 +17,9 @@ export default function locations() {
   let radiusScale = d3.scaleLinear()
                       .domain([0, 1])
                       .range([5, 20]);
-  let opacityScale = d3.scaleLinear()
-                      .domain([10, 3])
-                      .range([0.2, 0.8]); 
+  let pulseScale = d3.scaleLinear()
+                      .domain([0, 1])
+                      .range([10, 0]); 
   let state = store.getState();
   let storeEntities = state.entities;
 
@@ -54,7 +54,7 @@ export default function locations() {
         .onSnapshot(function(snapshot) {
           _.each(snapshot.docChanges, (change, index) => {
             if (change.type === "added") {
-              setTimeout(() => { updateLocations(change.doc.data().sensors) }, index*2000);
+              setTimeout(() => { updateLocations(change.doc.data().sensors) }, index*5000);
             }
           });
         });
@@ -85,7 +85,7 @@ export default function locations() {
             return classroomScale(sensor[rotate ? 'x': 'y']);
           })
           .attr("r", (sensor) => {
-            return 10 + (c === 'pulse' ? opacityScale(sensor.strength) : 0);
+            return 10 + (c === 'pulse' ? pulseScale(sensor.strength) : 0);
           })
           
       })
