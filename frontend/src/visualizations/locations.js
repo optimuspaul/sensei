@@ -54,7 +54,9 @@ export default function locations() {
         .onSnapshot(function(snapshot) {
           _.each(snapshot.docChanges, (change, index) => {
             if (change.type === "added") {
-              setTimeout(() => { updateLocations(change.doc.data().sensors) }, index*5000);
+              // setTimeout(() => { 
+                updateLocations(change.doc.data().sensors) 
+              // }, index*5000);
             }
           });
         });
