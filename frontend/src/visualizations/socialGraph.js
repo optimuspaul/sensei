@@ -46,13 +46,6 @@ export default function socialGraph(data) {
 
 
 
-
-
-
-
-
-
-
   var svg = d3.select("#visualization svg g#container")
   svg.attr("transform", `scale(${zoomLevel})`);
 
@@ -93,12 +86,10 @@ export default function socialGraph(data) {
           .on("end", dragended));
 
 
-  var label = svg.append("g")
-      .attr("class", "labels")
-      .selectAll("text")
-      .append("text")
+  var label = svg.selectAll("text")
       .data(graphData.nodes)
       .enter().append("text")
+      .attr("class", "label")
       .text(node => node.label)
       .attr('style', `font-size: ${scaleZoom.range([5,2])(zoom)}px`)
       .call(d3.drag()
@@ -123,6 +114,10 @@ export default function socialGraph(data) {
     node
         .attr("cx", function(d) { return d.x; })
         .attr("cy", function(d) { return d.y; });
+
+    label
+        .attr("x", function(d) { return d.x + 3; })
+        .attr("y", function(d) { return d.y + 3; });
   }
 
   function calcStrength(d) {
