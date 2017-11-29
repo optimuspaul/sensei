@@ -17,3 +17,4 @@ export const changeCases = (data, toCase) => {
     return changeCase(x, toCase);
   });
 }
+

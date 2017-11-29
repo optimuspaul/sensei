@@ -80,7 +80,7 @@ import key from 'keyboard-shortcut';
       let dynamicPrimaryNav = document.createElement("a");
       dynamicPrimaryNav.className = "primary-nav-link";
       dynamicPrimaryNav.id = "sensors-nav";
-      dynamicPrimaryNav.href = `/s/${schoolId}/networks/wf/events/sensors${classroomId ? '?classroom_id=' + classroomId : '' }`;
+      dynamicPrimaryNav.href = `/s/${schoolId}/networks/wf/events/insights/dashboard${classroomId ? '?classroom_id=' + classroomId : '' }`;
       dynamicPrimaryNav.innerHTML = `<i class="fa fa-cubes"></i><span>Sensors</span>`
       insertionPoint && insertionPoint.appendChild(dynamicPrimaryNav);
 
