@@ -14,7 +14,7 @@ export default function interactionTotals(data) {
 
   if (!data) return;
 
-  document.querySelector("#visualization").innerHTML = "<svg><g id='top-ticks'></g><g id='bottom-ticks'></g></svg>";
+  document.querySelector("svg#interactionTotals").innerHTML = "<g id='top-ticks'></g><g id='bottom-ticks'></g>";
   let vizElement = document.querySelector("#visualization");
   let chart = d3.select("#visualization svg")
   let topTicks = chart.select("g#top-ticks");
@@ -75,7 +75,7 @@ export default function interactionTotals(data) {
 
   }
 
-  vizElement.addEventListener('dataChanged',
+  chart.addEventListener('dataChanged',
       updateChart
   );
 

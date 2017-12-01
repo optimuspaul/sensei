@@ -1,13 +1,15 @@
 import _ from 'lodash';
 import {getSenseiToken, getClassroomId, baseUrl, entityInflections} from './../constants';
 
+
 export const ADD_OBSERVATIONS = 'ADD_OBSERVATIONS';
 export const addObservations = (entityId, entityType, observations) => {
   return {
     type: ADD_OBSERVATIONS,
     observations,
     entityId,
-    entityType
+    entityType,
+    ui: {}
   }
 }
 
@@ -101,21 +103,55 @@ export const fetchInteractionTotals = (entityId, entityType, date, endDate, inte
 export const SELECT_ENTITY = 'SELECT_ENTITY'
 export const selectEntity = (entityId, entityType) => {
   return (dispatch, getState) => {
+    let state = getState();
+    let entity = _.get(state, `entities.${entityInflections[entityType]}.${entityId}`);
     dispatch({
       type: SELECT_ENTITY,
       entityId,
-      entityType
+      entityType,
+      entity
     });
+  }
+}
+
+
+
+export const updateCurrentVisualization = () => {
+  return (dispatch, getState) => {
+    let {currentEntityId, currentEntityType, visualization, currentDate, endDate, interactionType} = getState().insights.ui;
+
+    switch(visualization) {
+      case 'activityTimeline':
+        dispatch(fetchObservations(currentEntityId, currentEntityType, currentDate, interactionType));
+        break;
+      case 'segmentedTimeline':
+        dispatch(fetchInteractionPeriods(currentEntityId, currentEntityType, currentDate));
+        break;
+      case 'socialGraph':
+        dispatch(fetchInteractionTotals(currentEntityId, currentEntityType, currentDate, endDate, visualization));
+        break;
+      case 'unitSummary':
+      case 'studentSummary':
+      case 'interactionTotals':
+        if (endDate && !(visualization === 'unitSummary' && !interactionType)) {
+          dispatch(fetchInteractionTotals(currentEntityId, currentEntityType, currentDate, endDate, visualization === 'unitSummary' && interactionType));
+        }
+        break;
+    }
   }
 }
 
 export const SELECT_VISUALIZATION = 'SELECT_VISUALIZATION'
 export const selectVisualization = (visualization) => {
   return (dispatch, getState) => {
+    let state = getState();
+    let entityId = _.get(state, 'insights.ui.currentEntityId');
+    let entityType = _.get(state, 'insights.ui.currentEntityType');
     dispatch({
       type: SELECT_VISUALIZATION,
       visualization
-    });
+    }).then(updateCurrentVisualization());
+
   }
 }
 

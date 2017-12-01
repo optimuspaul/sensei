@@ -19,15 +19,27 @@ export default function sensorMappings(state = initialState, action) {
   switch (action.type) {
     case 'ADD_OBSERVATIONS':
       let entityUid = `${action.entityType}-${action.entityId}`
-      let dateKey = state.ui.currentDate
+      let date = state.ui.currentDate
+      let endDate = state.ui.endDate;
+      let dateString = (new Date(date)).toDateString();
+      if (endDate) {
+        dateString += ` to ${(new Date(state.ui.currentDate)).toDateString()}`
+      }
+      let hasData = _.isEmpty(action.observations.entities);
+      let entityName = _.get(state, 'ui.entity.displayName');
       return {
         ...state,
         observations: {
           ...state.observations,
           [entityUid]: {
             ...state.observations[entityUid],
-            [state.ui.currentDate]: action.observations
+            [date]: action.observations
           }
+        },
+        currentObservationsData: action.observations,
+        ui: {
+          ...state.ui,
+          visualizationTitle: hasData ? `${entityName} <small>${dateString}</small>` : 'No data...'
         },
         status: 'fetched'
       }
