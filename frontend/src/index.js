@@ -181,27 +181,29 @@ import key from 'keyboard-shortcut';
           store.dispatch(updateCurrentVisualization());
 
           store.subscribe(() => {
-            let vizElement = document.querySelector("#visualization");
+            let visualizationsElement = document.querySelector("#visualization");
             let state = store.getState();
             let visualization = _.get(state, 'insights.ui.visualization');
             if (!visualization) return;
             let date = _.get(state, 'insights.ui.currentDate');
             let observationsData = _.get(state, `insights.currentObservationsData`);
-            let svg = document.querySelector(`#visualization svg#${visualization}`);
-            let allSVGs = document.querySelectorAll('#visualization svg');
+            let vizElement = document.querySelector(`#visualization div#${visualization}.viz`);
+            let allVizElements = document.querySelectorAll('#visualization .viz');
             document.querySelector("#visualization-title").innerHTML = _.get(state, 'insights.ui.visualizationTitle', 'loading..');
-            _.each(allSVGs, (s) => {
+            _.each(allVizElements, (s) => {
               s.style.display = 'none';
             });
-            if (!svg) {
-              svg = document.createElement('svg');
-              svg.id = visualization;
-              vizElement.append(svg);
+            if (!vizElement) {
+              vizElement = document.createElement('div');
+              vizElement.id = visualization;
+              vizElement.className = "viz";
+              vizElement.innerHTML = '<svg></svg>';
+              visualizationsElement.append(vizElement);
               visualizations[visualization](observationsData);
             }
-            svg.style.display = 'inline';
+            vizElement.style.display = 'inline';
             var event = new CustomEvent('dataChanged', { detail: observationsData });
-            svg.dispatchEvent(event);
+            vizElement.dispatchEvent(event);
           });
         }
       }

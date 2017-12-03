@@ -16,49 +16,91 @@ const offset = 205; // how far to the right the interaction segments should star
  */
 export default function segmentedTimeline(data) {
 
-  if (!data) return;
+  document.querySelector("div#segmentedTimeline svg").innerHTML = "<g id='top-ticks' class='ticks'></g><g id='bottom-ticks' class='ticks'></g>";
+  let vizElement = document.querySelector("#visualization #segmentedTimeline");
+  let chartElement = document.querySelector("#visualization");
+  let chart = d3.select("#visualization div#segmentedTimeline svg");
+  let topTicks = chart.select("g#top-ticks");
+  let bottomTicks = chart.select("g#bottom-ticks");
 
-  document.querySelector("#visualization").innerHTML = "<svg>";
-  let zoom = _.get(store.getState(), "insights.ui.zoom") || 1;
-  let chartWidth = 1260 * zoom; // how wide the width of the visualization is
-  let segmentedData = segmentData(data);
-  let {startTime, endTime} = startAndEndTimes(data.timestamps);
-  let xScalar = generateXScalar(startTime, endTime, chartWidth-offset);
-  let chartHeight = calcChartHeight(segmentedData);
-  let ticks = timelineTicks(startTime, endTime, xScalar, zoom);
-  let chart = d3.select("#visualization svg")
+  let updateChart = (event) => {
 
-  console.log("segmentedData", segmentedData)
+    data = event.detail
+    if (!data) return;
 
-  chart.attr("width", chartWidth)
-    .attr("height", chartHeight + 20)
-    .call(timeTicks, startTime, endTime, {offset, y: 10, zoom, id: 'top'})
-    .call(timeTicks, startTime, endTime, {offset, y: chartHeight+20, zoom, hideLines: true})
-    .selectAll("g.segments")
-    .data(segmentedData)
-    .call(entityTypeSection, {className: 'segments'})
+    let zoom = _.get(store.getState(), "insights.ui.zoom") || 1;
+    let chartWidth = 1260 * zoom; // how wide the width of the visualization is
+    let segmentedData = segmentData(data);
+    let {startTime, endTime} = startAndEndTimes(data.timestamps);
+    let xScalar = generateXScalar(startTime, endTime, chartWidth-offset);
+    let chartHeight = calcChartHeight(segmentedData);
+    let ticks = timelineTicks(startTime, endTime, xScalar, zoom);
+    let chart = d3.select("#visualization svg")
 
-  chart.selectAll("g.segments")
-    .selectAll("g.row")
-    .data(d => d[1].entities || [])
-    .call(entityRow, 'row')
+    chart.attr("width", chartWidth)
+      .attr("height", chartHeight + 20)
+      .selectAll("g.segments")
+      .data(segmentedData)
+      .call(entityTypeSection, {className: 'segments'})
 
-  chart.selectAll("g.row")
-    .call(entityRowLabel)
-    .selectAll("rect")
-    .data(d => d.obs)
-    .enter().append("rect")
-    .attr("x", (d) => {
-      let timestamp = new Date(d[0]);
-      return xScalar(timestamp.getTime()) + offset
-    })
-    .attr('width', (d) => {
-      let startTimestamp = new Date(d[0]);
-      let endTimestamp = new Date(d[1]);
-      return xScalar(endTimestamp.getTime()) - xScalar(startTimestamp.getTime());
-    })
-    .attr('height', rowHeight*0.6)
-    .attr("y", rowHeight*0.2)
+    let row = chart.selectAll("g.segments")
+      .selectAll("g.row")
+      .data(d => d[1].entities || [])
+      .call(entityRow, 'row')
+
+    row.call(entityRow, 'row')
+    row.call(entityRowLabel)
+
+    let rect = row.selectAll("rect")
+        .data((d) => {
+          console.log("rect d: ", d)
+          return d ? d.obs : [];
+        })
+
+    rect.transition()
+      .attr("x", (d) => {
+        let timestamp = new Date(d[0]);
+        return xScalar(timestamp.getTime()) + offset
+      })
+      .attr('width', (d) => {
+        let startTimestamp = new Date(d[0]);
+        let endTimestamp = new Date(d[1]);
+        return xScalar(endTimestamp.getTime()) - xScalar(startTimestamp.getTime());
+      })
+      .attr('height', rowHeight*0.6)
+      .attr("y", rowHeight*0.2)
+
+      // .data((d) => {
+      //   debugger;
+      //   return d.obs
+
+
+
+      // })
+    rect.enter().append("rect")
+      .attr("x", (d) => {
+        let timestamp = new Date(d[0]);
+        return xScalar(timestamp.getTime()) + offset
+      })
+      .attr('width', (d) => {
+        let startTimestamp = new Date(d[0]);
+        let endTimestamp = new Date(d[1]);
+        return xScalar(endTimestamp.getTime()) - xScalar(startTimestamp.getTime());
+      })
+      .attr('height', rowHeight*0.6)
+      .attr("y", rowHeight*0.2)
+
+      topTicks.call(timeTicks, ticks, {offset, y: 10, zoom})
+      bottomTicks.call(timeTicks, ticks, {offset, y: chartHeight+20, zoom, hideLines: true})
+
+  }
+
+  vizElement.addEventListener('dataChanged',
+    updateChart
+  );
+  updateChart({detail: data})
+
+  return updateChart;
 
 
 }

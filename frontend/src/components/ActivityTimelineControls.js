@@ -192,7 +192,7 @@ class ActivityTimelineControls extends React.Component {
 
     let datePicker;
 
-    if (_.includes(['activityTimeline', 'segmentedTimeline'], this.props.insights.ui.visualization)) {
+    if (_.includes(['activityTimeline'], this.props.insights.ui.visualization)) {
       datePicker = (
         <DayPicker
           onDayClick={this.handleDayClick}
@@ -201,11 +201,11 @@ class ActivityTimelineControls extends React.Component {
       )
     } else {
       datePicker = (
-        <DatePicker 
-          maxDate={this.state.maxStartDate} 
-          showClearButton={false} 
-          value={this.props.insights.ui.currentDate} 
-          onChange={this.handleDateChange.bind(this)} 
+        <DatePicker
+          maxDate={this.state.maxStartDate}
+          showClearButton={false}
+          value={this.props.insights.ui.currentDate}
+          onChange={this.handleDateChange.bind(this)}
         />
       )
     }

@@ -45,6 +45,7 @@ export default function sensorMappings(state = initialState, action) {
       }
     case 'SELECT_ENTITY':
       return {
+        ...state,
         observations: {},
         ui: {
           ...state.ui,
@@ -55,6 +56,7 @@ export default function sensorMappings(state = initialState, action) {
       }
     case 'SELECT_VISUALIZATION':
       return {
+        ...state,
         observations: {},
         ui: {
           ...state.ui,
@@ -64,6 +66,7 @@ export default function sensorMappings(state = initialState, action) {
       }
     case 'SELECT_INTERACTION_TYPE':
       return {
+        ...state,
         observations: {},
         ui: {
           ...state.ui,
@@ -73,6 +76,7 @@ export default function sensorMappings(state = initialState, action) {
       }
     case 'SELECT_DATE':
       return {
+        ...state,
         observations: {},
         ui: {
           ...state.ui,
@@ -82,6 +86,7 @@ export default function sensorMappings(state = initialState, action) {
       }
     case 'SELECT_END_DATE':
       return {
+        ...state,
         observations: {},
         ui: {
           ...state.ui,
@@ -93,6 +98,7 @@ export default function sensorMappings(state = initialState, action) {
       selectedDays = state.ui.selectedDays;
       selectedDays.push(action.date);
       return {
+        ...state,
         observations: state.observations,
         ui: {
           ...state.ui,
@@ -107,6 +113,7 @@ export default function sensorMappings(state = initialState, action) {
         return _.isEqual(action.date, day);
       });
       return {
+        ...state,
         observations: state.observations,
         ui: {
           ...state.ui,
@@ -125,6 +132,7 @@ export default function sensorMappings(state = initialState, action) {
     case 'REFRESH_FROM_PARAMS':
       let params = _.pick(action.params, ['currentDate', 'endDate', 'visualization', 'interactionType', 'currentEntityType', 'currentEntityId', 'zoom']);
       return {
+        ...state,
         observations: state.observations,
         ui: {
           ...state.ui,

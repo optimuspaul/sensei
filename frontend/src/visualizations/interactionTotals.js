@@ -12,16 +12,18 @@ const offset = 100; // how far to the right the totals should start being drawn 
 
 export default function interactionTotals(data) {
 
-  if (!data) return;
 
-  document.querySelector("svg#interactionTotals").innerHTML = "<g id='top-ticks'></g><g id='bottom-ticks'></g>";
-  let vizElement = document.querySelector("#visualization");
-  let chart = d3.select("#visualization svg")
+
+  document.querySelector("div#interactionTotals svg").innerHTML = "<g id='top-ticks'></g><g id='bottom-ticks'></g>";
+  let vizElement = document.querySelector("#visualization #interactionTotals");
+  let chartElement = document.querySelector("#visualization");
+  let chart = d3.select("#visualization div#interactionTotals svg")
   let topTicks = chart.select("g#top-ticks");
   let bottomTicks = chart.select("g#bottom-ticks");
 
-  const updateChart = (event) => {
+  let updateChart = (event) => {
     data = event.detail
+    if (!data) return;
     let zoom = _.get(store.getState(), "insights.ui.zoom") || 1;
     let chartWidth = 1260 * zoom; // how wide the width of the visualization is
     let segmentedData = segmentData(data);
@@ -75,10 +77,9 @@ export default function interactionTotals(data) {
 
   }
 
-  chart.addEventListener('dataChanged',
-      updateChart
+  vizElement.addEventListener('dataChanged',
+    updateChart
   );
-
   updateChart({detail: data})
 
   return updateChart;

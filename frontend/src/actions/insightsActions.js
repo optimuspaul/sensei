@@ -31,7 +31,7 @@ export const fetchObservations = (entityId, entityType, date) => {
         'Content-Type': 'application/json'
       }
     }).then(function(response) {
-      return response.text()
+      return (response && response.text()) || ''
     }).then((body) => {
       let observations = JSON.parse(body);
       observations = _.reduce(observations.obs, (current, obs, index) => {
@@ -64,7 +64,7 @@ export const fetchInteractionPeriods = (entityId, entityType, date) => {
         'Content-Type': 'application/json'
       }
     }).then(function(response) {
-      return response.text()
+      return (response && response.text()) || ''
     }).then((body) => {
       let observations = JSON.parse(body);
       dispatch(addObservations(entityId, entityType, observations));
@@ -92,7 +92,7 @@ export const fetchInteractionTotals = (entityId, entityType, date, endDate, inte
         'Content-Type': 'application/json'
       }
     }).then(function(response) {
-      return response.text()
+      return (response && response.text()) || ''
     }).then((body) => {
       let observations = JSON.parse(body);
       dispatch(addObservations(entityId, entityType, observations));
@@ -150,7 +150,8 @@ export const selectVisualization = (visualization) => {
     dispatch({
       type: SELECT_VISUALIZATION,
       visualization
-    }).then(updateCurrentVisualization());
+    });
+    dispatch(updateCurrentVisualization());
 
   }
 }
@@ -172,6 +173,7 @@ export const selectDate = (date) => {
       type: SELECT_DATE,
       date: date.split("T")[0]
     });
+    dispatch(updateCurrentVisualization());
   }
 }
 
@@ -182,6 +184,7 @@ export const selectEndDate = (endDate) => {
       type: SELECT_END_DATE,
       endDate
     });
+    dispatch(updateCurrentVisualization());
   }
 }
 
@@ -192,6 +195,7 @@ export const addDay = (date) => {
       type: ADD_DAY,
       date: date.split("T")[0]
     });
+    dispatch(updateCurrentVisualization());
   }
 }
 
@@ -202,6 +206,7 @@ export const removeDay = (date) => {
       type: REMOVE_DAY,
       date
     });
+    dispatch(updateCurrentVisualization());
   }
 }
 
