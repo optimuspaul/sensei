@@ -16,14 +16,11 @@ export default function entityRowLabels(selection, opts = { }) {
   let text = selection
     .selectAll("text")
     .data(d => [d])
-    .text(d => d.entityName)
-    .on('click', (entity) => {
-        store.dispatch(selectEntity(entity.entityId, _.invert(entityInflections)[entity.entityType]))
-      })
 
   text.exit().remove();
 
   text.enter().append("text")
+    .merge(text)
     .attr("y", opts.rowHeight / 1.5)
     .attr("dy", ".35em")
     .attr("x", 5)

@@ -14,12 +14,11 @@ export default function interactionTotals(data) {
 
 
 
-  document.querySelector("div#interactionTotals svg").innerHTML = "<g id='top-ticks'></g><g id='bottom-ticks'></g>";
+  document.querySelector("div#interactionTotals svg").innerHTML = "<g class='ticks' id='top-ticks'></g><g class='ticks' id='bottom-ticks'></g>";
   let vizElement = document.querySelector("#visualization #interactionTotals");
   let chartElement = document.querySelector("#visualization");
   let chart = d3.select("#visualization div#interactionTotals svg")
-  let topTicks = chart.select("g#top-ticks");
-  let bottomTicks = chart.select("g#bottom-ticks");
+  
 
   let updateChart = (event) => {
     data = event.detail
@@ -32,6 +31,8 @@ export default function interactionTotals(data) {
     var xScalar = d3.scaleLinear().domain([0, maxTotal]).range([0, chartWidth-offset-100]);
     let ticks = totalTimeTicks(maxTotal, xScalar);
     let chartHeight = calcChartHeight(segmentedData);
+    let topTicks = chart.select("g#top-ticks");
+    let bottomTicks = chart.select("g#bottom-ticks");
 
     console.log("segmentedData", segmentedData)
 
@@ -72,7 +73,7 @@ export default function interactionTotals(data) {
       .attr("y", rowHeight*0.3)
 
     topTicks.call(timeTicks, ticks, {offset, y: 10, zoom})
-    bottomTicks.call(timeTicks, ticks, {offset, y: chartHeight+20, zoom, hideLines: true})
+    bottomTicks.call(timeTicks, ticks, {offset, y: chartHeight+20, zoom, hideLines: true, zoom})
 
 
   }

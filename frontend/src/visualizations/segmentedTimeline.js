@@ -14,7 +14,7 @@ const offset = 205; // how far to the right the interaction segments should star
   and any other given entity. Each segment is scaled linearly on the x-axis using xScalar
   defined above, and its timestamp is added as a data attribute for debugging purposes.
  */
-export default function segmentedTimeline(data) {
+export default function segmentedTimeline() {
 
   document.querySelector("div#segmentedTimeline svg").innerHTML = "<g id='top-ticks' class='ticks'></g><g id='bottom-ticks' class='ticks'></g>";
   let vizElement = document.querySelector("#visualization #segmentedTimeline");
@@ -25,8 +25,12 @@ export default function segmentedTimeline(data) {
 
   let updateChart = (event) => {
 
-    data = event.detail
+    let data = event.detail
     if (!data) return;
+
+    var t = d3.transition()
+    .duration(750)
+    .ease(d3.easeLinear);
 
     let zoom = _.get(store.getState(), "insights.ui.zoom") || 1;
     let chartWidth = 1260 * zoom; // how wide the width of the visualization is
@@ -57,7 +61,7 @@ export default function segmentedTimeline(data) {
           return d ? d.obs : [];
         })
 
-    rect.transition()
+    rect.transition(t)
       .attr("x", (d) => {
         let timestamp = new Date(d[0]);
         return xScalar(timestamp.getTime()) + offset
@@ -70,13 +74,6 @@ export default function segmentedTimeline(data) {
       .attr('height', rowHeight*0.6)
       .attr("y", rowHeight*0.2)
 
-      // .data((d) => {
-      //   debugger;
-      //   return d.obs
-
-
-
-      // })
     rect.enter().append("rect")
       .attr("x", (d) => {
         let timestamp = new Date(d[0]);
@@ -98,7 +95,7 @@ export default function segmentedTimeline(data) {
   vizElement.addEventListener('dataChanged',
     updateChart
   );
-  updateChart({detail: data})
+  
 
   return updateChart;
 

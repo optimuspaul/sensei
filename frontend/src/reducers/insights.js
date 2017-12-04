@@ -25,7 +25,7 @@ export default function sensorMappings(state = initialState, action) {
       if (endDate) {
         dateString += ` to ${(new Date(state.ui.currentDate)).toDateString()}`
       }
-      let hasData = _.isEmpty(action.observations.entities);
+      let hasData = !_.isEmpty(action.observations.entities);
       let entityName = _.get(state, 'ui.entity.displayName');
       return {
         ...state,
