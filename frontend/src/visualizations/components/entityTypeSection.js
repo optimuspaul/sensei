@@ -13,7 +13,7 @@ export default function entityTypeSection(selection, opts = {}) {
 
   // selects group tag that corresponds to the current entity type
   selection
-    .attr("id", (d) => { 
+    .attr("id", (d) => {
       return d[0];
     })
     // sets the y displacement for the current entity type group
@@ -26,11 +26,19 @@ export default function entityTypeSection(selection, opts = {}) {
     .append("g")
     .attr("class", opts.className)
     .merge(selection)
+
+  let text = selection.selectAll('text')
+    .data((d, x, y) => {
+      return [d[0]];
+    })
+  text.enter()
     .append("text")
      .attr("x", 0)
      .attr("y", 0)
      .attr("style", `font-weight: bold; opacity: ${opts.hideLabels ? 0 : 1}`)
-     .text(d => d[0]);
+     .text((d) => {
+        return d;
+      });
 
 }
 

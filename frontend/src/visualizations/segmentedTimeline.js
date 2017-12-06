@@ -50,7 +50,7 @@ export default function segmentedTimeline() {
     let row = chart.selectAll("g.segments")
       .selectAll("g.row")
       .data(d => d[1].entities || [])
-      .call(entityRow, 'row')
+
 
     row.call(entityRow, 'row')
     row.call(entityRowLabel)
@@ -95,7 +95,7 @@ export default function segmentedTimeline() {
   vizElement.addEventListener('dataChanged',
     updateChart
   );
-  
+
 
   return updateChart;
 
