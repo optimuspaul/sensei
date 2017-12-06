@@ -29,7 +29,7 @@ export default function segmentedTimeline() {
     if (!data) return;
 
     var t = d3.transition()
-    .duration(750)
+    .duration(400)
     .ease(d3.easeLinear);
 
     let zoom = _.get(store.getState(), "insights.ui.zoom") || 1;
