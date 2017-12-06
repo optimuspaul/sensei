@@ -11,6 +11,7 @@ const defaultOpts = {
 export default function entityRows(selection, opts = {}) {
   opts = _.merge({}, defaultOpts, opts);
 
+
   selection.exit().remove();
 
   /*

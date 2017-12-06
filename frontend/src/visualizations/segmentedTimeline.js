@@ -29,7 +29,7 @@ export default function segmentedTimeline() {
     if (!data) return;
 
     var t = d3.transition()
-    .duration(750)
+    .duration(400)
     .ease(d3.easeLinear);
 
     let zoom = _.get(store.getState(), "insights.ui.zoom") || 1;
@@ -49,7 +49,7 @@ export default function segmentedTimeline() {
     let row = chart.selectAll("g.segments")
       .selectAll("g.row")
       .data(d => d[1].entities || [])
-      .call(entityRow, 'row')
+
 
     row.call(entityRow, 'row')
     row.call(entityRowLabel)
@@ -94,7 +94,7 @@ export default function segmentedTimeline() {
   vizElement.addEventListener('dataChanged',
     updateChart
   );
-  
+
 
   return updateChart;
 
