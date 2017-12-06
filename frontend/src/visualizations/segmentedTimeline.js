@@ -39,7 +39,6 @@ export default function segmentedTimeline() {
     let xScalar = generateXScalar(startTime, endTime, chartWidth-offset);
     let chartHeight = calcChartHeight(segmentedData);
     let ticks = timelineTicks(startTime, endTime, xScalar, zoom);
-    let chart = d3.select("#visualization svg")
 
     chart.attr("width", chartWidth)
       .attr("height", chartHeight + 20)

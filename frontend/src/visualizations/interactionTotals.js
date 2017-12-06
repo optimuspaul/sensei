@@ -18,11 +18,17 @@ export default function interactionTotals(data) {
   let vizElement = document.querySelector("#visualization #interactionTotals");
   let chartElement = document.querySelector("#visualization");
   let chart = d3.select("#visualization div#interactionTotals svg")
-  
+  let topTicks = chart.select("g#top-ticks");
+    let bottomTicks = chart.select("g#bottom-ticks");
 
   let updateChart = (event) => {
-    data = event.detail
+    let data = event.detail
     if (!data) return;
+
+    var t = d3.transition()
+    .duration(750)
+    .ease(d3.easeLinear);
+
     let zoom = _.get(store.getState(), "insights.ui.zoom") || 1;
     let chartWidth = 1260 * zoom; // how wide the width of the visualization is
     let segmentedData = segmentData(data);
@@ -31,8 +37,7 @@ export default function interactionTotals(data) {
     var xScalar = d3.scaleLinear().domain([0, maxTotal]).range([0, chartWidth-offset-100]);
     let ticks = totalTimeTicks(maxTotal, xScalar);
     let chartHeight = calcChartHeight(segmentedData);
-    let topTicks = chart.select("g#top-ticks");
-    let bottomTicks = chart.select("g#bottom-ticks");
+    
 
     console.log("segmentedData", segmentedData)
 
@@ -55,7 +60,7 @@ export default function interactionTotals(data) {
         return d ? [d] : [];
       })
 
-    rect.transition()
+    rect.transition(t)
       .attr('width', (d) => {
         return xScalar(d.obs);
       })
