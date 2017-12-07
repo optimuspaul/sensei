@@ -27,6 +27,9 @@ export default function sensorMappings(state = initialState, action) {
       }
       let hasData = !_.isEmpty(action.observations.entities);
       let entityName = _.get(state, 'ui.entity.displayName');
+
+      let currentObservationsData = state.ui.visualization === 'activityTimeline' ? state.observations[entityUid] : action.observations;
+
       return {
         ...state,
         observations: {
@@ -36,7 +39,7 @@ export default function sensorMappings(state = initialState, action) {
             [date]: action.observations
           }
         },
-        currentObservationsData: action.observations,
+        currentObservationsData,
         ui: {
           ...state.ui,
           visualizationTitle: hasData ? `${entityName} <small>${dateString}</small>` : 'No data...'
@@ -103,7 +106,7 @@ export default function sensorMappings(state = initialState, action) {
         ui: {
           ...state.ui,
           selectedDays,
-          currentDate: action.date.toISOString()
+          currentDate: action.date.toISOString().split("T")[0]
         },
         status: 'fetching'
       }

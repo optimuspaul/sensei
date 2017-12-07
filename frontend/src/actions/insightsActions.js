@@ -190,10 +190,13 @@ export const selectEndDate = (endDate) => {
 
 export const ADD_DAY = 'ADD_DAY'
 export const addDay = (date) => {
+  date.setHours(0);
+  date.setMinutes(0);
+  date.setSeconds(0);
   return (dispatch, getState) => {
     dispatch({
       type: ADD_DAY,
-      date: date.split("T")[0]
+      date: date
     });
     dispatch(updateCurrentVisualization());
   }
@@ -201,6 +204,9 @@ export const addDay = (date) => {
 
 export const REMOVE_DAY = 'REMOVE_DAY'
 export const removeDay = (date) => {
+  date.setHours(0);
+  date.setMinutes(0);
+  date.setSeconds(0);
   return (dispatch, getState) => {
     dispatch({
       type: REMOVE_DAY,

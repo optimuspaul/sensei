@@ -58,7 +58,7 @@ export const segmentData = (data, entitiesToShow = ENTITIES_TO_SHOW) => {
 export const generateXScalar = (startTime, endTime, upperRange) => {
 
   return d3.scaleLinear()
-    .domain([startTime.getTime(), endTime.getTime()])
+    .domain([startTime, endTime])
     .range([0, upperRange]);
 }
 
