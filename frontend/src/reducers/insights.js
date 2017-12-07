@@ -22,7 +22,7 @@ export default function sensorMappings(state = initialState, action) {
       let date = state.ui.currentDate
       let endDate = state.ui.endDate;
       let dateString = (new Date(date)).toDateString();
-      if (endDate) {
+      if (endDate && _.includes(['studentSummary', 'unitSummary', 'socialGraph'], state.ui.visualization)) {
         dateString += ` to ${(new Date(state.ui.currentDate)).toDateString()}`
       }
       let hasData = !_.isEmpty(action.observations.entities);
