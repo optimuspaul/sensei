@@ -97,6 +97,9 @@ export default function activityTimeline(data) {
         .attr("cy", rowHeight / 1.5)
         .attr("r", (observation, index) => { return ((observation[0] ? 1 : 0) + (observation[1] ? 1 : 0))*3 })
 
+        topTicks.call(timeTicks, ticks, {offset, y: 10, zoom})
+      bottomTicks.call(timeTicks, ticks, {offset, y: chartHeight+20, zoom, hideLines: true})
+
     });
 
   }

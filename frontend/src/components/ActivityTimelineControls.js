@@ -232,6 +232,27 @@ class ActivityTimelineControls extends React.Component {
       )
     }
 
+    let zoomControl = '';
+    if (this.props.insights.ui.visualization !== 'studentSummary') {
+      zoomControl = (
+        <div className="row" style={{marginBottom: '10px'}}>
+          <div className="col-md-12">
+            <h6> Zoom level: {this.state.zoom} </h6>
+            <input
+              id="zoom-slider"
+              type="range"
+              defaultValue={this.props.insights.ui.zoom}
+              onChange={this.handleZoomChange}
+              min="1"
+              max="5"
+              step="1"
+              onMouseUp={this.handleZoomSet}
+            />
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div>
         <div className="row">
@@ -283,21 +304,7 @@ class ActivityTimelineControls extends React.Component {
           </div>
         </div>
         {endDatePicker}
-        <div className="row" style={{marginBottom: '10px'}}>
-          <div className="col-md-12">
-            <h6> Zoom level: {this.state.zoom} </h6>
-            <input
-              id="zoom-slider"
-              type="range"
-              defaultValue={this.props.insights.ui.zoom}
-              onChange={this.handleZoomChange}
-              min="1"
-              max="5"
-              step="1"
-              onMouseUp={this.handleZoomSet}
-            />
-          </div>
-        </div>
+        {zoomControl}
 
       </div>
     )
