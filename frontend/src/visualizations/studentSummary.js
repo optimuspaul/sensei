@@ -3,6 +3,8 @@ import {entityInflections} from './../constants';
 import store from './../store/configureStore';
 import {selectEntity} from './../actions/insightsActions';
 import _ from 'lodash';
+import d3Tip from "d3-tip";
+d3.tip = d3Tip;
 
 const ROW_WIDTH = 200; // how tall each row of data in timeline is
 const STATIC_HEIGHT = 450; // how wide the width of the visualization is
@@ -30,7 +32,10 @@ export default function interactionTotals(data) {
   }
 
   _.forEach(_.orderBy(_.zip(data.obs, data.entities), '0', 'desc'), (pair, index) => { data.entities[index] = pair[1]; data.obs[index] = pair[0]; });
-  
+
+
+
+
 
   /*
     Initializes the template into the DOM
@@ -42,6 +47,10 @@ export default function interactionTotals(data) {
     are drawn and which percentage label should be placed to the right of them to
     be fed into d3
    */
+
+  let color = d3.scaleLinear().domain([1,d3.max([10, _.size(data.entities)]) ])
+      .interpolate(d3.interpolateHcl)
+      .range([d3.rgb(66, 183, 228), d3.rgb(266, 183, 128)]);
 
   let ticks = _.reduce(_.times(10),(c,n) => {return _.concat(c,(n+1)*10)}, []);
 
@@ -61,7 +70,7 @@ export default function interactionTotals(data) {
     let entityName = entity ? entity.displayName : "Unknown";
     current[entityType] = current[entityType] || {totals: [], entities: []};
     current[entityType].totals.push(data.obs[index]);
-    current[entityType].entities.push(entityName);
+    current[entityType].entities.push({name: entityName, timetext: generateTimeText(data.obs[index]).text, index});
     return current;
   }, {});
   let summedTotals = _.map(segmentedData, (group) => {
@@ -110,6 +119,10 @@ export default function interactionTotals(data) {
        .attr("x1", OFFSET + 10)
        .attr("x2", chartWidth + OFFSET)
        .attr('class', 'x axis');
+
+
+
+
   /*
     Adds the dashed time tick lines and their appropriate 10-minute increment labels
     using the ticks data array created above and scaled using the linear
@@ -175,14 +188,19 @@ export default function interactionTotals(data) {
 
 
     /*
-      plots the total for each entity within the current entity type group. The total 
-      is scaled linearly on the x-axis using yScalar defined above, and its timestamp 
+      plots the total for each entity within the current entity type group. The total
+      is scaled linearly on the x-axis using yScalar defined above, and its timestamp
       is added as a data attribute for debugging purposes.
      */
-    
+
     let myYScalar = d3.scaleLinear()
     .domain([0, totalSeconds])
     .range([0, STATIC_HEIGHT-OFFSET]);
+
+    let tip = d3.tip().attr('class', 'd3-tip').html(function(entity, index, rects) {
+      return `${entity.name} </br> ${entity.timetext}`;
+    });
+    chart.call(tip)
 
     row.append("rect")
        .attr("y", (t, index) => {
@@ -195,19 +213,32 @@ export default function interactionTotals(data) {
           return myYScalar(entityData.totals[index]);
         })
        .attr('width', ROW_WIDTH*0.8)
+       // .attr('style', (entity) => {
+       //    return `fill: ${color(entity.index)}; `;
+       //  })
        .attr("x", ROW_WIDTH*0.2 + OFFSET)
+       .attr("class", (t, i) => {
+          return myYScalar(entityData.totals[i]) < 30 ? 'tipped' : '';
+        });
+
+
+    row.selectAll('rect.tipped')
+       .on('mouseover', tip.show)
+       .on('mouseout', tip.hide)
 
     // // adds the entity display names as labels for each entity row within the current group
 
     row.append("text")
-        .attr("y", (t, i) => { return calcEntityTextY(t,i)})
+        .attr("y", (t, i) => {
+          return calcEntityTextY(t,i) + (myYScalar(entityData.totals[i]) < 30 ? 10 : 0);
+        })
         .attr("x", ROW_WIDTH/2 + 20 + OFFSET)
-        .text(function(entity, index) { 
-          return entity 
+        .text(function(entity, index) {
+          return entity.name
         })
         .attr('text-anchor', 'middle')
-        .attr("class", (t, index) => {
-          return myYScalar(entityData.totals[index]) < 30 ? 'show-on-hover' : ''
+        .style("display", (t, index) => {
+          return myYScalar(entityData.totals[index]) < 15 ? 'none' : 'inline'
         })
         .on('click', (entity) => {
           store.dispatch(selectEntity(entity.entityId, _.invert(entityInflections)[entity.entityType]))
@@ -215,19 +246,19 @@ export default function interactionTotals(data) {
     row.append("text")
         .attr("y", (t, i) => { return calcEntityTextY(t,i) + 15 })
         .attr("x", ROW_WIDTH/2 + 20 + OFFSET)
-        .text(function(entity, index) { 
-          return generateTimeText(entityData.totals[index]).text;
+        .text(function(entity, index) {
+          return entity.timetext;
         })
         .attr('text-anchor', 'middle')
-        .attr("class", (t, index) => {
-          return myYScalar(entityData.totals[index]) < 30 ? 'show-on-hover' : ''
+        .style("display", (t, index) => {
+          return myYScalar(entityData.totals[index]) < 30 ? 'none' : 'inline'
         })
         .on('click', (entity) => {
           store.dispatch(selectEntity(entity.entityId, _.invert(entityInflections)[entity.entityType]))
         })
 
 
- 
+
     function calcEntityTextY(t, index) {
       let prevTotal = _.sum(entityData.totals.slice(0,index));
       let prevY = prevTotal ? myYScalar(prevTotal) : 0;
