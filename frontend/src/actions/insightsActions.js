@@ -111,6 +111,7 @@ export const selectEntity = (entityId, entityType) => {
       entityType,
       entity
     });
+    dispatch(updateCurrentVisualization());
   }
 }
 

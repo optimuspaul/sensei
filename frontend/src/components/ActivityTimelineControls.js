@@ -253,25 +253,9 @@ class ActivityTimelineControls extends React.Component {
       )
     }
 
-    return (
-      <div>
-        <div className="row">
-          <div className="col-md-12">
-            <form>
-              <div className="form-group">
-                <label>Visualization</label>
-                <select className="form-control" name="select-entity" value={this.props.insights.ui.visualization} onChange={this.handleVisualizationSelect}>
-                  <option value="">Select visualization..</option>
-                  <option key={`activity-timeline`} value={`activityTimeline`}>Activity Timeline</option>
-                  <option key={`segmented-timeline`} value={`segmentedTimeline`}>Segmented Timeline</option>
-                  <option key={`student-summary`} value={`studentSummary`}>Student Summary</option>
-                  <option key={`unit-summary`} value={`unitSummary`}>Unit Summary</option>
-                  <option key={`social-graph`} value={`socialGraph`}>Social Graph</option>
-                </select>
-              </div>
-            </form>
-          </div>
-        </div>
+    let viewpointSelector = '';
+    if (this.props.insights.ui.visualization !== 'socialGraph') {
+      viewpointSelector = (
         <div className="row">
           <div className="col-md-12">
             <form>
@@ -296,6 +280,29 @@ class ActivityTimelineControls extends React.Component {
             </form>
           </div>
         </div>
+      )
+    }
+
+    return (
+      <div>
+        <div className="row">
+          <div className="col-md-12">
+            <form>
+              <div className="form-group">
+                <label>Visualization</label>
+                <select className="form-control" name="select-entity" value={this.props.insights.ui.visualization} onChange={this.handleVisualizationSelect}>
+                  <option value="">Select visualization..</option>
+                  <option key={`activity-timeline`} value={`activityTimeline`}>Activity Timeline</option>
+                  <option key={`segmented-timeline`} value={`segmentedTimeline`}>Segmented Timeline</option>
+                  <option key={`student-summary`} value={`studentSummary`}>Student Summary</option>
+                  <option key={`unit-summary`} value={`unitSummary`}>Unit Summary</option>
+                  <option key={`social-graph`} value={`socialGraph`}>Social Graph</option>
+                </select>
+              </div>
+            </form>
+          </div>
+        </div>
+        {viewpointSelector}
         {interactionTypeSelector}
         <div className="row" style={{marginBottom: '10px'}}>
           <div className="col-md-12">

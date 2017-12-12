@@ -10,6 +10,7 @@
   "dependencies": {
     "case": "^1.4.2",
     "d3": "4.10.0",
+    "d3-tip": "^0.7.1",
     "history": "^4.6.1",
     "keyboard-shortcut": "^1.2.0",
     "lodash": "^4.17.2",

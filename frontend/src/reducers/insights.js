@@ -23,11 +23,10 @@ export default function sensorMappings(state = initialState, action) {
       let endDate = state.ui.endDate;
       let dateString = (new Date(date)).toDateString();
       if (endDate && _.includes(['studentSummary', 'unitSummary', 'socialGraph'], state.ui.visualization)) {
-        dateString += ` to ${(new Date(state.ui.currentDate)).toDateString()}`
+        dateString += ` to ${(new Date(state.ui.endDate)).toDateString()}`
       }
       let hasData = !_.isEmpty(action.observations.entities);
-      let entityName = _.get(state, 'ui.entity.displayName');
-
+      let entityName = state.ui.visualization === 'socialGraph' ? '' : _.get(state, 'ui.entity.displayName');
       let currentObservationsData = state.ui.visualization === 'activityTimeline' ? state.observations[entityUid] : action.observations;
 
       return {
@@ -53,7 +52,8 @@ export default function sensorMappings(state = initialState, action) {
         ui: {
           ...state.ui,
           currentEntityId: action.entityId,
-          currentEntityType: action.entityType
+          currentEntityType: action.entityType,
+          entity: action.entity
         },
         status: 'fetching'
       }
