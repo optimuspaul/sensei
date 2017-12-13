@@ -51,9 +51,12 @@ export const fetchInteractionPeriods = (entityId, entityType, date) => {
     let state = getState();
     date = date || _.get(state, 'insights.ui.currentDate');
     date = date ? new Date(date) : new Date();
+    date.setHours(7);
 
-    let endDate = new Date(date);
-    endDate.setDate(endDate.getDate() + 1);
+    let endDate = _.get(state, 'insights.ui.endDate');
+    endDate = endDate || _.get(state, 'insights.ui.endDate');
+    endDate = endDate ? new Date(endDate) : new Date();
+    endDate.setHours(18);
     let startTime = encodeURIComponent(date.toISOString().split('.000Z')[0]);
     let endTime = encodeURIComponent(endDate.toISOString().split('.000Z')[0]);
 

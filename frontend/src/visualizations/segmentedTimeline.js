@@ -35,10 +35,14 @@ export default function segmentedTimeline() {
     let zoom = _.get(store.getState(), "insights.ui.zoom") || 1;
     let chartWidth = 1260 * zoom; // how wide the width of the visualization is
     let segmentedData = segmentData(data);
-    let {startTime, endTime} = startAndEndTimes(data.timestamps);
+    let {startTime} = startAndEndTimes(data.timestamps);
+    let endTime = new Date(startTime.getTime());
+    startTime.setHours(7);
+    endTime.setHours(18);
     let xScalar = generateXScalar(startTime, endTime, chartWidth-offset);
     let chartHeight = calcChartHeight(segmentedData);
     let ticks = timelineTicks(startTime, endTime, xScalar, zoom);
+    let firstDate = startTime.getDate()
 
     chart.attr("width", chartWidth)
       .attr("height", chartHeight + 20)
@@ -63,11 +67,14 @@ export default function segmentedTimeline() {
     rect.transition(t)
       .attr("x", (d) => {
         let timestamp = new Date(d[0]);
+        timestamp.setDate(firstDate);
         return xScalar(timestamp.getTime()) + offset
       })
       .attr('width', (d) => {
         let startTimestamp = new Date(d[0]);
+        startTimestamp.setDate(firstDate);
         let endTimestamp = new Date(d[1]);
+        endTimestamp.setDate(firstDate);
         return xScalar(endTimestamp.getTime()) - xScalar(startTimestamp.getTime());
       })
       .attr('height', rowHeight*0.6)
@@ -76,11 +83,14 @@ export default function segmentedTimeline() {
     rect.enter().append("rect")
       .attr("x", (d) => {
         let timestamp = new Date(d[0]);
+        timestamp.setDate(firstDate);
         return xScalar(timestamp.getTime()) + offset
       })
       .attr('width', (d) => {
         let startTimestamp = new Date(d[0]);
+        startTimestamp.setDate(firstDate);
         let endTimestamp = new Date(d[1]);
+        endTimestamp.setDate(firstDate);
         return xScalar(endTimestamp.getTime()) - xScalar(startTimestamp.getTime());
       })
       .attr('height', rowHeight*0.6)
