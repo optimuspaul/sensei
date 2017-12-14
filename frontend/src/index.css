@@ -4,14 +4,14 @@
 
 #foundation #visualization.locations svg .sensors circle {
   cursor: pointer;
-  stroke: red; 
+  stroke: red;
   /*stroke: black; */
   stroke-width: 2px;
   stroke-opacity: 1;
 }
 
 #foundation #visualization.locations svg .sensors circle.fill {
-  fill: red; 
+  fill: red;
 }
 
 #foundation #visualization.locations svg .sensors circle.pulse {
@@ -68,8 +68,9 @@
 
 #foundation #visualization .segments rect {
   stroke-width: 2;
-  fill: #f9e9e9;
-  stroke: red;
+  /*fill: #d8121240;*/
+  stroke-linecap: round;
+  rx: 10;
 }
 
 #foundation #visualization .segments.total rect {

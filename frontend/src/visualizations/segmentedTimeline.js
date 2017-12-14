@@ -22,6 +22,7 @@ export default function segmentedTimeline() {
   let chart = d3.select("#visualization div#segmentedTimeline svg");
   let topTicks = chart.select("g#top-ticks");
   let bottomTicks = chart.select("g#bottom-ticks");
+  let color = d3.scaleOrdinal(d3.schemeCategory10).domain([0,5]);
 
   let updateChart = (event) => {
 
@@ -31,6 +32,7 @@ export default function segmentedTimeline() {
     var t = d3.transition()
     .duration(400)
     .ease(d3.easeLinear);
+
 
     let zoom = _.get(store.getState(), "insights.ui.zoom") || 1;
     let chartWidth = 1260 * zoom; // how wide the width of the visualization is
@@ -64,27 +66,23 @@ export default function segmentedTimeline() {
           return d ? d.obs : [];
         })
 
-    rect.transition(t)
-      .attr("x", (d) => {
-        let timestamp = new Date(d[0]);
-        timestamp.setDate(firstDate);
-        return xScalar(timestamp.getTime()) + offset
-      })
-      .attr('width', (d) => {
-        let startTimestamp = new Date(d[0]);
-        startTimestamp.setDate(firstDate);
-        let endTimestamp = new Date(d[1]);
-        endTimestamp.setDate(firstDate);
-        return xScalar(endTimestamp.getTime()) - xScalar(startTimestamp.getTime());
-      })
-      .attr('height', rowHeight*0.6)
-      .attr("y", rowHeight*0.2)
 
     rect.enter().append("rect")
+      .merge(rect)
+      .transition(t)
       .attr("x", (d) => {
         let timestamp = new Date(d[0]);
         timestamp.setDate(firstDate);
         return xScalar(timestamp.getTime()) + offset
+      })
+      .attr("style", function(d, i) {
+        let startTimestamp = new Date(d[0]);
+        let endTimestamp = new Date(d[1]);
+        let colorIndex = endTimestamp.getDate() - firstDate
+        return `fill:${color(colorIndex)};opacity:0.5;`;
+      })
+      .attr("date", function(d, i) {
+        return `${d[0]} to ${d[1]}`;
       })
       .attr('width', (d) => {
         let startTimestamp = new Date(d[0]);
