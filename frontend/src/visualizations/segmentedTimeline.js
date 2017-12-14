@@ -8,6 +8,8 @@ import _ from 'lodash';
 const rowHeight = 30; // how tall each row of data in timeline is
 const offset = 205; // how far to the right the interaction segments should start being drawn from
 
+const TZO = (new Date()).getTimezoneOffset()*60*1000
+
 /*
   plots the interaction segments for each entity within the current entity type group. The
   segments are based on a running average of radio observations between the current entity
@@ -40,7 +42,7 @@ export default function segmentedTimeline() {
     let {startTime} = startAndEndTimes(data.timestamps);
     let endTime = new Date(startTime.getTime());
     startTime.setHours(7);
-    endTime.setHours(18);
+    endTime.setHours(17);
     let xScalar = generateXScalar(startTime, endTime, chartWidth-offset);
     let chartHeight = calcChartHeight(segmentedData);
     let ticks = timelineTicks(startTime, endTime, xScalar, zoom);
@@ -73,7 +75,7 @@ export default function segmentedTimeline() {
       .attr("x", (d) => {
         let timestamp = new Date(d[0]);
         timestamp.setDate(firstDate);
-        return xScalar(timestamp.getTime()) + offset
+        return xScalar(timestamp.getTime()+TZO) + offset
       })
       .attr("style", function(d, i) {
         let startTimestamp = new Date(d[0]);
@@ -89,7 +91,7 @@ export default function segmentedTimeline() {
         startTimestamp.setDate(firstDate);
         let endTimestamp = new Date(d[1]);
         endTimestamp.setDate(firstDate);
-        return xScalar(endTimestamp.getTime()) - xScalar(startTimestamp.getTime());
+        return xScalar(endTimestamp.getTime()+TZO) - xScalar(startTimestamp.getTime()+TZO);
       })
       .attr('height', rowHeight*0.6)
       .attr("y", rowHeight*0.2)
