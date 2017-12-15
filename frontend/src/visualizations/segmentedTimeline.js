@@ -8,7 +8,7 @@ import _ from 'lodash';
 const rowHeight = 30; // how tall each row of data in timeline is
 const offset = 205; // how far to the right the interaction segments should start being drawn from
 
-const TZO = (new Date()).getTimezoneOffset()*60*1000
+const TZO = (new Date()).getTimezoneOffset()*60*1000;
 
 /*
   plots the interaction segments for each entity within the current entity type group. The
@@ -36,6 +36,7 @@ export default function segmentedTimeline() {
     .ease(d3.easeLinear);
 
 
+
     let zoom = _.get(store.getState(), "insights.ui.zoom") || 1;
     let chartWidth = 1260 * zoom; // how wide the width of the visualization is
     let segmentedData = segmentData(data);
@@ -46,7 +47,7 @@ export default function segmentedTimeline() {
     let xScalar = generateXScalar(startTime, endTime, chartWidth-offset);
     let chartHeight = calcChartHeight(segmentedData);
     let ticks = timelineTicks(startTime, endTime, xScalar, zoom);
-    let firstDate = startTime.getDate()
+    let firstDate = startTime.getDate();
 
     chart.attr("width", chartWidth)
       .attr("height", chartHeight + 20)
@@ -56,23 +57,27 @@ export default function segmentedTimeline() {
 
     let row = chart.selectAll("g.segments")
       .selectAll("g.row")
-      .data(d => d[1].entities || [])
-
+      .data((d) => {
+        console.log("row data", d)
+        return d[1].entities || [];
+      })
 
     row.call(entityRow, 'row')
     row.call(entityRowLabel)
 
     let rect = row.selectAll("rect")
-        .data((d) => {
-          console.log("rect d: ", d)
-          return d ? d.obs : [];
-        })
+      .data((d) => {
+        console.log("rect d: ", d)
+        return d ? d.obs : [];
+      })
 
+    rect.exit().remove();
 
     rect.enter().append("rect")
       .merge(rect)
       .transition(t)
       .attr("x", (d) => {
+        console.log("rect added")
         let timestamp = new Date(d[0]);
         timestamp.setDate(firstDate);
         return xScalar(timestamp.getTime()+TZO) + offset

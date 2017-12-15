@@ -11,7 +11,7 @@
 }
 
 #foundation #visualization.locations svg .sensors circle.fill {
-  fill: red;
+  fill: #ff000063;
 }
 
 #foundation #visualization.locations svg .sensors circle.pulse {
@@ -63,15 +63,21 @@
 }
 
 #foundation #visualization .segments circle {
-  /*fill: red;*/
+  fill: #ff000050;
 }
 
 #foundation #visualization .segments rect {
   stroke-width: 2;
-  /*fill: #d8121240;*/
+  fill: #d8121270;
+
+}
+
+#foundation #visualization #segmentedTimeline .segments rect {
+  stroke-width: 2;
   stroke-linecap: round;
   rx: 10;
 }
+
 
 #foundation #visualization .segments.total rect {
   stroke-width: 0;

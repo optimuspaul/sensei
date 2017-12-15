@@ -25,14 +25,14 @@ export default function timeTicks(selection, ticks, opts = {}) {
     .duration(750)
     .ease(d3.easeLinear);
 
-  let text = selection.selectAll(`text.y-${opts.y}`).data(ticks);
+  let text = selection.selectAll(`text.${opts.id}`).data(ticks);
 
   text.exit().remove();
-    
+
   text.enter().append(`text`)
     .merge(text)
     .transition(t)
-    .attr('class', `y-${opts.y}`)
+    .attr('class', opts.id)
     .attr("x", (tick, index) => { return tick[1] + opts.offset })
     .attr("y", opts.y)
     .text((tick, index) => { return tick[0] });

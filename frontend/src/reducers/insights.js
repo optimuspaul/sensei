@@ -3,7 +3,6 @@ import QueryParams from 'query-params';
 
 let params = QueryParams.decode(location.search.slice(1));
 params.currentDate = params.currentDate || (new Date((new Date()).toDateString())).toISOString();
-params.currentDate = params.currentDate.split('T')[0]
 params.selectedDays = [new Date(params.currentDate)];
 params.endDate = params.endDate || (new Date((new Date()).toDateString())).toISOString();
 const initialState = {
@@ -26,8 +25,8 @@ export default function sensorMappings(state = initialState, action) {
         dateString += ` to ${(new Date(state.ui.endDate)).toDateString()}`
       }
       let hasData = !_.isEmpty(action.observations.entities);
-      let entityName = state.ui.visualization === 'socialGraph' ? '' : _.get(state, 'ui.entity.displayName');
-      let currentObservationsData = state.ui.visualization === 'activityTimeline' ? state.observations[entityUid] : action.observations;
+      let entityName = state.ui.visualization === 'socialGraph' ? '' : _.get(action, 'entity.displayName');
+      let currentObservationsData = action.observations;
 
       return {
         ...state,
@@ -94,33 +93,6 @@ export default function sensorMappings(state = initialState, action) {
         ui: {
           ...state.ui,
           endDate: action.endDate
-        },
-        status: 'fetching'
-      }
-    case 'ADD_DAY':
-      selectedDays = state.ui.selectedDays;
-      selectedDays.push(action.date);
-      return {
-        ...state,
-        observations: state.observations,
-        ui: {
-          ...state.ui,
-          selectedDays,
-          currentDate: action.date.toISOString().split("T")[0]
-        },
-        status: 'fetching'
-      }
-    case 'REMOVE_DAY':
-      selectedDays = state.ui.selectedDays;
-      _.remove(selectedDays, (day) => {
-        return _.isEqual(action.date, day);
-      });
-      return {
-        ...state,
-        observations: state.observations,
-        ui: {
-          ...state.ui,
-          selectedDays
         },
         status: 'fetching'
       }

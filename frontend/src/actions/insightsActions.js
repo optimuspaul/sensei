@@ -4,12 +4,17 @@ import {getSenseiToken, getClassroomId, baseUrl, entityInflections} from './../c
 
 export const ADD_OBSERVATIONS = 'ADD_OBSERVATIONS';
 export const addObservations = (entityId, entityType, observations) => {
-  return {
-    type: ADD_OBSERVATIONS,
-    observations,
-    entityId,
-    entityType,
-    ui: {}
+  return (dispatch, getState) => {
+    let state = getState();
+    let entity = _.get(state, `entities.${entityInflections[entityType]}.${entityId}`);
+    dispatch({
+      type: ADD_OBSERVATIONS,
+      observations,
+      entityId,
+      entityType,
+      entity,
+      ui: {}
+    });
   }
 }
 
@@ -51,14 +56,14 @@ export const fetchInteractionPeriods = (entityId, entityType, date) => {
     let state = getState();
     date = date || _.get(state, 'insights.ui.currentDate');
     date = date ? new Date(date) : new Date();
-    date.setHours(7);
+    date.setHours(0);
 
     let endDate = _.get(state, 'insights.ui.endDate');
     endDate = endDate || _.get(state, 'insights.ui.endDate');
     endDate = endDate ? new Date(endDate) : new Date();
-    endDate.setHours(18);
-    let startTime = encodeURIComponent(date.toISOString().split('.000Z')[0]);
-    let endTime = encodeURIComponent(endDate.toISOString().split('.000Z')[0]);
+    endDate.setHours(23);
+    let startTime = encodeURIComponent(date.toISOString());
+    let endTime = encodeURIComponent(endDate.toISOString());
 
 
     fetch(`${baseUrl()}/api/v1/interaction_periods?classroom_id=${getClassroomId()}&entity_id=${entityId}&entity_type=${entityType}&start_time=${startTime}&end_time=${endTime}`, {
@@ -175,7 +180,7 @@ export const selectDate = (date) => {
   return (dispatch, getState) => {
     dispatch({
       type: SELECT_DATE,
-      date: date.split("T")[0]
+      date
     });
     dispatch(updateCurrentVisualization());
   }

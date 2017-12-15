@@ -20,17 +20,17 @@ class ActivityTimelineControls extends React.Component {
 
     let params = QueryParams.decode(location.search.slice(1));
 
-    let date = new Date((params.date ? new Date(params.date) : new Date()).toDateString());
-    date = date.toISOString().split('Z')[0];
+    let date = new Date((params.currentDate ? new Date(params.currentDate) : new Date()).toDateString());
+    date = date.toISOString();
 
     let endDate = new Date((params.endDate ? new Date(params.endDate) : new Date()).toDateString());
-    endDate = endDate.toISOString().split('Z')[0];
+    endDate = endDate.toISOString();
 
     this.state = {
       date,
       endDate,
       maxEndDate: (new Date()).toISOString(),
-      minEndDate: (new Date()).toISOString(),
+      minEndDate: date,
       selectedDays: []
     }
   }
