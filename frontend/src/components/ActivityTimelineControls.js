@@ -222,7 +222,7 @@ class ActivityTimelineControls extends React.Component {
     }
 
     let zoomControl = '';
-    if (this.props.insights.ui.visualization !== 'studentSummary') {
+    if (!_.includes(['studentSummary', 'socialGraph'], this.props.insights.ui.visualization)) {
       zoomControl = (
         <div className="row" style={{marginBottom: '10px'}}>
           <div className="col-md-12">

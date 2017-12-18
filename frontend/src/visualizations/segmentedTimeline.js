@@ -58,7 +58,6 @@ export default function segmentedTimeline() {
     let row = chart.selectAll("g.segments")
       .selectAll("g.row")
       .data((d) => {
-        console.log("row data", d)
         return d[1].entities || [];
       })
 
@@ -67,7 +66,6 @@ export default function segmentedTimeline() {
 
     let rect = row.selectAll("rect")
       .data((d) => {
-        console.log("rect d: ", d)
         return d ? d.obs : [];
       })
 
@@ -77,10 +75,9 @@ export default function segmentedTimeline() {
       .merge(rect)
       .transition(t)
       .attr("x", (d) => {
-        console.log("rect added")
         let timestamp = new Date(d[0]);
         timestamp.setDate(firstDate);
-        return xScalar(timestamp.getTime()+TZO) + offset
+        return xScalar(timestamp.getTime()) + offset
       })
       .attr("style", function(d, i) {
         let startTimestamp = new Date(d[0]);
@@ -96,12 +93,12 @@ export default function segmentedTimeline() {
         startTimestamp.setDate(firstDate);
         let endTimestamp = new Date(d[1]);
         endTimestamp.setDate(firstDate);
-        return xScalar(endTimestamp.getTime()+TZO) - xScalar(startTimestamp.getTime()+TZO);
+        return xScalar(endTimestamp.getTime()) - xScalar(startTimestamp.getTime());
       })
       .attr('height', rowHeight*0.6)
       .attr("y", rowHeight*0.2)
 
-      topTicks.call(timeTicks, ticks, {offset, y: 10, zoom})
+      topTicks.call(timeTicks, ticks, {offset, y: 10, zoom, chartHeight})
       bottomTicks.call(timeTicks, ticks, {offset, y: chartHeight+20, zoom, hideLines: true})
 
   }

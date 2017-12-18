@@ -49,6 +49,6 @@ export default function timeTicks(selection, ticks, opts = {}) {
     .attr("x1", (tick, index) => { return tick[1] + opts.offset + 15 })
     .attr("x2", (tick, index) => { return tick[1] + opts.offset + 15 })
     .attr("y1", 20)
-    .attr("y2", opts.chartHeight-40);
+    .attr("y2", opts.chartHeight);
 
 }

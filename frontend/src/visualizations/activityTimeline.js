@@ -9,7 +9,6 @@ import moment from 'moment';
 
 const rowHeight = 30; // how tall each row of data in timeline is
 const offset = 205; // how far to the right the observation points start being drawn
-const TZO = (new Date()).getTimezoneOffset()*60*1000;
 
 export default function activityTimeline(data) {
 
@@ -76,7 +75,7 @@ export default function activityTimeline(data) {
       let timestamp = new Date(data.timestamps[index]);
       timestamp.setDate(startTime.getDate());
       timestamp.setMonth(startTime.getMonth());
-      return xScalar(timestamp.getTime()+TZO) + offset
+      return xScalar(timestamp.getTime()) + offset
     })
     .attr("date", (observation, index) => {
       let timestamp = new Date(data.timestamps[index]);
@@ -85,7 +84,7 @@ export default function activityTimeline(data) {
     .attr("cy", rowHeight / 1.5)
     .attr("r", (observation, index) => { return ((observation[0] ? 1 : 0) + (observation[1] ? 1 : 0))*2 })
 
-    topTicks.call(timeTicks, ticks, {offset, y: 10, zoom})
+    topTicks.call(timeTicks, ticks, {offset, y: 10, zoom, chartHeight})
     bottomTicks.call(timeTicks, ticks, {offset, y: chartHeight+20, zoom, hideLines: true})
 
 

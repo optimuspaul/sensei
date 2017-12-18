@@ -24,7 +24,9 @@ export default function entityRowLabels(selection, opts = { }) {
     .attr("y", opts.rowHeight / 1.5)
     .attr("dy", ".35em")
     .attr("x", 5)
-    .text(d => d.entityName)
+    .text((d) => {
+      return d.entityName.length > 14 ? `${d.entityName.substring(0,13)}..` : d.entityName;
+    })
     .on('click', (entity) => {
         store.dispatch(selectEntity(entity.entityId, _.invert(entityInflections)[entity.entityType]))
       })
