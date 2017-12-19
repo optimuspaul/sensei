@@ -224,7 +224,10 @@ import key from 'keyboard-shortcut';
             vizElement.style.display = 'inline';
             var event = new CustomEvent('dataChanged', { detail: observationsData });
             vizElement.dispatchEvent(event);
-            setTimeout(() => { vizElement.dispatchEvent(event); }, 1000);
+            // some vizualizations don't want to render correctly the first time and need to be kicked
+            if (visualization !== 'socialGraph') {
+              setTimeout(() => { vizElement.dispatchEvent(event); }, 1000);
+            }
           });
         }
       }
