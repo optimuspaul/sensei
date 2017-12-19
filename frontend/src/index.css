@@ -81,14 +81,14 @@
 
 #foundation #visualization .segments.total rect {
   stroke-width: 0;
-  fill: red;
-  stroke: red;
+  /*fill: red;*/
+  /*stroke: red;*/
 }
 
 #foundation #visualization .student-summary .segments.total rect {
   stroke-width: 2;
   fill: white;
-  stroke: red;
+  /*stroke: red;*/
   z-index: 0;
 }
 

@@ -47,9 +47,11 @@ export default function interactionTotals(data) {
     let currentEntityType = _.get(state, 'insights.ui.currentEntityType');
 
 
-    let color = d3.scaleLinear().domain([1,d3.max([10, _.size(data.entities)]) ])
-        .interpolate(d3.interpolateHcl)
-        .range([d3.rgb(66, 183, 228), d3.rgb(266, 183, 128)]);
+    // let color = d3.scaleLinear().domain([1,d3.max([10, _.size(data.entities)]) ])
+    //     .interpolate(d3.interpolateHcl)
+    //     .range([d3.rgb(66, 183, 228), d3.rgb(266, 183, 128)]);
+  
+    let color = d3.scaleOrdinal(d3.schemeCategory20);
 
     let ticks = _.reduce(_.times(10),(c,n) => {return _.concat(c,(n+1)*10)}, []);
 
@@ -216,9 +218,9 @@ export default function interactionTotals(data) {
             return myYScalar(entityData.totals[index]);
           })
          .attr('width', ROW_WIDTH*0.8)
-         // .attr('style', (entity) => {
-         //    return `fill: ${color(entity.index)}; `;
-         //  })
+         .attr('style', (entity) => {
+            return `fill: ${color(entity.index)}; opacity: 0.4; `;
+          })
          .attr("x", ROW_WIDTH*0.2 + OFFSET)
          .attr("class", (t, i) => {
             return myYScalar(entityData.totals[i]) < 30 ? 'tipped' : '';
