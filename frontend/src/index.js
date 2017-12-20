@@ -12,16 +12,11 @@ import { Provider } from 'react-redux';
 import {fetchMappings} from './actions/sensorMappingActions';
 import {fetchChildren, fetchTeachers, fetchEntities, fetchMaterials} from './actions/entityActions';
 import {getClassroomId, isProduction, entityInflections, getSchoolId} from './constants';
-import {fetchObservations, fetchInteractionPeriods, fetchInteractionTotals} from './actions/insightsActions';
+import {fetchObservations, fetchInteractionPeriods, fetchInteractionTotals, updateCurrentVisualization, locations} from './actions/insightsActions';
 import {toggleAnonymizer} from './actions/entityActions';
 import _ from 'lodash';
 import './index.css';
-import activityTimeline from './visualizations/activityTimeline';
-import segmentedTimeline from './visualizations/segmentedTimeline';
-import studentSummary from './visualizations/studentSummary';
-import unitSummary from './visualizations/unitSummary';
-import socialGraph from './visualizations/socialGraph';
-import locations from './visualizations/locations';
+import * as visualizations from './visualizations';
 import key from 'keyboard-shortcut';
 
 
@@ -82,6 +77,7 @@ import key from 'keyboard-shortcut';
     }
 
     function setupNavs(insertionPoint) {
+      document.querySelector('.primary-nav-link.active').classList.remove('active')
       let dynamicPrimaryNav = document.createElement("a");
       dynamicPrimaryNav.className = "primary-nav-link";
       dynamicPrimaryNav.id = "sensors-nav";
@@ -183,11 +179,11 @@ import key from 'keyboard-shortcut';
 
           foundationEl.innerHTML = `
             <div class='row'>
-              <div class='col-md-2' id='insights-nav-container'></div>
-              <div class='col-md-10'>
+              <div class='col-md-3' id='insights-nav-container'></div>
+              <div class='col-md-9'>
                 <h2 id='visualization-title'></h2>
                 <hr />
-                <div id='visualization'><svg></svg></div>
+                <div id='visualization'></div>
               </div>
             </div>
           `;
@@ -199,91 +195,41 @@ import key from 'keyboard-shortcut';
             document.getElementById('insights-nav-container')
           );
 
-
           store.dispatch(fetchChildren());
           store.dispatch(fetchTeachers());
           store.dispatch(fetchEntities('areas'));
           store.dispatch(fetchMaterials());
-
-          let prevEntityUid, prevDate, prevEndDate, prevVisualization, prevInteractionType, prevZoom;
+          store.dispatch(updateCurrentVisualization());
 
           store.subscribe(() => {
+            let visualizationsElement = document.querySelector("#visualization");
             let state = store.getState();
-            let entityId = _.get(state, 'insights.ui.currentEntityId');
-            let entityType = _.get(state, 'insights.ui.currentEntityType');
             let visualization = _.get(state, 'insights.ui.visualization');
-            let interactionType = _.get(state, 'insights.ui.interactionType');
-            let entityUid = `${entityType}-${entityId}`
+            let observationsData = _.get(state, `insights.currentObservationsData`);
+            if (!visualization || !observationsData) return;
             let date = _.get(state, 'insights.ui.currentDate');
-            let endDate = _.get(state, 'insights.ui.endDate');
-            let zoom = _.get(state, 'insights.ui.zoom');
-            let status = _.get(state, 'insights.status');
-            let entity = _.get(state, `entities.${entityInflections[entityType]}.${entityId}`);
-            let entityName = entity && entity.displayName;
-
-            if (entityId && entityType && date && visualization && (endDate && _.includes(['studentSummary', 'unitSummary'], visualization) || !_.includes(['studentSummary', 'unitSummary'], visualization))) {
-              if (entityUid === prevEntityUid && date === prevDate && endDate === prevEndDate && prevVisualization === visualization && prevInteractionType === interactionType && prevZoom === zoom) {
-                let dateString = (new Date(date)).toDateString();
-                if (endDate) {
-                  dateString += ` to ${(new Date(endDate)).toDateString()}`
-                }
-                document.querySelector("#visualization-title").innerHTML = `${entityName} <small>${dateString}</small>`
-                let observationsData = state.insights.observations[entityUid];
-                if (observationsData && (!_.isEmpty(observationsData.entities) && !_.isEmpty(observationsData.timestamps))) {
-                  switch(visualization) {
-                    case 'activityTimeline':
-                      activityTimeline(observationsData);
-                      break;
-                    case 'segmentedTimeline':
-                      segmentedTimeline(observationsData);
-                      break;
-
-                    case 'unitSummary':
-                      unitSummary(observationsData);
-                      break;
-                    case 'studentSummary':
-                      studentSummary(observationsData);
-                      break;
-                    case 'socialGraph':
-                      socialGraph(observationsData);
-                      break;
-                  }
-                } else {
-                  if (status === 'fetched') {
-                    document.querySelector("#visualization").innerHTML = '<h3>No data</h3>';
-                  }
-                }
-              } else {
-                document.querySelector("#visualization").innerHTML = '<h3>loading...</h3>';
-                document.querySelector("#visualization-title").innerHTML = '';
-                switch(visualization) {
-                  case 'activityTimeline':
-                    store.dispatch(fetchObservations(entityId, entityType, date, interactionType));
-                    break;
-                  case 'segmentedTimeline':
-                    store.dispatch(fetchInteractionPeriods(entityId, entityType, date));
-                    break;
-                  case 'socialGraph':
-                    store.dispatch(fetchInteractionTotals(entityId, entityType, date, endDate, visualization));
-                    break;
-                  case 'unitSummary':
-                  case 'studentSummary':
-                    if (endDate && !(visualization === 'unitSummary' && !interactionType)) {
-                      store.dispatch(fetchInteractionTotals(entityId, entityType, date, endDate, visualization === 'unitSummary' && interactionType));
-                    } else {
-                      document.querySelector("#visualization").innerHTML = '';
-                    }
-                    break;
-                }
-              }
-              prevVisualization = visualization;
-              prevInteractionType = interactionType;
-              prevDate = date;
-              prevEndDate = endDate;
-              prevEntityUid = entityUid;
-              prevZoom = zoom;
+            let vizElement = document.querySelector(`#visualization div#${visualization}.viz`);
+            let allVizElements = document.querySelectorAll('#visualization .viz');
+            document.querySelector("#visualization-title").innerHTML = _.get(state, 'insights.ui.visualizationTitle', 'loading..');
+            _.each(allVizElements, (s) => {
+              s.style.display = 'none';
+            });
+            if (!vizElement) {
+              vizElement = document.createElement('div');
+              vizElement.id = visualization;
+              vizElement.className = "viz";
+              vizElement.innerHTML = '<svg></svg>';
+              visualizationsElement.append(vizElement);
+              visualizations[visualization]();
             }
-          })
+            vizElement.style.display = 'inline';
+            var event = new CustomEvent('dataChanged', { detail: observationsData });
+            vizElement.dispatchEvent(event);
+            // some vizualizations don't want to render correctly the first time and need to be kicked
+            if (visualization !== 'socialGraph') {
+              setTimeout(() => { vizElement.dispatchEvent(event); }, 1000);
+            }
+          });
         }
       }
     }

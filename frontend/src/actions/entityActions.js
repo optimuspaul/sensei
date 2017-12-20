@@ -102,7 +102,7 @@ export const fetchMaterials = () => {
         "X-CSRF-Token": getCrsfToken()
       }
     }).then(function(response) {
-      return response.text()
+      return response ? response.text() : Promise.reject();
     }).then(function(body) {
       let classrooms = JSON.parse(body)
       let classroom = _.find(classrooms, (classroom) => {
@@ -117,7 +117,7 @@ export const fetchMaterials = () => {
         });
       }
     }).then(function(response) {
-      return response.text();
+      return response ? response.text() : Promise.reject()
     }).then((body) => {
       let lessonSet = JSON.parse(body);
       let getMaterials = (obj) => {
@@ -142,7 +142,7 @@ export const saveEntity = (entityType, entity, requestId) => {
       method: 'POST',
       body: JSON.stringify(saveableEntity)
     }).then(function(response) {
-      return response.text();
+      return response ? response.text() : Promise.reject()
     }).then((body) => {
       let savedEntity = JSON.parse(body);
       dispatch(handleSaveEntitySuccess(entityType, _.merge(changeCase(savedEntity, 'camel'), {displayName: savedEntity.name})));
@@ -165,7 +165,7 @@ export const updateEntity = (entityType, entity, requestId) => {
       method: 'PUT',
       body: JSON.stringify(saveableEntity)
     }).then(function(response) {
-      return response.text();
+      return response ? response.text() : Promise.reject()
     }).then((body) => {
       let savedEntity = JSON.parse(body);
       dispatch(handleSaveEntitySuccess(entityType, _.merge(changeCase(savedEntity, 'camel'), {displayName: savedEntity.name})));

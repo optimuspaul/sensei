@@ -3,7 +3,8 @@ import _ from 'lodash';
 import DatePicker from 'react-bootstrap-date-picker';
 import QueryParams from 'query-params';
 import { history } from '../utils';
-
+import DayPicker from 'react-day-picker';
+import 'react-day-picker/lib/style.css';
 
 class ActivityTimelineControls extends React.Component {
 
@@ -19,17 +20,18 @@ class ActivityTimelineControls extends React.Component {
 
     let params = QueryParams.decode(location.search.slice(1));
 
-    let date = new Date((params.date ? new Date(params.date) : new Date()).toDateString());
-    date = date.toISOString().split('Z')[0];
+    let date = new Date((params.currentDate ? new Date(params.currentDate) : new Date()).toDateString());
+    date = date.toISOString();
 
     let endDate = new Date((params.endDate ? new Date(params.endDate) : new Date()).toDateString());
-    endDate = endDate.toISOString().split('Z')[0];
+    endDate = endDate.toISOString();
 
     this.state = {
       date,
       endDate,
       maxEndDate: (new Date()).toISOString(),
-      minEndDate: (new Date()).toISOString()
+      minEndDate: date,
+      selectedDays: []
     }
   }
 
@@ -138,6 +140,16 @@ class ActivityTimelineControls extends React.Component {
     }
   }
 
+  handleDayClick = (clickedDay, { selected }) => {
+    let selectedDays = this.state.selectedDays;
+    if (selected) {
+      this.props.dispatch(this.props.removeDay(clickedDay));
+    } else {
+      this.props.dispatch(this.props.addDay(clickedDay));
+    }
+
+  };
+
   render() {
 
     let children = _.map(this.props.entities.children, (child) => {
@@ -167,7 +179,7 @@ class ActivityTimelineControls extends React.Component {
 
     let selectedUid = this.props.insights.ui.currentEntityType ? `${this.props.insights.ui.currentEntityType}-${this.props.insights.ui.currentEntityId}` : '';
     let endDatePicker = '';
-    if (_.includes(['unitSummary', 'socialGraph'], this.props.insights.ui.visualization)) {
+    if (_.includes(['studentSummary', 'unitSummary', 'socialGraph', 'segmentedTimeline'], this.props.insights.ui.visualization)) {
       endDatePicker = (
         <div className="row">
           <div className="col-md-12">
@@ -177,6 +189,15 @@ class ActivityTimelineControls extends React.Component {
         </div>
       )
     }
+
+    let datePicker = (
+      <DatePicker
+        maxDate={this.state.maxStartDate}
+        showClearButton={false}
+        value={this.props.insights.ui.currentDate}
+        onChange={this.handleDateChange.bind(this)}
+      />
+    )
 
     let interactionTypeSelector = '';
     if (_.includes(['unitSummary'], this.props.insights.ui.visualization)) {
@@ -201,7 +222,7 @@ class ActivityTimelineControls extends React.Component {
     }
 
     let zoomControl = '';
-    if (this.props.insights.ui.visualization !== 'unitSummary') {
+    if (!_.includes(['studentSummary', 'socialGraph'], this.props.insights.ui.visualization)) {
       zoomControl = (
         <div className="row" style={{marginBottom: '10px'}}>
           <div className="col-md-12">
@@ -221,25 +242,9 @@ class ActivityTimelineControls extends React.Component {
       )
     }
 
-    return (
-      <div>
-        <div className="row">
-          <div className="col-md-12">
-            <form>
-              <div className="form-group">
-                <label>Visualization</label>
-                <select className="form-control" name="select-entity" value={this.props.insights.ui.visualization} onChange={this.handleVisualizationSelect}>
-                  <option value="">Select visualization..</option>
-                  <option key={`activity-timeline`} value={`activityTimeline`}>Activity Timeline</option>
-                  <option key={`segmented-timeline`} value={`segmentedTimeline`}>Segmented Timeline</option>
-                  <option key={`interaction-totals`} value={`unitSummary`}>Interaction Totals</option>
-                  <option key={`unit-summary`} value={`unitSummary`}>Unit Summary</option>
-                  <option key={`social-graph`} value={`socialGraph`}>Social Graph</option>
-                </select>
-              </div>
-            </form>
-          </div>
-        </div>
+    let viewpointSelector = '';
+    if (this.props.insights.ui.visualization !== 'socialGraph') {
+      viewpointSelector = (
         <div className="row">
           <div className="col-md-12">
             <form>
@@ -264,11 +269,34 @@ class ActivityTimelineControls extends React.Component {
             </form>
           </div>
         </div>
+      )
+    }
+
+    return (
+      <div>
+        <div className="row">
+          <div className="col-md-12">
+            <form>
+              <div className="form-group">
+                <label>Visualization</label>
+                <select className="form-control" name="select-entity" value={this.props.insights.ui.visualization} onChange={this.handleVisualizationSelect}>
+                  <option value="">Select visualization..</option>
+                  <option key={`activity-timeline`} value={`activityTimeline`}>Activity Timeline</option>
+                  <option key={`segmented-timeline`} value={`segmentedTimeline`}>Segmented Timeline</option>
+                  <option key={`student-summary`} value={`studentSummary`}>Student Summary</option>
+                  <option key={`unit-summary`} value={`unitSummary`}>Unit Summary</option>
+                  <option key={`social-graph`} value={`socialGraph`}>Social Graph</option>
+                </select>
+              </div>
+            </form>
+          </div>
+        </div>
+        {viewpointSelector}
         {interactionTypeSelector}
         <div className="row" style={{marginBottom: '10px'}}>
           <div className="col-md-12">
-            { _.includes(['unitSummary'], this.props.insights.ui.visualization) ? <label>From: </label> : <label>On: </label>}
-            <DatePicker maxDate={this.state.maxStartDate} showClearButton={false} value={this.props.insights.ui.currentDate} onChange={this.handleDateChange.bind(this)} />
+            { _.includes(['studentSummary', 'unitSummary'], this.props.insights.ui.visualization) ? <label>From: </label> : <label>On: </label>}
+            {datePicker}
           </div>
         </div>
         {endDatePicker}
