@@ -77,7 +77,8 @@ import key from 'keyboard-shortcut';
     }
 
     function setupNavs(insertionPoint) {
-      document.querySelector('.primary-nav-link.active').classList.remove('active')
+      let activePrimary = document.querySelector('.primary-nav-link.active');
+      if (activePrimary) activePrimary.classList.remove('active');
       let dynamicPrimaryNav = document.createElement("a");
       dynamicPrimaryNav.className = "primary-nav-link";
       dynamicPrimaryNav.id = "sensors-nav";
@@ -236,5 +237,3 @@ import key from 'keyboard-shortcut';
 
 
   }
-
-

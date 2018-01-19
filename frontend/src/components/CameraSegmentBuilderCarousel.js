@@ -74,17 +74,19 @@ class CameraSegmentBuilderCarousel extends React.Component {
     let carouselItems = _.map(this.props.photos[this.props.camera], (key, index) => {
       let content = _.reduce(_.keys(this.props.photos), (current, camera) => {
         _.each(vantagePoints, (vantagePoint) => {
-          let url = this.props.photos[camera][index].replace('camera01', vantagePoint);
-          current.images.push(<img key={`camera-${camera}-${vantagePoint}-image`}
-                               className={`sub-item camera-${camera} vantage-point-${vantagePoint}`}
-                               style={{display: (camera === this.props.camera && vantagePoint === this.props.vantagePoint) ? 'inline' : 'none'}}
-                               src={((this.state.index > (index-3)) || this.state.index === (index-10)) ? `${baseUrl()}/api/v1/camera_data/signed_url/${url}` : ''}/>)
-          current.captions.push(<Carousel.Caption key={`camera-${camera}-${vantagePoint}-caption`}
-                                  className={`sub-item camera-${camera} vantage-point-${vantagePoint}`}
-                                  style={{display: (camera === this.props.camera && vantagePoint === this.props.vantagePoint) ? 'inline' : 'none'}}>
-                                  <h3>camera {camera}</h3>
-                                  <p>{url}</p>
-                                </Carousel.Caption>)
+          if (this.props.photos[camera][index]) {
+            let url = this.props.photos[camera][index].replace('camera01', vantagePoint);
+            current.images.push(<img key={`camera-${camera}-${vantagePoint}-image`}
+                                 className={`sub-item camera-${camera} vantage-point-${vantagePoint}`}
+                                 style={{display: (camera === this.props.camera && vantagePoint === this.props.vantagePoint) ? 'inline' : 'none'}}
+                                 src={((this.state.index > (index-3)) || this.state.index === (index-10)) ? `${baseUrl()}/api/v1/camera_data/signed_url/${url}` : ''}/>)
+            current.captions.push(<Carousel.Caption key={`camera-${camera}-${vantagePoint}-caption`}
+                                    className={`sub-item camera-${camera} vantage-point-${vantagePoint}`}
+                                    style={{display: (camera === this.props.camera && vantagePoint === this.props.vantagePoint) ? 'inline' : 'none'}}>
+                                    <h3>camera {camera}</h3>
+                                    <p>{url}</p>
+                                  </Carousel.Caption>)
+          }
         })
         return current;
       }, {images: [], captions: []});

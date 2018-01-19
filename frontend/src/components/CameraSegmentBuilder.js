@@ -2,7 +2,7 @@ import React from 'react';
 import _ from 'lodash';
 import * as d3 from "d3";
 import './CameraSegmentBuilder.css';
-import { Carousel, FormGroup, FormControl } from 'react-bootstrap';
+import { Carousel, FormGroup, FormControl, ControlLabel, HelpBlock, Button } from 'react-bootstrap';
 import {getSenseiToken,  baseUrl, vantagePoints} from './../constants';
 import CameraSegmentBuilderCarousel from './CameraSegmentBuilderCarousel';
 import KeyHandler, {KEYDOWN} from 'react-key-handler';
@@ -116,16 +116,30 @@ class CameraSegmentBuilder extends React.Component {
     this.setState({currentDate: event.target.value});
   }
 
+  handleEmailChange = (event) => {
+    this.setState({email: event.target.value})
+  }
+
+  handlePasswordChange = (event) => {
+    this.setState({password: event.target.value})
+  }
+
+  handleAuthSubmit = (event) => {
+    event.preventDefault();
+    this.setState({authenticating: true})
+    this.props.authenticate(this.state.email, this.state.password);
+  }
+
   refreshPhotos() {
     this.props.fetchPhotos(this.state.currentLocation, this.state.currentCamera, this.state.currentDate);
   }
 
   componentDidMount() {
-    this.refreshPhotos();
+    this.props.fetchPhotos();
   }
 
   componentWillReceiveProps(nextProps) {
-    this.setState({ photos: this.getPhotos() });
+    this.setState({ photos: this.getPhotos(), authenticating: nextProps.authenticating });
   }
 
   switchCamera = (event) => {
@@ -150,7 +164,63 @@ class CameraSegmentBuilder extends React.Component {
 
   render() {
 
+    let selectors = (
+      <form className="navbar-form navbar-left" role="search">
+        <FormGroup controlId="formControlsSelect">
+          <FormControl onChange={this.handleLocationChange} value={this.state.currentLocation} componentClass="select">
+            <option value="select">select a classroom</option>
+            {_.map(this.getLocations(), (location) => { return <option key={location} value={location}>{location}</option> } ) }
+          </FormControl>
+        </FormGroup>
+        <FormGroup controlId="formControlsSelect">
+          <FormControl onChange={this.handleCameraChange} value={this.state.currentCamera} componentClass="select">
+            <option value="select">select a mode</option>
+            {_.map(this.getCameras(), (camera) => { return <option key={camera} value={camera}>{camera}</option> } ) }
+          </FormControl>
+        </FormGroup>
+        <FormGroup controlId="formControlsSelect">
+          <FormControl onChange={this.handleVantagePointChange} value={this.state.currentVantagePoint} componentClass="select">
+            <option value="select">select a camera</option>
+            {_.map(vantagePoints, (vantagePoint) => { return <option key={vantagePoint} value={vantagePoint}>{vantagePoint.replace("0", " ")}</option> } ) }
+          </FormControl>
+        </FormGroup>
+        <FormGroup controlId="formControlsSelect">
+          <FormControl onChange={this.handleDateChange} value={this.state.currentDate} componentClass="select">
+            <option value="select">select a date</option>
+            {_.map(this.getDates(), (date) => { return <option key={date} value={date}>{date}</option> } ) }
+          </FormControl>
+        </FormGroup>
+      </form>
+    )
 
+    let authForm = (
+      <form onSubmit={this.handleAuthSubmit} className="navbar-form navbar-left" role="search">
+
+        <FormGroup validationState={this.props.authFailed ? 'error' : null}>
+
+          <FormControl
+            id="formControlsEmail"
+            type="email"
+            label="TC Email"
+            placeholder="tc email"
+            name="email"
+            autoComplete="username"
+            onChange={this.handleEmailChange}
+          />
+          <FormControl 
+            id="formControlsPassword" 
+            label="Password" 
+            type="password" 
+            autoComplete="password"
+            placeholder="tc password"
+            name="password"
+            onChange={this.handlePasswordChange}
+          />
+        <Button onClick={this.handleAuthSubmit} type="submit" disabled={this.props.authenticating}>{this.props.authenticating ? 'submitting...' : 'Submit'}</Button>
+        </FormGroup>
+        { this.props.authFailed ? <FormGroup validationState={this.props.authFailed ? 'error' : null}><HelpBlock>wrong credentials</HelpBlock></FormGroup> : ''}
+      </form>
+    )
 
     return (
       <div>
@@ -161,34 +231,9 @@ class CameraSegmentBuilder extends React.Component {
             <div className="navbar-header">
               <a className="navbar-brand" href="/">Wildflower Schools: Camera Segment Builder</a>
             </div>
-            <form className="navbar-form navbar-left" role="search">
-              <FormGroup controlId="formControlsSelect">
-                <FormControl onChange={this.handleLocationChange} value={this.state.currentLocation} componentClass="select">
-                  <option value="select">select a classroom</option>
-                  {_.map(this.getLocations(), (location) => { return <option key={location} value={location}>{location}</option> } ) }
-                </FormControl>
-              </FormGroup>
-              <FormGroup controlId="formControlsSelect">
-                <FormControl onChange={this.handleCameraChange} value={this.state.currentCamera} componentClass="select">
-                  <option value="select">select a mode</option>
-                  {_.map(this.getCameras(), (camera) => { return <option key={camera} value={camera}>{camera}</option> } ) }
-                </FormControl>
-              </FormGroup>
-              <FormGroup controlId="formControlsSelect">
-                <FormControl onChange={this.handleVantagePointChange} value={this.state.currentVantagePoint} componentClass="select">
-                  <option value="select">select a camera</option>
-                  {_.map(vantagePoints, (vantagePoint) => { return <option key={vantagePoint} value={vantagePoint}>{vantagePoint.replace("0", " ")}</option> } ) }
-                </FormControl>
-              </FormGroup>
-              <FormGroup controlId="formControlsSelect">
-                <FormControl onChange={this.handleDateChange} value={this.state.currentDate} componentClass="select">
-                  <option value="select">select a date</option>
-                  {_.map(this.getDates(), (date) => { return <option key={date} value={date}>{date}</option> } ) }
-                </FormControl>
-              </FormGroup>
-            </form>
-            <ul id="logout-actions" className="hidden nav navbar-nav navbar-right">
-              <li><a id="logout" href="#">Sign out</a></li>
+            {this.props.authenticated ? selectors : authForm}
+            <ul id="logout-actions" className={`nav navbar-nav navbar-right ${this.props.authenticated ? '' : 'hidden'}`}>
+              <li><a id="logout" onClick={this.props.deauthenticate} href="#">Sign out</a></li>
             </ul>
           </div>
         </nav>

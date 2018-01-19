@@ -35,6 +35,10 @@ class APIAuthWrapper():
                 res = self.check_token(request.headers.get('X-SenseiToken'))
             else:
                 auth = request.authorization
+                print("request: %s" % request, request)
+                print("auth: %s" % auth)
+                print("auth.username: %s" % auth.username)
+                print("auth.password: %s" % auth.password)
                 if not auth:
                     return self.need_authentication_response()
                 res = self.check_auth(auth.username, auth.password)
