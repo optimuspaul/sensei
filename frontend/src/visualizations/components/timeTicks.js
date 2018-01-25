@@ -21,29 +21,34 @@ const defaultOpts = {
 export default function timeTicks(selection, ticks, opts = {}) {
   opts = _.merge({}, defaultOpts, opts);
 
-  let ticksContainer = selection.append("g")
-    .attr("id", opts.id)
-    .attr("class", "ticks")
+  var t = d3.transition()
+    .duration(750)
+    .ease(d3.easeLinear);
 
-  ticksContainer
-    .selectAll(`text.y-${opts.y}`)
-    .data(ticks)
-    .enter().append(`text`)
-    .attr('class', `y-${opts.y}`)
-    .attr("x", (tick, index) => { debugger; return tick[1] + opts.offset })
+  let text = selection.selectAll(`text.${opts.id}`).data(ticks);
+
+  text.exit().remove();
+
+  text.enter().append(`text`)
+    .merge(text)
+    .transition(t)
+    .attr('class', opts.id)
+    .attr("x", (tick, index) => { return tick[1] + opts.offset })
     .attr("y", opts.y)
-    .text((tick, index) => { return tick[0] })
+    .text((tick, index) => { return tick[0] });
 
-  if (!opts.hideLines) return;
+  if (opts.hideLines) return;
 
-  ticksContainer
-    .selectAll("line")
-    .data(ticks)
-    .enter().append("line")
+  let line = selection.selectAll("line").data(ticks);
+
+  line.exit().remove();
+
+  line.enter().append("line")
+    .merge(line)
+    .transition(t)
     .attr("x1", (tick, index) => { return tick[1] + opts.offset + 15 })
     .attr("x2", (tick, index) => { return tick[1] + opts.offset + 15 })
     .attr("y1", 20)
-    .attr("y2", opts.chartHeight-40)
-
+    .attr("y2", opts.chartHeight);
 
 }

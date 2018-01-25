@@ -3,15 +3,45 @@ import {getSenseiToken,  baseUrl} from './../constants';
 import {handleRequest} from './requestActions';
 import {changeCase} from './../utils';
 
+
+
+export const authenticate = (username, password) => {
+  let credentials = btoa(`${username}:${password}`);
+  
+  return (dispatch, getState) => {
+    dispatch({
+      type: 'AUTHENTICATE',
+      credentials 
+    })
+    dispatch(fetchPhotos())
+    .then(() => {
+      localStorage.setItem('TC_CAMERA_BUILDER_CREDS', credentials);
+      return dispatch({
+        type: 'AUTH_SUCCEEDED'
+      })
+    })
+    .catch(() => {
+      dispatch({
+        type: 'AUTH_FAILED'
+      })
+    })
+  }
+}
+
+export const deauthenticate = () => {
+  localStorage.removeItem('TC_CAMERA_BUILDER_CREDS');
+  return {
+    type: 'DEAUTHENTICATE'
+  }
+}
+
 export const fetchPhotos = (location, camera, date) => {
   return (dispatch, getState) => {
 
-    fetch(`${baseUrl()}/api/v1/camera_data?${location ? `s3_folder_name=${location}` : ''}${date ? `&date=${date}` : ''}`, {
-      headers: {
-        'X-SenseiToken': getSenseiToken(),
-        'Content-Type': 'application/json'
-      }
-    }).then(function(response) {
+    return fetch(`${baseUrl()}/api/v1/camera_data?${location ? `s3_folder_name=${location}` : ''}${date ? `&date=${date}` : ''}`, {
+      headers: getHeaders(getState())
+    })
+    .then(function(response) {
       return response.text()
     }).then((body) => {
       let cameraData = JSON.parse(body);
@@ -54,11 +84,9 @@ export const fetchCameraSegments = (location, date) => {
 
 
     fetch(`${baseUrl()}/api/v1/camera_data/segments?s3_folder_name=${location}&start_time=${startTime}&end_time=${endTime}`, {
-      headers: {
-        'X-SenseiToken': getSenseiToken(),
-        'Content-Type': 'application/json'
-      }
-    }).then(function(response) {
+      headers: getHeaders(getState())
+    })
+    .then(function(response) {
       return response.text()
     }).then((body) => {
       let cameraSegments = JSON.parse(body);
@@ -92,10 +120,7 @@ export const saveCameraSegment = (cameraSegment, requestId) => {
   return (dispatch, getState) => {
     dispatch(handleRequest(requestId, 'pending', cameraSegment));
     fetch(`${baseUrl()}/api/v1/camera_data/segments`, {
-      headers: {
-        // 'X-SenseiToken': getSenseiToken(),
-        'Content-Type': 'application/json'
-      },
+      headers: getHeaders(getState()),
       method: 'POST',
       body: JSON.stringify(changeCase(cameraSegmentToSave, 'snake'))
     }).then(function(response) {
@@ -107,5 +132,13 @@ export const saveCameraSegment = (cameraSegment, requestId) => {
     }).catch((error) => {
       dispatch(handleRequest(requestId, 'error', {message: 'Something went wrong.'}));
     });
+  }
+}
+
+function getHeaders(state) {
+  let creds = _.get(state, 'cameraSegmentBuilder.credentials');
+  return {
+    'Authorization': `Basic ${creds}`,
+    'Content-Type': 'application/json'
   }
 }

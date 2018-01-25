@@ -3,6 +3,7 @@ import QueryParams from 'query-params';
 
 let params = QueryParams.decode(location.search.slice(1));
 params.currentDate = params.currentDate || (new Date((new Date()).toDateString())).toISOString();
+params.selectedDays = [new Date(params.currentDate)];
 params.endDate = params.endDate || (new Date((new Date()).toDateString())).toISOString();
 const initialState = {
   observations: {
@@ -13,29 +14,51 @@ const initialState = {
 };
 
 export default function sensorMappings(state = initialState, action) {
+  let selectedDays;
   switch (action.type) {
     case 'ADD_OBSERVATIONS':
       let entityUid = `${action.entityType}-${action.entityId}`
+      let date = state.ui.currentDate
+      let endDate = state.ui.endDate;
+      let dateString = (new Date(date)).toDateString();
+      if (endDate && _.includes(['studentSummary', 'unitSummary', 'socialGraph'], state.ui.visualization)) {
+        dateString += ` to ${(new Date(state.ui.endDate)).toDateString()}`
+      }
+      let hasData = !_.isEmpty(action.observations.entities);
+      let entityName = state.ui.visualization === 'socialGraph' ? '' : _.get(action, 'entity.displayName');
+      let currentObservationsData = action.observations;
+
       return {
         ...state,
         observations: {
           ...state.observations,
-          [entityUid]: action.observations
+          [entityUid]: {
+            ...state.observations[entityUid],
+            [date]: action.observations
+          }
+        },
+        currentObservationsData,
+        ui: {
+          ...state.ui,
+          visualizationTitle: hasData ? `${entityName} <small>${dateString}</small>` : 'No data...'
         },
         status: 'fetched'
       }
     case 'SELECT_ENTITY':
       return {
+        ...state,
         observations: {},
         ui: {
           ...state.ui,
           currentEntityId: action.entityId,
-          currentEntityType: action.entityType
+          currentEntityType: action.entityType,
+          entity: action.entity
         },
         status: 'fetching'
       }
     case 'SELECT_VISUALIZATION':
       return {
+        ...state,
         observations: {},
         ui: {
           ...state.ui,
@@ -45,6 +68,7 @@ export default function sensorMappings(state = initialState, action) {
       }
     case 'SELECT_INTERACTION_TYPE':
       return {
+        ...state,
         observations: {},
         ui: {
           ...state.ui,
@@ -54,6 +78,7 @@ export default function sensorMappings(state = initialState, action) {
       }
     case 'SELECT_DATE':
       return {
+        ...state,
         observations: {},
         ui: {
           ...state.ui,
@@ -63,6 +88,7 @@ export default function sensorMappings(state = initialState, action) {
       }
     case 'SELECT_END_DATE':
       return {
+        ...state,
         observations: {},
         ui: {
           ...state.ui,
@@ -79,9 +105,14 @@ export default function sensorMappings(state = initialState, action) {
         }
       }
     case 'REFRESH_FROM_PARAMS':
+      let params = _.pick(action.params, ['currentDate', 'endDate', 'visualization', 'interactionType', 'currentEntityType', 'currentEntityId', 'zoom']);
       return {
-        observations: {},
-        ui: _.pick(action.params, ['currentDate', 'endDate', 'visualization', 'interactionType', 'currentEntityType', 'currentEntityId', 'zoom']),
+        ...state,
+        observations: state.observations,
+        ui: {
+          ...state.ui,
+          ...params
+        },
         status: 'fetching'
       }
     default:

@@ -11,6 +11,9 @@ const defaultOpts = {
 export default function entityRows(selection, opts = {}) {
   opts = _.merge({}, defaultOpts, opts);
 
+
+  selection.exit().remove();
+
   /*
     adds a row for each entity included in the current entity type group and sets
     its correct y displacement

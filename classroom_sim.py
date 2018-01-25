@@ -254,9 +254,10 @@ sensors = children + teachers + areas + materials
 
 
 # Start sim at 8am yesterday
-sim_time = datetime.now(get_localzone()) - timedelta(hours=48)
+sim_time = datetime.now(get_localzone()) - timedelta(hours=120)
 sim_time = sim_time.replace(hour=8, minute=0, second=0, microsecond=0)
-end_time = sim_time + timedelta(hours=7)
+sim_end_time = sim_time + timedelta(hours=7)
+end_time = sim_time + timedelta(hours=127)
 
 # Example upload of sensor ob
 def upload_obs(obs):
@@ -278,6 +279,11 @@ def upload_accel_obs(obs):
     print "Upload took %s seconds" % elapsed_time
 
 while sim_time < end_time:
+
+    if sim_time > sim_end_time:
+        sim_time = sim_end_time + timedelta(hours=16)
+        sim_end_time = sim_time + timedelta(hours=7)
+
     print "*" * 80
     print "sim_time = %s" % sim_time
     for child in children:

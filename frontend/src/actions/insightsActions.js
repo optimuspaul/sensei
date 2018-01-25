@@ -1,13 +1,20 @@
 import _ from 'lodash';
 import {getSenseiToken, getClassroomId, baseUrl, entityInflections} from './../constants';
 
+
 export const ADD_OBSERVATIONS = 'ADD_OBSERVATIONS';
 export const addObservations = (entityId, entityType, observations) => {
-  return {
-    type: ADD_OBSERVATIONS,
-    observations,
-    entityId,
-    entityType
+  return (dispatch, getState) => {
+    let state = getState();
+    let entity = _.get(state, `entities.${entityInflections[entityType]}.${entityId}`);
+    dispatch({
+      type: ADD_OBSERVATIONS,
+      observations,
+      entityId,
+      entityType,
+      entity,
+      ui: {}
+    });
   }
 }
 
@@ -29,7 +36,7 @@ export const fetchObservations = (entityId, entityType, date) => {
         'Content-Type': 'application/json'
       }
     }).then(function(response) {
-      return response.text()
+      return (response && response.text()) || ''
     }).then((body) => {
       let observations = JSON.parse(body);
       observations = _.reduce(observations.obs, (current, obs, index) => {
@@ -49,11 +56,14 @@ export const fetchInteractionPeriods = (entityId, entityType, date) => {
     let state = getState();
     date = date || _.get(state, 'insights.ui.currentDate');
     date = date ? new Date(date) : new Date();
+    date.setHours(0);
 
-    let endDate = new Date(date);
-    endDate.setDate(endDate.getDate() + 1);
-    let startTime = encodeURIComponent(date.toISOString().split('.000Z')[0]);
-    let endTime = encodeURIComponent(endDate.toISOString().split('.000Z')[0]);
+    let endDate = _.get(state, 'insights.ui.endDate');
+    endDate = endDate || _.get(state, 'insights.ui.endDate');
+    endDate = endDate ? new Date(endDate) : new Date();
+    endDate.setHours(23);
+    let startTime = encodeURIComponent(date.toISOString());
+    let endTime = encodeURIComponent(endDate.toISOString());
 
 
     fetch(`${baseUrl()}/api/v1/interaction_periods?classroom_id=${getClassroomId()}&entity_id=${entityId}&entity_type=${entityType}&start_time=${startTime}&end_time=${endTime}`, {
@@ -62,7 +72,7 @@ export const fetchInteractionPeriods = (entityId, entityType, date) => {
         'Content-Type': 'application/json'
       }
     }).then(function(response) {
-      return response.text()
+      return (response && response.text()) || ''
     }).then((body) => {
       let observations = JSON.parse(body);
       dispatch(addObservations(entityId, entityType, observations));
@@ -90,7 +100,7 @@ export const fetchInteractionTotals = (entityId, entityType, date, endDate, inte
         'Content-Type': 'application/json'
       }
     }).then(function(response) {
-      return response.text()
+      return (response && response.text()) || ''
     }).then((body) => {
       let observations = JSON.parse(body);
       dispatch(addObservations(entityId, entityType, observations));
@@ -101,21 +111,57 @@ export const fetchInteractionTotals = (entityId, entityType, date, endDate, inte
 export const SELECT_ENTITY = 'SELECT_ENTITY'
 export const selectEntity = (entityId, entityType) => {
   return (dispatch, getState) => {
+    let state = getState();
+    let entity = _.get(state, `entities.${entityInflections[entityType]}.${entityId}`);
     dispatch({
       type: SELECT_ENTITY,
       entityId,
-      entityType
+      entityType,
+      entity
     });
+    dispatch(updateCurrentVisualization());
+  }
+}
+
+
+
+export const updateCurrentVisualization = () => {
+  return (dispatch, getState) => {
+    let {currentEntityId, currentEntityType, visualization, currentDate, endDate, interactionType} = getState().insights.ui;
+
+    switch(visualization) {
+      case 'activityTimeline':
+        dispatch(fetchObservations(currentEntityId, currentEntityType, currentDate, interactionType));
+        break;
+      case 'segmentedTimeline':
+        dispatch(fetchInteractionPeriods(currentEntityId, currentEntityType, currentDate));
+        break;
+      case 'socialGraph':
+        dispatch(fetchInteractionTotals(currentEntityId, currentEntityType, currentDate, endDate, visualization));
+        break;
+      case 'unitSummary':
+      case 'studentSummary':
+      case 'interactionTotals':
+        if (endDate && !(visualization === 'unitSummary' && !interactionType)) {
+          dispatch(fetchInteractionTotals(currentEntityId, currentEntityType, currentDate, endDate, visualization === 'unitSummary' && interactionType));
+        }
+        break;
+    }
   }
 }
 
 export const SELECT_VISUALIZATION = 'SELECT_VISUALIZATION'
 export const selectVisualization = (visualization) => {
   return (dispatch, getState) => {
+    let state = getState();
+    let entityId = _.get(state, 'insights.ui.currentEntityId');
+    let entityType = _.get(state, 'insights.ui.currentEntityType');
     dispatch({
       type: SELECT_VISUALIZATION,
       visualization
     });
+    dispatch(updateCurrentVisualization());
+
   }
 }
 
@@ -136,6 +182,7 @@ export const selectDate = (date) => {
       type: SELECT_DATE,
       date
     });
+    dispatch(updateCurrentVisualization());
   }
 }
 
@@ -146,6 +193,35 @@ export const selectEndDate = (endDate) => {
       type: SELECT_END_DATE,
       endDate
     });
+    dispatch(updateCurrentVisualization());
+  }
+}
+
+export const ADD_DAY = 'ADD_DAY'
+export const addDay = (date) => {
+  date.setHours(0);
+  date.setMinutes(0);
+  date.setSeconds(0);
+  return (dispatch, getState) => {
+    dispatch({
+      type: ADD_DAY,
+      date: date
+    });
+    dispatch(updateCurrentVisualization());
+  }
+}
+
+export const REMOVE_DAY = 'REMOVE_DAY'
+export const removeDay = (date) => {
+  date.setHours(0);
+  date.setMinutes(0);
+  date.setSeconds(0);
+  return (dispatch, getState) => {
+    dispatch({
+      type: REMOVE_DAY,
+      date
+    });
+    dispatch(updateCurrentVisualization());
   }
 }
 

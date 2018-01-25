@@ -66,3 +66,12 @@ body {
 .carousel-inner .item {
   min-height: 700px;
 }
+
+
+.form-group {
+  margin-right: 5px;
+}
+
+.form-group input {
+  margin-right: 5px;
+}
