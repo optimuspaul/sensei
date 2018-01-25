@@ -22,7 +22,7 @@ def camera_data_image(key):
 
 # Camera Data - index #
 @api.route('/api/v1/camera_data', methods = ['GET'])
-# @api_auth.requires_auth
+@api_auth.requires_auth
 def camera_data_index():
 
   s3 = get_s3_client()
@@ -85,7 +85,7 @@ def camera_data_index():
 
 # Sensor Mapping - index #
 @api.route('/api/v1/camera_data/segments', methods = ['GET'])
-# @api_auth.requires_auth
+@api_auth.requires_auth
 def camera_segments_index():
   s3_folder_name = request.args.get('s3_folder_name')
   if not s3_folder_name:
@@ -105,7 +105,7 @@ def camera_segments_index():
 
 # Sensor Mapping - create/update #
 @api.route('/api/v1/camera_data/segments', methods=['POST'])
-# @api_auth.requires_auth
+@api_auth.requires_auth
 def create_camera_segment():
 
   segment_data = request.get_json()

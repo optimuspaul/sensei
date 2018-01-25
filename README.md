@@ -36,8 +36,8 @@ Getting started:
 
 ```
 <script>window.sensei = {env: {baseUrl: 'http://localhost:5000'}}</script>
-<script src="http://localhost:5000/static/bundle.js"></script>
-<link rel="stylesheet" type="text/css" href="http://localhost:5000/static/bundle.css">
+<script src="http://localhost:3002/static/bundle.js"></script>
+<link rel="stylesheet" type="text/css" href="http://localhost:3002/static/bundle.css">
 ```
 ## Running the classroom simulator
 

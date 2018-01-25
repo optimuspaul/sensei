@@ -6,11 +6,38 @@ const initialState = {
   currentCamera: '1',
   cameraSegments: [
 
-  ]
+  ],
+  credentials: localStorage.getItem('TC_CAMERA_BUILDER_CREDS'),
+  authenticated: !_.isNull(localStorage.getItem('TC_CAMERA_BUILDER_CREDS'))
 };
 
 export default function cameraSegmentBuilder(state = initialState, action) {
   switch (action.type) {
+    case 'DEAUTHENTICATE':
+      return {
+        ...state,
+        credentials: null,
+        authenticating: false,
+        authenticated: false
+      }
+    case 'AUTHENTICATE':
+      return {
+        ...state,
+        credentials: action.credentials,
+        authenticating: true
+      }
+    case 'AUTH_SUCCEEDED':
+      return {
+        ...state,
+        authenticated: true,
+        authenticating: false
+      }
+    case 'AUTH_FAILED':
+      return {
+        ...state,
+        authenticated: false,
+        authenticating: false
+      }
     case 'RECEIVED_PHOTOS':
       if (_.isEmpty(state.locations) && !action.date) {
         return {
