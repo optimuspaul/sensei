@@ -85,7 +85,31 @@ exports.locations = functions.https.onRequest((request, res) => {
     .catch((error) => {
       reportError(error, {event})
     });
-
 });
 
+exports.radioObservations = functions.https.onRequest((request, res) => {
 
+  let batch = db.batch();
+  let obs = request.body.obs;
+  let classroomId = request.body.classroom_id;
+
+  obs.forEach((ob) => {
+    let observedAt = new Date(ob.observed_at);
+    let obRef = db.collection(`classrooms`)
+      .doc(`${classroomId}`)
+      .collection(`radioObservations`)
+      .doc(`${observedAt.getMonth()+1}-${observedAt.getDate()}-${observedAt.getFullYear()}`)
+      .collection(`events`)
+      .doc(ob.observed_at)
+    batch.set(obRef, ob)
+  })
+
+  batch.commit()
+    .then((docRef) => {
+      res.status(200).send(`Observations committed`);
+    })
+    .catch((error) => {
+      reportError(error, {obs, classroomId})
+    });
+
+});

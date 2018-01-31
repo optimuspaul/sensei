@@ -56,7 +56,7 @@ export default function locations() {
             if (change.type === "added") {
               setTimeout(() => { 
                 updateLocations(change.doc.data().sensors) 
-              }, index*5000);
+              }, index*4000);
             }
           });
         });
@@ -67,7 +67,7 @@ export default function locations() {
       let sensorWrapper = chart.select('g.sensors');
 
       let t = d3.transition()
-        .duration(1000)
+        .duration(3000)
         .ease(d3.easeCubic);
 
       _.each(['pulse', 'fill'], (c) => {

@@ -1,15 +1,18 @@
-from flask import request, abort, jsonify
+from flask import request, abort, jsonify, current_app
 import json, gzip
 from sqlalchemy import or_, and_
 import numpy as np
 from shared import *
 from ..models import *
 import StringIO
+import urllib, urllib2, base64
+
 
 # Radio Observations upload #
 @api.route('/api/v1/radio_observations', methods=['POST'])
 @api_auth.requires_auth
 def post_radio_observations():
+    firebase = current_app.config.get("FIREBASE_SERVICE")
     if request.headers.get('Content-Encoding') == 'gzip':
         file = StringIO.StringIO(request.data)
         f = gzip.GzipFile(fileobj=file, mode="rb")
@@ -27,6 +30,8 @@ def post_radio_observations():
     relationships = {r.key(): r for r in EntityRelationship.query.filter_by(classroom_id=classroom_id)}
 
     obs = []
+
+    batch = firebase.db.batch()
 
     for event in event_data:
         if event['local_id'] == event['remote_id']:
@@ -52,14 +57,46 @@ def post_radio_observations():
                     db.session.add(relationship)
 
             if relationship.should_be_stored():
-                obs.append(RadioObservation(
+                ob = RadioObservation(
                     event.get('classroom_id'),
                     event.get('observed_at'),
                     relationship,
-                    event.get('rssi')))
+                    event.get('rssi'))
+                obs.append(ob)
+                date = ob.observed_at.strftime('%m-%d-%y')
+                observed_at = event.get('observed_at')
+                path = 'classrooms/%s/radioObservations/%s/events/%s/%s-%s' % (classroom_id, date, observed_at, local_mapping.entity_type.value, local_mapping.entity_id)
+                doc_ref = firebase.db.document(path)
+                json_data = ob.as_dict_for_web_resource()
+                print "json_data: %s" % json_data
+
+                batch.set(doc_ref, {
+                    'local_type': u'%s' % json_data['local_type'],
+                    'local_id': json_data['local_id'],
+                    'rssi': json_data['rssi'],
+                    'remote_type': u'%s' % json_data['remote_type'],
+                    'remote_id': json_data['remote_id'],
+                    'observed_at': u'%s' % json_data['observed_at'],
+                })
+
     db.session.commit() # This stores the new relationships
     if len(obs) > 0:
+
+        batch.commit()
+        
+        # req = urllib2.Request('https://us-central1-sensei-b9fb6.cloudfunctions.net/radioObservations')
+        # req.add_header('Content-Type', 'application/json')
+        # data = json.dumps({
+        #     'obs': [o.as_dict_for_web_resource() for o in obs],
+        #     'classroom_id': classroom_id
+        # })
+        # response = urllib2.urlopen(req, data)
+        # print response.read()
+
         RadioObservation.bulk_store(obs)
+
+        
+
     return "OK", 201
 
 
