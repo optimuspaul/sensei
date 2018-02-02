@@ -178,8 +178,9 @@ class ActivityTimelineControls extends React.Component {
 
 
     let selectedUid = this.props.insights.ui.currentEntityType ? `${this.props.insights.ui.currentEntityType}-${this.props.insights.ui.currentEntityId}` : '';
+    let selectedUids = _.keys(this.props.insights.observations);
     let endDatePicker = '';
-    if (_.includes(['studentSummary', 'unitSummary', 'socialGraph', 'segmentedTimeline'], this.props.insights.ui.visualization)) {
+    if (_.includes(['studentSummary', 'unitSummary', 'socialGraph', 'segmentedTimeline', 'gridSummary'], this.props.insights.ui.visualization)) {
       endDatePicker = (
         <div className="row">
           <div className="col-md-12">
@@ -200,7 +201,7 @@ class ActivityTimelineControls extends React.Component {
     )
 
     let interactionTypeSelector = '';
-    if (_.includes(['unitSummary'], this.props.insights.ui.visualization)) {
+    if (_.includes(['unitSummary', 'gridSummary'], this.props.insights.ui.visualization)) {
       interactionTypeSelector = (
         <div className="row">
           <div className="col-md-12">
@@ -222,7 +223,7 @@ class ActivityTimelineControls extends React.Component {
     }
 
     let zoomControl = '';
-    if (!_.includes(['studentSummary', 'socialGraph'], this.props.insights.ui.visualization)) {
+    if (!_.includes(['studentSummary', 'socialGraph', 'gridSummary'], this.props.insights.ui.visualization)) {
       zoomControl = (
         <div className="row" style={{marginBottom: '10px'}}>
           <div className="col-md-12">
@@ -250,7 +251,7 @@ class ActivityTimelineControls extends React.Component {
             <form>
               <div className="form-group">
                 <label>Viewpoint</label>
-                <select className="form-control" value={selectedUid} name="select-entity" onChange={this.handleEntitySelect}>
+                <select className="form-control" multiple={this.props.insights.ui.visualization === 'gridSummary'} value={this.props.insights.ui.visualization === 'gridSummary' ? selectedUids : selectedUid} name="select-entity" onChange={this.handleEntitySelect}>
                   <option value="">Select viewpoint..</option>
                   <optgroup label="Children">
                     {children}
@@ -285,6 +286,7 @@ class ActivityTimelineControls extends React.Component {
                   <option key={`segmented-timeline`} value={`segmentedTimeline`}>Segmented Timeline</option>
                   <option key={`student-summary`} value={`studentSummary`}>Student Summary</option>
                   <option key={`unit-summary`} value={`unitSummary`}>Unit Summary</option>
+                  <option key={`grid-summary`} value={`gridSummary`}>Grid Summary</option>
                   <option key={`social-graph`} value={`socialGraph`}>Social Graph</option>
                 </select>
               </div>
@@ -295,7 +297,7 @@ class ActivityTimelineControls extends React.Component {
         {interactionTypeSelector}
         <div className="row" style={{marginBottom: '10px'}}>
           <div className="col-md-12">
-            { _.includes(['studentSummary', 'unitSummary'], this.props.insights.ui.visualization) ? <label>From: </label> : <label>On: </label>}
+            { _.includes(['studentSummary', 'unitSummary', 'gridSummary'], this.props.insights.ui.visualization) ? <label>From: </label> : <label>On: </label>}
             {datePicker}
           </div>
         </div>

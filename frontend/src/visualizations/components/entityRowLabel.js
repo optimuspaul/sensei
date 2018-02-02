@@ -15,7 +15,9 @@ export default function entityRowLabels(selection, opts = { }) {
   // adds the entity display names as labels for each entity row within the current group
   let text = selection
     .selectAll("text")
-    .data(d => [d])
+    .data(d => {
+      return [d];
+    })
 
   text.exit().remove();
 

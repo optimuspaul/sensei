@@ -46,7 +46,7 @@ export default function unitSummary(data) {
     let ticks = totalTimeTicks(maxTotal, xScalar);
     let chartHeight = calcChartHeight(segmentedData);
 
-    
+    let sData = ['']
 
     chart.attr("width", chartWidth)
       .attr("height", chartHeight + 20)

@@ -139,6 +139,9 @@ export const updateCurrentVisualization = () => {
       case 'socialGraph':
         dispatch(fetchInteractionTotals(currentEntityId, currentEntityType, currentDate, endDate, visualization));
         break;
+      case 'gridSummary':
+        dispatch(fetchInteractionTotals(currentEntityId, currentEntityType, currentDate, endDate, interactionType));
+        break;
       case 'unitSummary':
       case 'studentSummary':
       case 'interactionTotals':

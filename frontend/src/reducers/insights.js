@@ -47,7 +47,9 @@ export default function sensorMappings(state = initialState, action) {
     case 'SELECT_ENTITY':
       return {
         ...state,
-        observations: {},
+        observations: {
+          ...state.observations
+        },
         ui: {
           ...state.ui,
           currentEntityId: action.entityId,

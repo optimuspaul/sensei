@@ -124,6 +124,7 @@
   font-size: 11px;
 }
 
+
 #foundation #visualization .student-summary .segments g text.show-on-hover {
   opacity: 0;
 }
@@ -170,6 +171,10 @@
   text-anchor: end;
 }
 
+#foundation #visualization #gridSummary text.col-label {
+  text-anchor: middle;
+  font-size: 11px;
+}
 
 
 .d3-tip {
