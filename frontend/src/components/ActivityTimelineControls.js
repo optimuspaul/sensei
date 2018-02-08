@@ -130,6 +130,9 @@ class ActivityTimelineControls extends React.Component {
     if (event.target.value) {
       this.entityId = event.target.value.split("-")[1];
       this.entityType = event.target.value.split("-")[0];
+      if (_.includes(_.keys(this.props.insights.observations), event.target.value)) {
+        return this.props.dispatch(this.props.deselectEntity(this.entityId, this.entityType));
+      }
       this.setState({
         params: {
           entityId: this.entityId,
@@ -152,35 +155,41 @@ class ActivityTimelineControls extends React.Component {
 
   render() {
 
+    let viz = this.props.insights.ui.visualization;
+
     let children = _.map(this.props.entities.children, (child) => {
       return (
         <option key={`child-${child.id}`} value={`child-${child.id}`}>{child.displayName }</option>
       )
     })
+    let childrenOptGroup = <optgroup label="children">{children}</optgroup>;
 
     let teachers = _.map(this.props.entities.teachers, (teacher) => {
       return (
         <option key={`teacher-${teacher.id}`} value={`teacher-${teacher.id}`}>{teacher.displayName }</option>
       )
     })
+    let teachersOptGroup = <optgroup label="teachers">{teachers}</optgroup>;
 
     let areas = _.map(this.props.entities.areas, (area) => {
       return (
         <option key={`area-${area.id}`} value={`area-${area.id}`}>{area.displayName }</option>
       )
     })
+    let areasOptGroup = <optgroup label="areas">{areas}</optgroup>;
 
     let materials = _.map(this.props.entities.materials, (material) => {
       return (
         <option key={`material-${material.id}`} value={`material-${material.id}`}>{material.displayName }</option>
       )
     })
+    let materialsOptGroup = <optgroup label="materials">{materials}</optgroup>;
 
 
     let selectedUid = this.props.insights.ui.currentEntityType ? `${this.props.insights.ui.currentEntityType}-${this.props.insights.ui.currentEntityId}` : '';
     let selectedUids = _.keys(this.props.insights.observations);
     let endDatePicker = '';
-    if (_.includes(['studentSummary', 'unitSummary', 'socialGraph', 'segmentedTimeline', 'gridSummary'], this.props.insights.ui.visualization)) {
+    if (_.includes(['studentSummary', 'unitSummary', 'socialGraph', 'segmentedTimeline', 'gridSummary'], viz)) {
       endDatePicker = (
         <div className="row">
           <div className="col-md-12">
@@ -201,7 +210,7 @@ class ActivityTimelineControls extends React.Component {
     )
 
     let interactionTypeSelector = '';
-    if (_.includes(['unitSummary', 'gridSummary'], this.props.insights.ui.visualization)) {
+    if (_.includes(['unitSummary', 'gridSummary'], viz)) {
       interactionTypeSelector = (
         <div className="row">
           <div className="col-md-12">
@@ -223,7 +232,7 @@ class ActivityTimelineControls extends React.Component {
     }
 
     let zoomControl = '';
-    if (!_.includes(['studentSummary', 'socialGraph', 'gridSummary'], this.props.insights.ui.visualization)) {
+    if (!_.includes(['studentSummary', 'socialGraph', 'gridSummary'], viz)) {
       zoomControl = (
         <div className="row" style={{marginBottom: '10px'}}>
           <div className="col-md-12">
@@ -244,27 +253,20 @@ class ActivityTimelineControls extends React.Component {
     }
 
     let viewpointSelector = '';
-    if (this.props.insights.ui.visualization !== 'socialGraph') {
+    if (viz !== 'socialGraph') {
       viewpointSelector = (
         <div className="row">
           <div className="col-md-12">
             <form>
               <div className="form-group">
                 <label>Viewpoint</label>
-                <select className="form-control" multiple={this.props.insights.ui.visualization === 'gridSummary'} value={this.props.insights.ui.visualization === 'gridSummary' ? selectedUids : selectedUid} name="select-entity" onChange={this.handleEntitySelect}>
-                  <option value="">Select viewpoint..</option>
-                  <optgroup label="Children">
-                    {children}
-                  </optgroup>
-                  <optgroup label="Teachers">
-                    {teachers}
-                  </optgroup>
-                  <optgroup label="Areas">
-                    {areas}
-                  </optgroup>
-                  <optgroup label="Materials">
-                    {materials}
-                  </optgroup>
+                <select className={`form-control ${viz === 'gridSummary' ? 'grid-summary' : ''}`} multiple={viz === 'gridSummary'} value={viz === 'gridSummary' ? selectedUids : selectedUid} name="select-entity" onChange={this.handleEntitySelect}>
+                  {viz === 'gridSummary' ? '' : <option value="">Select viewpoint..</option>}
+                  {viz === 'gridSummary' ? children : childrenOptGroup}
+                  {viz === 'gridSummary' ? '' : teachersOptGroup}
+                  {viz === 'gridSummary' ? '' : areasOptGroup}
+                  {viz === 'gridSummary' ? '' : materialsOptGroup}
+                  
                 </select>
               </div>
             </form>
@@ -280,7 +282,7 @@ class ActivityTimelineControls extends React.Component {
             <form>
               <div className="form-group">
                 <label>Visualization</label>
-                <select className="form-control" name="select-entity" value={this.props.insights.ui.visualization} onChange={this.handleVisualizationSelect}>
+                <select className="form-control" name="select-entity" value={viz} onChange={this.handleVisualizationSelect}>
                   <option value="">Select visualization..</option>
                   <option key={`activity-timeline`} value={`activityTimeline`}>Activity Timeline</option>
                   <option key={`segmented-timeline`} value={`segmentedTimeline`}>Segmented Timeline</option>
@@ -297,7 +299,7 @@ class ActivityTimelineControls extends React.Component {
         {interactionTypeSelector}
         <div className="row" style={{marginBottom: '10px'}}>
           <div className="col-md-12">
-            { _.includes(['studentSummary', 'unitSummary', 'gridSummary'], this.props.insights.ui.visualization) ? <label>From: </label> : <label>On: </label>}
+            { _.includes(['studentSummary', 'unitSummary', 'gridSummary'], viz) ? <label>From: </label> : <label>On: </label>}
             {datePicker}
           </div>
         </div>

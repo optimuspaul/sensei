@@ -58,6 +58,18 @@ export default function sensorMappings(state = initialState, action) {
         },
         status: 'fetching'
       }
+    case 'DESELECT_ENTITY':
+      let currentObs = _.keys(state.observations);
+      if (_.size(currentObs) < 2) return state;
+      state.observations = _.omit(state.observations, action.entityUid);
+      currentObs = _.keys(state.observations);
+      let prevEntity = currentObs[0];
+      let prevEntityId = prevEntity.split("-")[1];
+      let prevEntityType = prevEntity.split("-")[0];
+      state.ui.currentEntityType = prevEntityType;
+      state.ui.currentEntityId = prevEntityId;
+      
+      return _.merge({}, state);
     case 'SELECT_VISUALIZATION':
       return {
         ...state,
@@ -110,7 +122,9 @@ export default function sensorMappings(state = initialState, action) {
       let params = _.pick(action.params, ['currentDate', 'endDate', 'visualization', 'interactionType', 'currentEntityType', 'currentEntityId', 'zoom']);
       return {
         ...state,
-        observations: state.observations,
+        observations: {
+          ...state.observations
+        },
         ui: {
           ...state.ui,
           ...params

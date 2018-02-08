@@ -124,6 +124,19 @@ export const selectEntity = (entityId, entityType) => {
 }
 
 
+export const DESELECT_ENTITY = 'DESELECT_ENTITY'
+export const deselectEntity = (entityId, entityType) => {
+  return (dispatch, getState) => {
+    let state = getState();
+    let entity = _.get(state, `entities.${entityInflections[entityType]}.${entityId}`);
+    dispatch({
+      type: DESELECT_ENTITY,
+      entityUid: `${entityType}-${entityId}`
+    });
+    dispatch(updateCurrentVisualization());
+  }
+}
+
 
 export const updateCurrentVisualization = () => {
   return (dispatch, getState) => {
