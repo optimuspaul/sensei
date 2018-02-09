@@ -9,9 +9,18 @@ class SensorMappingInterface extends React.Component {
     super(props);
     this.handleMappingChange = this.handleMappingChange.bind(this);
     this.handleSave = this.handleSave.bind(this);
+
     this.state = {
       saveDisabled: true
     }
+  }
+
+  componentWillMount() {
+    window.onbeforeunload = () => !this.state.saveDisabled
+  }
+
+  componentWillUnmount() {
+    window.onbeforeunload = null;
   }
 
   handleMappingChange(mapping) {
