@@ -10,7 +10,7 @@ import _ from 'lodash';
 const rowHeight = 30; // how tall each row of data in timeline is
 const offset = 100; // how far to the right the totals should start being drawn from
 const boxWidth = 70;
-
+const keyboxWidth = boxWidth/2
 
 
 export default function gridSummary(data) {
@@ -51,15 +51,21 @@ export default function gridSummary(data) {
       return _.values(entity)[0].obs
     }))
     let chartWidth = (boxWidth * _.size(entities)) + offset*2;
-    let chartHeight = 200;
+    let chartHeight = _.size(segmentedData)*boxWidth + 100;
+    let legendHeight = _.size(segmentedData)*boxWidth
+    let keyboxWidth = _.size(segmentedData) > 1 ? legendHeight / 5 : (legendHeight*2) / 5;
     let maxTotal = d3.max(allObs);
-    let color = d3.scaleLinear().range(["white", "#666666"]).domain([0,maxTotal]);
+    let color = d3.scaleLinear(d3.schemeCategory20).range(["white", "#999999"]).domain([0,maxTotal]);
     var xScalar = d3.scaleLinear().domain([0, maxTotal]).range([0, chartWidth-offset-100]);
-    let ticks = totalTimeTicks(maxTotal, xScalar);
-    
+    var keyScalar = d3.scaleLinear().domain([0, 5]).range([0, maxTotal]);
     
 
-    chart.attr("width", chartWidth)
+
+    
+
+
+
+    chart.attr("width", chartWidth + 200)
       .attr("height", chartHeight + 20)
       
     let row = chart.selectAll("g.row")
@@ -84,7 +90,7 @@ export default function gridSummary(data) {
       .attr("y", 20)
       .transition(t)
       .attr("style", function(d, i) {
-        return `fill:${color(d.obs)};stroke: #f3f2f2`;
+        return `fill:${color(d.obs)};stroke: #000`;
       })
 
     if (chart.select('g.header').empty()) {
@@ -104,6 +110,49 @@ export default function gridSummary(data) {
           return d.entityName;
         });
     }
+
+    let keys = _.reverse(_.times(5, keyScalar));
+    let key = chart.selectAll("g.key")
+      .data(keys)
+
+    key.exit().remove();
+
+    key.enter().append("g")
+       .merge(key)
+       .attr('class', 'key')
+       .attr("transform", (d, i) => {
+          return `translate(${chartWidth-offset+100},${i*keyboxWidth + 17})`;
+        })
+
+    let keyRect = key.selectAll('rect').data(d => [d]);
+
+    keyRect.exit().remove();    
+
+    keyRect.enter().append('rect')
+       .attr("x", 0)
+       .attr("y", 0)
+       .attr('width', keyboxWidth)
+       .attr('height', keyboxWidth)
+       .attr("style", function(d, i) {
+        return `fill:${color(d)};stroke: #000`;
+      })
+
+    let keyText = key.selectAll('text').data(d => [d]);   
+
+    keyText.exit().remove();
+
+    keyText.enter().append('text')
+       .attr("x", keyboxWidth+20)
+       .attr("y", keyboxWidth/2+5)
+       .attr('width', keyboxWidth)
+       .attr('height', keyboxWidth)
+       .text((d) => {
+          if (maxTotal < 3600) {  
+            return `${(d/60).toFixed(0)}m`;
+          } else {
+            return `${(d/60/60).toFixed(0)}hr`;
+          }
+        });
 
   }
 
