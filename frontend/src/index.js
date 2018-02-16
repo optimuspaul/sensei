@@ -12,7 +12,7 @@ import { Provider } from 'react-redux';
 import {fetchMappings} from './actions/sensorMappingActions';
 import {fetchChildren, fetchTeachers, fetchEntities, fetchMaterials} from './actions/entityActions';
 import {getClassroomId, isProduction, entityInflections, getSchoolId} from './constants';
-import {fetchObservations, fetchInteractionPeriods, fetchInteractionTotals, updateCurrentVisualization, locations} from './actions/insightsActions';
+import {fetchObservations, fetchInteractionPeriods, fetchInteractionTotals, updateCurrentVisualization} from './actions/insightsActions';
 import {toggleAnonymizer} from './actions/entityActions';
 import _ from 'lodash';
 import './index.css';
