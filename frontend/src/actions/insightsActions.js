@@ -186,6 +186,9 @@ export const fetchLocations = (date) => {
       prevDate = date;
     }
 
+    let entityId = _.get(state, 'insights.ui.currentEntityId');
+    let entityType = _.get(state, 'insights.ui.currentEntityType');
+
     let endDate = _.get(state, 'insights.ui.endDate');
     endDate = endDate || _.get(state, 'insights.ui.endDate');
     endDate = endDate ? new Date(endDate) : new Date();
@@ -199,18 +202,22 @@ export const fetchLocations = (date) => {
           return Promise.reject()
         }
         let classroom = doc.data();
-        return doc.ref.collection(`locationReports`)
-          .where('timestamp', '>', date)
-          .where('timestamp', '<', endDate)
-          .orderBy('timestamp', 'desc')
+        return doc.ref.collection(`location_observations`)
+          .where('observedAt', '>', date)
+          .where('observedAt', '<', endDate)
+          .orderBy('observedAt', 'desc')
           .onSnapshot(function(snapshot) {
-            _.each(snapshot.docChanges, (change, index) => {
-              if (change.type === "added") {
-                // setTimeout(() => { 
-                  dispatch(receiveLocations(change.doc.data(), classroom.height, classroom.width))
-                // }, index*5000);
-              }
-            });
+            let locations = _.filter(snapshot.docChanges, {type: "added"});
+            let segmentedLocations = _.reduce(locations, (current, location) => {
+              let data = location.doc.data();
+              let dateString = data.observedAt.toISOString();
+              current[dateString] = current[dateString] || {sensors: [], timestamp: data.observedAt};
+              current[dateString].sensors.push(data);
+              return current;
+            }, {})
+            _.each(_.values(segmentedLocations), (locations) => {
+              dispatch(receiveLocations(locations, classroom.height, classroom.width));
+            })
           });
       })
   }
@@ -219,13 +226,18 @@ export const fetchLocations = (date) => {
 export const SHOW_LOCATIONS_AT = 'SHOW_LOCATIONS_AT'
 export const showLocationsAt = (date) => {
   return (dispatch, getState) => {
-    date = new Date(date);
     let state = getState();
     let obs = _.get(state, `insights.currentObservationsData.obs`);
-    let zoom = _.findIndex(obs, (ob) => {
-      return ob.timestamp > date; 
-    });
-    zoom = zoom < 0 ? 0 : zoom+1;
+    let zoom;
+    if (date === 'now') {
+      zoom = -1
+    } else {
+      date = new Date(date);
+      let zoom = _.findIndex(obs, (ob) => {
+        return ob.timestamp > date; 
+      });
+      zoom = zoom < 0 ? 0 : zoom+1;
+    }
 
     dispatch({
       type: SET_ZOOM,

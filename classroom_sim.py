@@ -55,6 +55,16 @@ class AccelerometerObservation(object):
         self.y_acceleration = accelerations[1]
         self.z_acceleration = accelerations[2]
 
+class LocationObservation(object):
+
+    def __init__(self, classroom_id, sensor_id, observed_at, coords, strength):
+        self.classroom_id = classroom_id
+        self.sensor_id = sensor_id
+        self.observed_at = observed_at
+        self.x_coord = coords[0]
+        self.y_coord = coords[1]
+        self.strength = strength
+
 def trial(prob):
     return random.random() < prob
 
@@ -72,8 +82,8 @@ class Room(object):
 
     def random_pos(self):
         return np.array([
-            (random.random() * self.width) - self.width/2.0,
-            (random.random() * self.length) - self.length/2.0])
+            (random.random() * self.width),
+            (random.random() * self.length)])
 
 class Sensor(object):
     RF_COLLISION_PROB = 0.25
@@ -233,7 +243,7 @@ class Material(Sensor):
         self.home_area.add_material(self)
 
 
-r = Room(7,18)
+r = Room(20.7,3.8)
 
 def get_sensor_mappings():
     req = api_req('sensor_mappings', {'classroom_id': CLASSROOM_ID})
@@ -254,7 +264,7 @@ sensors = children + teachers + areas + materials
 
 
 # Start sim at 8am yesterday
-sim_time = datetime.now(get_localzone()) - timedelta(hours=120)
+sim_time = datetime.now(get_localzone()) - timedelta(hours=96)
 sim_time = sim_time.replace(hour=8, minute=0, second=0, microsecond=0)
 sim_end_time = sim_time + timedelta(hours=7)
 end_time = sim_time + timedelta(hours=127)
@@ -272,6 +282,15 @@ def upload_obs(obs):
 def upload_accel_obs(obs):
     print "Uploading simulated accelerometer observations. %s" % json.dumps(obs)
     req = api_req('accelerometer_observations')
+    start_time = time.time()
+    response = urllib2.urlopen(req, json.dumps(obs))
+    print response.read()
+    elapsed_time = time.time() - start_time
+    print "Upload took %s seconds" % elapsed_time
+
+def upload_location_obs(obs):
+    print "Uploading simulated location observations. %s" % json.dumps(obs)
+    req = api_req('location_observations')
     start_time = time.time()
     response = urllib2.urlopen(req, json.dumps(obs))
     print response.read()
@@ -296,12 +315,17 @@ while sim_time < end_time:
     # Gather pings
     obs = []
     accel_obs = []
+    location_obs = []
     for sensor in sensors:
         accelerations = sensor.sim_acceleration()
         accel_event = AccelerometerObservation(CLASSROOM_ID, sensor.sensor_id, sim_time.isoformat(), accelerations)
         accel_obs.append(accel_event)
         for other in sensors:
             if sensor.sensor_id == other.sensor_id:
+                strength = np.random.uniform(0, 5)
+                print "location: %s " % sensor.pos
+                loc_ob = LocationObservation(CLASSROOM_ID, sensor.sensor_id, sim_time.isoformat(), sensor.pos, strength)
+                location_obs.append(loc_ob)
                 continue
             rssi = sensor.sim_ping(other)
             if rssi is not None:
@@ -321,6 +345,10 @@ while sim_time < end_time:
     if len(accel_obs) > 0:
         accel_obs = map(lambda x: x.__dict__, accel_obs)
         upload_accel_obs(accel_obs)
+
+    if len(location_obs) > 0:
+        location_obs = map(lambda x: x.__dict__, location_obs)
+        upload_location_obs(location_obs)
 
     #time.sleep(1)
     sim_time = sim_time + timedelta(seconds=10)

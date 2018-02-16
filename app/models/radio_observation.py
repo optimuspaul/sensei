@@ -30,6 +30,7 @@ class RadioObservation(db.Model):
 
     def as_dict_for_web_resource(self):
        return dict(
+         classroom_id=self.classroom_id,
          observed_at=self.observed_at.isoformat(),
          local_id=self.relationship.entity1_id,
          local_type=self.relationship.entity1_type.name,

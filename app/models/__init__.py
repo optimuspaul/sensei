@@ -12,3 +12,4 @@ from classroom import *
 from child import *
 from teacher import *
 from camera_segment import *
+from location_observation import *

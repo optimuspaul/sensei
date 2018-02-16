@@ -10,8 +10,38 @@
   stroke-opacity: 1;
 }
 
-#foundation #visualization #locations svg .sensors circle.fill {
+
+#foundation #visualization #locations svg .sensors circle.teacher.pulse {
+  stroke: #5b3cc1;
+}
+
+#foundation #visualization #locations svg .sensors circle.material.pulse {
+  stroke: #3cc150;
+}
+
+#foundation #visualization #locations svg .sensors circle.area.pulse {
+  stroke: #a43cc1;
+}
+
+
+#foundation #visualization #locations svg .sensors circle.child.fill {
+  stroke: #ff0000;
   fill: #ff000063;
+}
+
+#foundation #visualization #locations svg .sensors circle.teacher.fill {
+  stroke: #5b3cc1;
+  fill: #5b3cc166;
+}
+
+#foundation #visualization #locations svg .sensors circle.material.fill {
+  fill: #3cc15066;
+  stroke: #3cc150;
+}
+
+#foundation #visualization #locations svg .sensors circle.area.fill {
+  fill: #a43cc166;
+  stroke: #a43cc1;
 }
 
 #foundation #visualization #locations svg .sensors circle.pulse {

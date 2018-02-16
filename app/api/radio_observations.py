@@ -63,35 +63,25 @@ def post_radio_observations():
                     relationship,
                     event.get('rssi'))
                 obs.append(ob)
-                date = ob.observed_at.strftime('%m-%d-%y')
                 observed_at = event.get('observed_at')
-                path = 'classrooms/%s/radioObservations/%s/events/%s/%s-%s' % (classroom_id, date, observed_at, local_mapping.entity_type.value, local_mapping.entity_id)
+                path = 'classrooms/%s/radio_observations/%s-%s-%s' % (classroom_id, local_mapping.entity_type.value, local_mapping.entity_id, observed_at)
                 doc_ref = firebase.db.document(path)
                 json_data = ob.as_dict_for_web_resource()
                 print "json_data: %s" % json_data
 
                 batch.set(doc_ref, {
-                    'local_type': u'%s' % json_data['local_type'],
-                    'local_id': json_data['local_id'],
+                    'localType': u'%s' % json_data['local_type'],
+                    'localId': json_data['local_id'],
                     'rssi': json_data['rssi'],
-                    'remote_type': u'%s' % json_data['remote_type'],
-                    'remote_id': json_data['remote_id'],
-                    'observed_at': u'%s' % json_data['observed_at'],
+                    'remoteType': u'%s' % json_data['remote_type'],
+                    'remoteId': json_data['remote_id'],
+                    'observedAt': u'%s' % json_data['observed_at'],
                 })
 
     db.session.commit() # This stores the new relationships
     if len(obs) > 0:
 
         batch.commit()
-        
-        # req = urllib2.Request('https://us-central1-sensei-b9fb6.cloudfunctions.net/radioObservations')
-        # req.add_header('Content-Type', 'application/json')
-        # data = json.dumps({
-        #     'obs': [o.as_dict_for_web_resource() for o in obs],
-        #     'classroom_id': classroom_id
-        # })
-        # response = urllib2.urlopen(req, data)
-        # print response.read()
 
         RadioObservation.bulk_store(obs)
 

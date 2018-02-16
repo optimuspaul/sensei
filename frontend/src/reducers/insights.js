@@ -47,7 +47,7 @@ export default function sensorMappings(state = initialState, action) {
     case 'RECEIVE_LOCATIONS':
       let obs = _.get(state, 'currentObservationsData.obs', []);
       obs.push(action.locations)
-      obs = _.orderBy(obs, ['timestamp', 'desc']);
+      obs = _.orderBy(obs, ['observedAt', 'desc']);
       return {
         ...state,
         currentObservationsData: {
@@ -124,6 +124,7 @@ export default function sensorMappings(state = initialState, action) {
       }
     case 'REFRESH_FROM_PARAMS':
       let params = _.pick(action.params, ['currentDate', 'endDate', 'visualization', 'interactionType', 'currentEntityType', 'currentEntityId', 'zoom']);
+      params.zoom = parseInt(params.zoom);
       return {
         ...state,
         observations: state.observations,

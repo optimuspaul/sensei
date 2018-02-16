@@ -14,10 +14,10 @@ export default function locations() {
       chartHeight;
 
   let radiusScale = d3.scaleLinear()
-                      .domain([0, 1])
+                      .domain([0, 5])
                       .range([5, 20]);
   let pulseScale = d3.scaleLinear()
-                      .domain([0, 1])
+                      .domain([0, 5])
                       .range([10, 0]); 
   let state = store.getState();
   let storeEntities = state.entities;
@@ -34,14 +34,16 @@ export default function locations() {
 
     let updateChart = (event) => {
 
-      let zoom = event.zoom || _.get(store.getState(), "insights.ui.zoom") || 1;
+      let zoom = event.zoom || parseInt(_.get(store.getState(), "insights.ui.zoom")) || -1;
 
       let data = event.detail
       if (!data || !data.obs || !_.get(data, `obs.0.sensors`)) return;
 
       let obsCount = _.size(data.obs);
-      let currentIndex = obsCount - zoom;
+      let currentIndex = zoom === -1 ? obsCount + 1 : obsCount - zoom;
       let sensors = _.get(data, `obs.${currentIndex}.sensors`);
+
+      if (!sensors) return;
 
       if (classroomHeight !== data.classroomHeight || classroomWidth !== data.classroomWidth) {
         classroomHeight = data.classroomHeight;
@@ -71,7 +73,9 @@ export default function locations() {
           .data(sensors)
           .enter()
           .append("circle")
-          .attr('class', c)
+          .attr('class', (sensor) => {
+            return  `${sensor.entityType} ${c}`
+          })
 
         sensorWrapper.selectAll(`circle.${c}`)
           .transition(t)

@@ -261,13 +261,14 @@ class ActivityTimelineControls extends React.Component {
               step="1"
               onChange={this.handleZoomSet}
             />
+            <button onClick={() => { this.props.dispatch(this.props.setZoom(-1)); }}>Live</button>
           </div>
         </div>
       )
     }
 
     let viewpointSelector = '';
-    if (this.props.insights.ui.visualization !== 'socialGraph') {
+    if (!_.includes(['studentSummary', 'socialGraph'], this.props.insights.ui.visualization)) {
       viewpointSelector = (
         <div className="row">
           <div className="col-md-12">
