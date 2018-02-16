@@ -156,7 +156,7 @@ import key from 'keyboard-shortcut';
           </div>
         `;
 
-        locations();
+        visualizations.locations();
 
       }
 

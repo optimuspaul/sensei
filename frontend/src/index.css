@@ -1,8 +1,8 @@
-#foundation #visualization.locations svg {
+#foundation #visualization #locations svg {
   border: 3px solid black;
 }
 
-#foundation #visualization.locations svg .sensors circle {
+#foundation #visualization #locations svg .sensors circle {
   cursor: pointer;
   stroke: red;
   /*stroke: black; */
@@ -10,11 +10,11 @@
   stroke-opacity: 1;
 }
 
-#foundation #visualization.locations svg .sensors circle.fill {
+#foundation #visualization #locations svg .sensors circle.fill {
   fill: #ff000063;
 }
 
-#foundation #visualization.locations svg .sensors circle.pulse {
+#foundation #visualization #locations svg .sensors circle.pulse {
   fill: white;
   fill-opacity: 0;
   transform-origin: 50% 50%;

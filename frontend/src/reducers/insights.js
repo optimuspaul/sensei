@@ -44,6 +44,24 @@ export default function sensorMappings(state = initialState, action) {
         },
         status: 'fetched'
       }
+    case 'RECEIVE_LOCATIONS':
+      let obs = _.get(state, 'currentObservationsData.obs', []);
+      obs.push(action.locations)
+      obs = _.orderBy(obs, ['timestamp', 'desc']);
+      return {
+        ...state,
+        currentObservationsData: {
+          classroomHeight: action.classroomHeight,
+          classroomWidth: action.classroomWidth,
+          obs
+        },
+        ui: {
+          ...state.ui,
+          visualizationTitle: !_.isEmpty(action.sensors) ? `Sensor Locations` : 'No data...',
+          zoom: parseInt(_.size(obs))
+        },
+        status: 'fetched'
+      }
     case 'SELECT_ENTITY':
       return {
         ...state,

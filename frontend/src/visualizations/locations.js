@@ -1,3 +1,4 @@
+import './locations.css';
 import * as d3 from "d3";
 import {entityInflections, getClassroomId} from './../constants';
 import store from './../store/configureStore';
@@ -12,8 +13,6 @@ export default function locations() {
       classroomScale,
       chartHeight;
 
-  let chartMaxSize = 1400;
-
   let radiusScale = d3.scaleLinear()
                       .domain([0, 1])
                       .range([5, 20]);
@@ -22,48 +21,44 @@ export default function locations() {
                       .range([10, 0]); 
   let state = store.getState();
   let storeEntities = state.entities;
+  let vizElement = document.querySelector("#visualization #locations");
+  let chartMaxSize = _.get(vizElement, 'parentElement.offsetWidth', 800) - 20;
 
-  let chart = d3.select("#visualization.locations svg")
+  let chart = d3.select("#visualization #locations svg")
   chart.append('g')
     .attr("class", 'sensors')
 
-  firebase.firestore()
-    .collection(`classrooms`)
-    .doc(getClassroomId())
-    .get()
-    .then((doc) => {
-      if (doc.exists) {
-        return doc.data();
+  
+    let classroomHeight, classroomWidth;
+
+
+    let updateChart = (event) => {
+
+      let zoom = event.zoom || _.get(store.getState(), "insights.ui.zoom") || 1;
+
+      let data = event.detail
+      if (!data || !data.obs || !_.get(data, `obs.0.sensors`)) return;
+
+      let obsCount = _.size(data.obs);
+      let currentIndex = obsCount - zoom;
+      let sensors = _.get(data, `obs.${currentIndex}.sensors`);
+
+      if (classroomHeight !== data.classroomHeight || classroomWidth !== data.classroomWidth) {
+        classroomHeight = data.classroomHeight;
+        classroomWidth = data.classroomWidth;
+        rotate = classroomWidth >= classroomHeight;
+        let upperDomain = rotate ? classroomWidth : classroomHeight;
+        let lowerDomain = rotate ? classroomHeight : classroomWidth;
+        
+        classroomScale = d3.scaleLinear()
+                        .domain([0, upperDomain])
+                        .range([0, chartMaxSize]);
+        chartHeight = classroomScale(lowerDomain);
+        chartWidth = classroomScale(upperDomain);
+        chart.attr("width", chartWidth).attr("height", chartHeight)
       }
-    })
-    .then((classroom) => {
-      rotate = classroom.width >= classroom.height
-      let upperDomain = rotate ? classroom.width : classroom.height;
-      let lowerDomain = rotate ? classroom.height : classroom.width;
-      
-      classroomScale = d3.scaleLinear()
-                      .domain([0, upperDomain])
-                      .range([0, chartMaxSize]);
-      chartHeight = classroomScale(lowerDomain);
-      chartWidth = classroomScale(upperDomain);
-      chart.attr("width", chartWidth).attr("height", chartHeight)
-      return firebase.firestore()
-        .collection(`classrooms`)
-        .doc(getClassroomId())
-        .collection('locationReports')
-        .onSnapshot(function(snapshot) {
-          _.each(snapshot.docChanges, (change, index) => {
-            if (change.type === "added") {
-              // setTimeout(() => { 
-                updateLocations(change.doc.data().sensors) 
-              // }, index*5000);
-            }
-          });
-        });
-    })
 
 
-    function updateLocations(sensors) {
       let sensorWrapper = chart.select('g.sensors');
 
       let t = d3.transition()
@@ -92,6 +87,12 @@ export default function locations() {
           
       })
     }
+
+    vizElement.addEventListener('dataChanged',
+      updateChart
+    );
+
+    return updateChart;
 
   
 

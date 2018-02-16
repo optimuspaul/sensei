@@ -1,6 +1,7 @@
 import _ from 'lodash';
+import moment from 'moment';
 import {getSenseiToken, getClassroomId, baseUrl, entityInflections} from './../constants';
-
+import firebase from './../firebase';
 
 export const ADD_OBSERVATIONS = 'ADD_OBSERVATIONS';
 export const addObservations = (entityId, entityType, observations) => {
@@ -50,13 +51,14 @@ export const fetchObservations = (entityId, entityType, date) => {
     })
   }
 }
-
 export const fetchInteractionPeriods = (entityId, entityType, date) => {
   return (dispatch, getState) => {
     let state = getState();
     date = date || _.get(state, 'insights.ui.currentDate');
     date = date ? new Date(date) : new Date();
     date.setHours(0);
+
+    
 
     let endDate = _.get(state, 'insights.ui.endDate');
     endDate = endDate || _.get(state, 'insights.ui.endDate');
@@ -130,6 +132,9 @@ export const updateCurrentVisualization = () => {
     let {currentEntityId, currentEntityType, visualization, currentDate, endDate, interactionType} = getState().insights.ui;
 
     switch(visualization) {
+      case 'locations':
+        dispatch(fetchLocations());
+        break;
       case 'activityTimeline':
         dispatch(fetchObservations(currentEntityId, currentEntityType, currentDate, interactionType));
         break;
@@ -147,6 +152,86 @@ export const updateCurrentVisualization = () => {
         }
         break;
     }
+  }
+}
+
+
+export const RECEIVE_LOCATIONS = 'RECEIVE_LOCATIONS';
+export const receiveLocations = (locations, classroomHeight, classroomWidth) => {
+  return (dispatch, getState) => {
+    let state = getState();
+    dispatch({
+      type: RECEIVE_LOCATIONS,
+      locations,
+      classroomHeight,
+      classroomWidth
+    });
+  }
+}
+
+
+
+let prevDate;
+export const FETCH_LOCATIONS = 'FETCH_LOCATIONS'
+export const fetchLocations = (date) => {
+  return (dispatch, getState) => {
+    let state = getState();
+    date = date || _.get(state, 'insights.ui.currentDate');
+    date = date ? new Date(date) : new Date();
+    date.setHours(0);
+
+    if (prevDate === date) {
+      return;
+    } else {
+      prevDate = date;
+    }
+
+    let endDate = _.get(state, 'insights.ui.endDate');
+    endDate = endDate || _.get(state, 'insights.ui.endDate');
+    endDate = endDate ? new Date(endDate) : new Date();
+    endDate.setHours(23);
+
+    firebase.firestore()
+      .doc(`/classrooms/${getClassroomId()}`)
+      .get()
+      .then((doc) => {
+        if (!doc.exists) {
+          return Promise.reject()
+        }
+        let classroom = doc.data();
+        return doc.ref.collection(`locationReports`)
+          .where('timestamp', '>', date)
+          .where('timestamp', '<', endDate)
+          .orderBy('timestamp', 'desc')
+          .onSnapshot(function(snapshot) {
+            _.each(snapshot.docChanges, (change, index) => {
+              if (change.type === "added") {
+                // setTimeout(() => { 
+                  dispatch(receiveLocations(change.doc.data(), classroom.height, classroom.width))
+                // }, index*5000);
+              }
+            });
+          });
+      })
+  }
+}
+
+export const SHOW_LOCATIONS_AT = 'SHOW_LOCATIONS_AT'
+export const showLocationsAt = (date) => {
+  return (dispatch, getState) => {
+    date = new Date(date);
+    let state = getState();
+    let obs = _.get(state, `insights.currentObservationsData.obs`);
+    let zoom = _.findIndex(obs, (ob) => {
+      return ob.timestamp > date; 
+    });
+    zoom = zoom < 0 ? 0 : zoom+1;
+
+    dispatch({
+      type: SET_ZOOM,
+      zoom
+    });
+    
   }
 }
 

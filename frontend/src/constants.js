@@ -30,7 +30,7 @@ export const getClassroomId = () => {
   if (classroomId === "" || classroomId === "all") {
     classroomId = _.get(window, 'tc.env.firstClassroomId');
   }
-  return classroomId;
+  return classroomId.toString();
 }
 
 export const getSchoolId = () => {
