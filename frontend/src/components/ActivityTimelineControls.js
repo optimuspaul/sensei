@@ -272,8 +272,7 @@ class ActivityTimelineControls extends React.Component {
           </div>
           <div className="row" style={{marginBottom: '10px'}}>
             <div className="col-md-12">
-              <Button type="checkbox"
-                active={this.props.insights.ui.isLive}
+              <Button active={this.props.insights.ui.isLive ? 'active' : ''}
                 bsStyle={this.props.insights.ui.isLive ? 'success' : 'default'}
                 onClick={() => { this.props.dispatch(this.props.toggleLive()) }} >Live</Button>
             </div>

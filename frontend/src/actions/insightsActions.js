@@ -171,7 +171,7 @@ export const receiveLocations = (locations, classroomHeight, classroomWidth) => 
 
 
 
-let prevDate;
+let prevDate, unsubscribe;
 export const FETCH_LOCATIONS = 'FETCH_LOCATIONS'
 export const fetchLocations = (date) => {
   return (dispatch, getState) => {
@@ -189,10 +189,10 @@ export const fetchLocations = (date) => {
     let entityId = _.get(state, 'insights.ui.currentEntityId');
     let entityType = _.get(state, 'insights.ui.currentEntityType');
 
-    let endDate = _.get(state, 'insights.ui.endDate');
-    endDate = endDate || _.get(state, 'insights.ui.endDate');
-    endDate = endDate ? new Date(endDate) : new Date();
-    endDate.setHours(23);
+    let endDate = new Date(date);
+    endDate.setDate(endDate.getDate() + 1);
+
+    unsubscribe && unsubscribe();
 
     firebase.firestore()
       .doc(`/classrooms/${getClassroomId()}`)
@@ -202,7 +202,7 @@ export const fetchLocations = (date) => {
           return Promise.reject()
         }
         let classroom = doc.data();
-        return doc.ref.collection(`location_observations`)
+        unsubscribe = doc.ref.collection(`location_observations`)
           .where('observedAt', '>', date)
           .where('observedAt', '<', endDate)
           .orderBy('observedAt', 'desc')
@@ -215,9 +215,7 @@ export const fetchLocations = (date) => {
               current[dateString].sensors.push(data);
               return current;
             }, {})
-            _.each(_.values(segmentedLocations), (locations) => {
-              dispatch(receiveLocations(locations, classroom.height, classroom.width));
-            })
+              dispatch(receiveLocations(segmentedLocations, classroom.height, classroom.width));
           });
       })
   }

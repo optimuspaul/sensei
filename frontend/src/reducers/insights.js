@@ -48,7 +48,10 @@ export default function sensorMappings(state = initialState, action) {
       let obs = _.get(state, 'currentObservationsData.obs', []);
       let isLive = _.get(state, 'ui.isLive', true);
       let currentZoom = _.get(state, 'ui.zoom', true);
-      obs.push(action.locations)
+      _.each(_.values(action.locations), (locations) => {
+        obs.push(locations)
+      });
+
       let zoom = isLive ? _.size(obs) : currentZoom;
       obs = _.orderBy(obs, ['timestamp'], ['desc']);
       return {
@@ -101,6 +104,7 @@ export default function sensorMappings(state = initialState, action) {
       return {
         ...state,
         observations: {},
+        currentObservationsData: {},
         ui: {
           ...state.ui,
           currentDate: action.date

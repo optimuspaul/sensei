@@ -207,7 +207,7 @@ import key from 'keyboard-shortcut';
             let state = store.getState();
             let visualization = _.get(state, 'insights.ui.visualization');
             let observationsData = _.get(state, `insights.currentObservationsData`);
-            if (!visualization || !observationsData) return;
+            if (!visualization) return;
             let date = _.get(state, 'insights.ui.currentDate');
             let vizElement = document.querySelector(`#visualization div#${visualization}.viz`);
             let allVizElements = document.querySelectorAll('#visualization .viz');

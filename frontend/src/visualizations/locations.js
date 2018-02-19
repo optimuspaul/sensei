@@ -29,21 +29,28 @@ export default function locations() {
     .attr("class", 'sensors')
 
   
-    let classroomHeight, classroomWidth;
+
 
 
     let updateChart = (event) => {
 
+      let sensors = []
+      let classroomHeight = 0, 
+      classroomWidth = 0;
 
       let data = event.detail
-      if (!data || !data.obs || !_.get(data, `obs.0.sensors`)) return;
 
-      let obsCount = _.size(data.obs);
-      let zoom = event.zoom || parseInt(_.get(store.getState(), "insights.ui.zoom")) || (obsCount-1);
-      let currentIndex = zoom === -1 ? obsCount + 1 : obsCount - zoom;
-      let sensors = _.get(data, `obs.${currentIndex}.sensors`);
-
-      if (!sensors) return;
+      if (!_.isEmpty(data) && !_.isEmpty(data.obs)) {
+        let obsCount = _.size(data.obs);
+        let zoom = event.zoom || parseInt(_.get(store.getState(), "insights.ui.zoom")) || (obsCount-1);
+        let currentIndex = zoom === -1 ? obsCount + 1 : obsCount - zoom;
+        sensors = _.get(data, `obs.${currentIndex}.sensors`);
+      } else {
+        data = {
+          classroomHeight: 0,
+          classroomWidth: 0
+        }
+      }
 
       if (classroomHeight !== data.classroomHeight || classroomWidth !== data.classroomWidth) {
         classroomHeight = data.classroomHeight;
@@ -69,16 +76,18 @@ export default function locations() {
 
       _.each(['pulse', 'fill'], (c) => {
 
-        sensorWrapper.selectAll(`circle.${c}`)
+        let circle = sensorWrapper
+          .selectAll(`circle.${c}`)
           .data(sensors)
-          .enter()
-          .append("circle")
+
+        circle.exit().remove();
+
+        circle.enter().append("circle")
+          .merge(circle)
+          .transition(t)
           .attr('class', (sensor) => {
             return  `${sensor.entityType} ${c}`
           })
-
-        sensorWrapper.selectAll(`circle.${c}`)
-          .transition(t)
           .attr("cx", (sensor, index) => {
             return classroomScale(sensor[rotate ? 'y': 'x']);
           })
