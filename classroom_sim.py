@@ -350,5 +350,5 @@ while sim_time < end_time:
         location_obs = map(lambda x: x.__dict__, location_obs)
         upload_location_obs(location_obs)
 
-    #time.sleep(1)
+    time.sleep(0.5)
     sim_time = sim_time + timedelta(seconds=10)

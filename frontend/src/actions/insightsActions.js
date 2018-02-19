@@ -342,4 +342,13 @@ export const setZoom = (zoom) => {
   }
 }
 
-
+export const TOGGLE_LIVE = 'TOGGLE_LIVE'
+export const toggleLive = (zoom) => {
+  return (dispatch, getState) => {
+    let state = getState();
+    dispatch({
+      type: TOGGLE_LIVE,
+      isLive: !_.get(state, 'insights.ui.isLive', true)
+    });
+  }
+}

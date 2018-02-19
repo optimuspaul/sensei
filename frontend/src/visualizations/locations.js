@@ -34,12 +34,12 @@ export default function locations() {
 
     let updateChart = (event) => {
 
-      let zoom = event.zoom || parseInt(_.get(store.getState(), "insights.ui.zoom")) || -1;
 
       let data = event.detail
       if (!data || !data.obs || !_.get(data, `obs.0.sensors`)) return;
 
       let obsCount = _.size(data.obs);
+      let zoom = event.zoom || parseInt(_.get(store.getState(), "insights.ui.zoom")) || (obsCount-1);
       let currentIndex = zoom === -1 ? obsCount + 1 : obsCount - zoom;
       let sensors = _.get(data, `obs.${currentIndex}.sensors`);
 
@@ -86,7 +86,9 @@ export default function locations() {
             return classroomScale(sensor[rotate ? 'x': 'y']);
           })
           .attr("r", (sensor) => {
-            return 10 + (c === 'pulse' ? pulseScale(sensor.strength) : 0);
+            let r = 10 + (c === 'pulse' ? pulseScale(sensor.strength) : 0);
+            r = sensor.entityType === 'child' || sensor.entityType === 'teacher' ? r : r/2;
+            return r;
           })
           
       })

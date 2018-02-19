@@ -20,7 +20,7 @@
 }
 
 #foundation #visualization #locations svg .sensors circle.area.pulse {
-  stroke: #a43cc1;
+  stroke: #3c97c1;
 }
 
 
@@ -40,8 +40,8 @@
 }
 
 #foundation #visualization #locations svg .sensors circle.area.fill {
-  fill: #a43cc166;
-  stroke: #a43cc1;
+  fill: #3c97c166;
+  stroke: #3c97c1;
 }
 
 #foundation #visualization #locations svg .sensors circle.pulse {

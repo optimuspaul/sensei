@@ -7,6 +7,7 @@ import DayPicker from 'react-day-picker';
 import 'react-day-picker/lib/style.css';
 import KeyHandler, {KEYDOWN} from 'react-key-handler';
 import moment from 'moment';
+import { Button } from 'react-bootstrap';
 
 class ActivityTimelineControls extends React.Component {
 
@@ -19,6 +20,7 @@ class ActivityTimelineControls extends React.Component {
     this.handleInteractionTypeSelect = this.handleInteractionTypeSelect.bind(this);
     this.handleZoomSet = this.handleZoomSet.bind(this);
     this.handleZoomChange = this.handleZoomChange.bind(this);
+    this.handleLiveCheckboxChanged = this.handleLiveCheckboxChanged.bind(this);
 
     let params = QueryParams.decode(location.search.slice(1));
 
@@ -138,6 +140,10 @@ class ActivityTimelineControls extends React.Component {
     this.props.dispatch(this.props.setZoom(zoom));
   }
 
+  handleLiveCheckboxChanged(event) {
+
+  }
+
   handleEntitySelect(event) {
     if (event.target.value) {
       this.entityId = event.target.value.split("-")[1];
@@ -242,26 +248,35 @@ class ActivityTimelineControls extends React.Component {
       let isLocations = this.props.insights.ui.visualization === 'locations';
       let label = isLocations ? 'Timeline:' : 'Zoom level:'
       let max = isLocations ? _.size(_.get(this.props.insights, `currentObservationsData.obs`)) : 5;
-      let currentVal = isLocations ? moment(_.get(this.props.insights, `currentObservationsData.obs.${this.state.zoom-1}.timestamp`)).format("h:mm:ss a") : this.state.zoom;
+      let currentVal = isLocations ? moment(_.get(this.props.insights, `currentObservationsData.obs.${max-this.state.zoom}.timestamp`)).format("h:mm:ss a") : this.state.zoom;
 
 
       zoomControl = (
-        <div className="row" style={{marginBottom: '10px'}}>
-          <KeyHandler keyEventName={KEYDOWN} keyValue="ArrowRight" onKeyHandle={this.handleZoomSet} />
-          <KeyHandler keyEventName={KEYDOWN} keyValue="ArrowLeft" onKeyHandle={this.handleZoomSet} />
-          <div className="col-md-12">
-            <label> {label} </label> {currentVal} 
-            <input
-              id="zoom-slider"
-              type="range"
-              defaultValue='1'
-              value={this.state.zoom}
-              min="1"
-              max={max}
-              step="1"
-              onChange={this.handleZoomSet}
-            />
-            <button onClick={() => { this.props.dispatch(this.props.setZoom(-1)); }}>Live</button>
+        <div>
+          <div className="row" style={{marginBottom: '10px'}}>
+            <KeyHandler keyEventName={KEYDOWN} keyValue="ArrowRight" onKeyHandle={this.handleZoomSet} />
+            <KeyHandler keyEventName={KEYDOWN} keyValue="ArrowLeft" onKeyHandle={this.handleZoomSet} />
+            <div className="col-md-12">
+              <label> {label} </label> {currentVal} 
+              <input
+                id="zoom-slider"
+                type="range"
+                defaultValue='1'
+                value={this.state.zoom}
+                min="1"
+                max={max}
+                step="1"
+                onChange={this.handleZoomSet}
+              />
+            </div>
+          </div>
+          <div className="row" style={{marginBottom: '10px'}}>
+            <div className="col-md-12">
+              <Button type="checkbox"
+                active={this.props.insights.ui.isLive}
+                bsStyle={this.props.insights.ui.isLive ? 'success' : 'default'}
+                onClick={() => { this.props.dispatch(this.props.toggleLive()) }} >Live</Button>
+            </div>
           </div>
         </div>
       )

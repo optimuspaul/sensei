@@ -46,8 +46,11 @@ export default function sensorMappings(state = initialState, action) {
       }
     case 'RECEIVE_LOCATIONS':
       let obs = _.get(state, 'currentObservationsData.obs', []);
+      let isLive = _.get(state, 'ui.isLive', true);
+      let currentZoom = _.get(state, 'ui.zoom', true);
       obs.push(action.locations)
-      obs = _.orderBy(obs, ['observedAt', 'desc']);
+      let zoom = isLive ? _.size(obs) : currentZoom;
+      obs = _.orderBy(obs, ['timestamp'], ['desc']);
       return {
         ...state,
         currentObservationsData: {
@@ -58,7 +61,7 @@ export default function sensorMappings(state = initialState, action) {
         ui: {
           ...state.ui,
           visualizationTitle: !_.isEmpty(action.sensors) ? `Sensor Locations` : 'No data...',
-          zoom: parseInt(_.size(obs))
+          zoom
         },
         status: 'fetched'
       }
@@ -120,6 +123,14 @@ export default function sensorMappings(state = initialState, action) {
         ui: {
           ...state.ui,
           zoom: parseInt(action.zoom)
+        }
+      }
+    case 'TOGGLE_LIVE':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          isLive: action.isLive
         }
       }
     case 'REFRESH_FROM_PARAMS':
