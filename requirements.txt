@@ -15,4 +15,4 @@ Flask-Migrate==2.0.2
 pytz==2017.2
 tzlocal==1.4
 boto3==1.4.7
-firebase-admin=2.8.0
+firebase-admin==2.8.0
