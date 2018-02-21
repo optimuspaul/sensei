@@ -24,3 +24,6 @@ class TestConfig(Base):
     SQLALCHEMY_ECHO = False
     API_AUTH_SERVICE = MockAuthService()
     TC_SERVICE = MockTCService()
+    FIREBASE_URL = os.getenv('FIREBASE_URL', 'https://sensei-b9fb6.firebaseio.com')
+    FIREBASE_CERT = os.getenv('FIREBASE_CERT', 'sensei-b9fb6-firebase-adminsdk-dn9oq-8794bfa2a5.json')
+    FIREBASE_SERVICE = FirebaseService(FIREBASE_URL, FIREBASE_CERT)
