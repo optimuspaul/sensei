@@ -5,7 +5,7 @@ from firebase_admin import firestore
 
 
 
-class FirebaseService:
+class FirebaseService():
   
   def __init__(self, databaseURL, cert_path):
     cred = credentials.Certificate(cert_path)

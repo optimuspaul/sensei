@@ -1,5 +1,5 @@
 import os
-from test_mocks import MockAuthService, MockTCService
+from test_mocks import MockAuthService, MockTCService, MockFirebaseService
 from tc_auth_service import TCAuthService
 from tc_service import TCService
 from firebase_service import FirebaseService
@@ -26,4 +26,4 @@ class TestConfig(Base):
     TC_SERVICE = MockTCService()
     FIREBASE_URL = os.getenv('FIREBASE_URL', 'https://sensei-b9fb6.firebaseio.com')
     FIREBASE_CERT = os.getenv('FIREBASE_CERT', 'sensei-b9fb6-firebase-adminsdk-dn9oq-8794bfa2a5.json')
-    FIREBASE_SERVICE = FirebaseService(FIREBASE_URL, FIREBASE_CERT)
+    FIREBASE_SERVICE = MockFirebaseService('test', 'test')
