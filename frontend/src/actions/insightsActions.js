@@ -1,6 +1,7 @@
 import _ from 'lodash';
+import moment from 'moment';
 import {getSenseiToken, getClassroomId, baseUrl, entityInflections} from './../constants';
-
+import firebase from './../firebase';
 
 export const ADD_OBSERVATIONS = 'ADD_OBSERVATIONS';
 export const addObservations = (entityId, entityType, observations) => {
@@ -50,13 +51,14 @@ export const fetchObservations = (entityId, entityType, date) => {
     })
   }
 }
-
 export const fetchInteractionPeriods = (entityId, entityType, date) => {
   return (dispatch, getState) => {
     let state = getState();
     date = date || _.get(state, 'insights.ui.currentDate');
     date = date ? new Date(date) : new Date();
     date.setHours(0);
+
+    
 
     let endDate = _.get(state, 'insights.ui.endDate');
     endDate = endDate || _.get(state, 'insights.ui.endDate');
@@ -130,6 +132,9 @@ export const updateCurrentVisualization = () => {
     let {currentEntityId, currentEntityType, visualization, currentDate, endDate, interactionType} = getState().insights.ui;
 
     switch(visualization) {
+      case 'locations':
+        dispatch(fetchLocations());
+        break;
       case 'activityTimeline':
         dispatch(fetchObservations(currentEntityId, currentEntityType, currentDate, interactionType));
         break;
@@ -147,6 +152,96 @@ export const updateCurrentVisualization = () => {
         }
         break;
     }
+  }
+}
+
+
+export const RECEIVE_LOCATIONS = 'RECEIVE_LOCATIONS';
+export const receiveLocations = (locations, classroomHeight, classroomWidth) => {
+  return (dispatch, getState) => {
+    let state = getState();
+    dispatch({
+      type: RECEIVE_LOCATIONS,
+      locations,
+      classroomHeight,
+      classroomWidth
+    });
+  }
+}
+
+
+
+let prevDate, unsubscribe;
+export const FETCH_LOCATIONS = 'FETCH_LOCATIONS'
+export const fetchLocations = (date) => {
+  return (dispatch, getState) => {
+    let state = getState();
+    date = date || _.get(state, 'insights.ui.currentDate');
+    date = date ? new Date(date) : new Date();
+    date.setHours(0);
+
+    if (prevDate === date) {
+      return;
+    } else {
+      prevDate = date;
+    }
+
+    let entityId = _.get(state, 'insights.ui.currentEntityId');
+    let entityType = _.get(state, 'insights.ui.currentEntityType');
+
+    let endDate = new Date(date);
+    endDate.setDate(endDate.getDate() + 1);
+
+    unsubscribe && unsubscribe();
+
+    firebase.firestore()
+      .doc(`/classrooms/${getClassroomId()}`)
+      .get()
+      .then((doc) => {
+        if (!doc.exists) {
+          return Promise.reject()
+        }
+        let classroom = doc.data();
+        unsubscribe = doc.ref.collection(`location_observations`)
+          .where('observedAt', '>', date)
+          .where('observedAt', '<', endDate)
+          .orderBy('observedAt', 'desc')
+          .onSnapshot(function(snapshot) {
+            let locations = _.filter(snapshot.docChanges, {type: "added"});
+            let segmentedLocations = _.reduce(locations, (current, location) => {
+              let data = location.doc.data();
+              let dateString = data.observedAt.toISOString();
+              current[dateString] = current[dateString] || {sensors: [], timestamp: data.observedAt};
+              current[dateString].sensors.push(data);
+              return current;
+            }, {})
+              dispatch(receiveLocations(segmentedLocations, classroom.height, classroom.width));
+          });
+      })
+  }
+}
+
+export const SHOW_LOCATIONS_AT = 'SHOW_LOCATIONS_AT'
+export const showLocationsAt = (date) => {
+  return (dispatch, getState) => {
+    let state = getState();
+    let obs = _.get(state, `insights.currentObservationsData.obs`);
+    let zoom;
+    if (date === 'now') {
+      zoom = -1
+    } else {
+      date = new Date(date);
+      let zoom = _.findIndex(obs, (ob) => {
+        return ob.timestamp > date; 
+      });
+      zoom = zoom < 0 ? 0 : zoom+1;
+    }
+
+    dispatch({
+      type: SET_ZOOM,
+      zoom
+    });
+    
   }
 }
 
@@ -245,4 +340,13 @@ export const setZoom = (zoom) => {
   }
 }
 
-
+export const TOGGLE_LIVE = 'TOGGLE_LIVE'
+export const toggleLive = (zoom) => {
+  return (dispatch, getState) => {
+    let state = getState();
+    dispatch({
+      type: TOGGLE_LIVE,
+      isLive: !_.get(state, 'insights.ui.isLive', true)
+    });
+  }
+}

@@ -12,7 +12,7 @@ import { Provider } from 'react-redux';
 import {fetchMappings} from './actions/sensorMappingActions';
 import {fetchChildren, fetchTeachers, fetchEntities, fetchMaterials} from './actions/entityActions';
 import {getClassroomId, isProduction, entityInflections, getSchoolId} from './constants';
-import {fetchObservations, fetchInteractionPeriods, fetchInteractionTotals, updateCurrentVisualization, locations} from './actions/insightsActions';
+import {fetchObservations, fetchInteractionPeriods, fetchInteractionTotals, updateCurrentVisualization} from './actions/insightsActions';
 import {toggleAnonymizer} from './actions/entityActions';
 import _ from 'lodash';
 import './index.css';
@@ -156,7 +156,7 @@ import key from 'keyboard-shortcut';
           </div>
         `;
 
-        locations();
+        visualizations.locations();
 
       }
 
@@ -207,7 +207,7 @@ import key from 'keyboard-shortcut';
             let state = store.getState();
             let visualization = _.get(state, 'insights.ui.visualization');
             let observationsData = _.get(state, `insights.currentObservationsData`);
-            if (!visualization || !observationsData) return;
+            if (!visualization) return;
             let date = _.get(state, 'insights.ui.currentDate');
             let vizElement = document.querySelector(`#visualization div#${visualization}.viz`);
             let allVizElements = document.querySelectorAll('#visualization .viz');

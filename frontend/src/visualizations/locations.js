@@ -1,3 +1,4 @@
+import './locations.css';
 import * as d3 from "d3";
 import {entityInflections, getClassroomId} from './../constants';
 import store from './../store/configureStore';
@@ -12,58 +13,61 @@ export default function locations() {
       classroomScale,
       chartHeight;
 
-  let chartMaxSize = 1400;
-
   let radiusScale = d3.scaleLinear()
-                      .domain([0, 1])
+                      .domain([0, 5])
                       .range([5, 20]);
   let pulseScale = d3.scaleLinear()
-                      .domain([0, 1])
+                      .domain([0, 5])
                       .range([10, 0]); 
   let state = store.getState();
   let storeEntities = state.entities;
+  let vizElement = document.querySelector("#visualization #locations");
+  let chartMaxSize = _.get(vizElement, 'parentElement.offsetWidth', 800) - 20;
 
-  let chart = d3.select("#visualization.locations svg")
+  let chart = d3.select("#visualization #locations svg")
   chart.append('g')
     .attr("class", 'sensors')
 
-  firebase.firestore()
-    .collection(`classrooms`)
-    .doc(getClassroomId())
-    .get()
-    .then((doc) => {
-      if (doc.exists) {
-        return doc.data();
+  
+
+
+
+    let updateChart = (event) => {
+
+      let sensors = []
+      let classroomHeight = 0, 
+      classroomWidth = 0;
+
+      let data = event.detail
+
+      if (!_.isEmpty(data) && !_.isEmpty(data.obs)) {
+        let obsCount = _.size(data.obs);
+        let zoom = event.zoom || parseInt(_.get(store.getState(), "insights.ui.zoom")) || (obsCount-1);
+        let currentIndex = zoom === -1 ? obsCount + 1 : obsCount - zoom;
+        sensors = _.get(data, `obs.${currentIndex}.sensors`);
+      } else {
+        data = {
+          classroomHeight: 0,
+          classroomWidth: 0
+        }
       }
-    })
-    .then((classroom) => {
-      rotate = classroom.width >= classroom.height
-      let upperDomain = rotate ? classroom.width : classroom.height;
-      let lowerDomain = rotate ? classroom.height : classroom.width;
-      
-      classroomScale = d3.scaleLinear()
-                      .domain([0, upperDomain])
-                      .range([0, chartMaxSize]);
-      chartHeight = classroomScale(lowerDomain);
-      chartWidth = classroomScale(upperDomain);
-      chart.attr("width", chartWidth).attr("height", chartHeight)
-      return firebase.firestore()
-        .collection(`classrooms`)
-        .doc(getClassroomId())
-        .collection('locationReports')
-        .onSnapshot(function(snapshot) {
-          _.each(snapshot.docChanges, (change, index) => {
-            if (change.type === "added") {
-              // setTimeout(() => { 
-                updateLocations(change.doc.data().sensors) 
-              // }, index*5000);
-            }
-          });
-        });
-    })
+
+      if (classroomHeight !== data.classroomHeight || classroomWidth !== data.classroomWidth) {
+        classroomHeight = data.classroomHeight;
+        classroomWidth = data.classroomWidth;
+        rotate = classroomWidth >= classroomHeight;
+        let upperDomain = rotate ? classroomWidth : classroomHeight;
+        let lowerDomain = rotate ? classroomHeight : classroomWidth;
+        
+        classroomScale = d3.scaleLinear()
+                        .domain([0, upperDomain])
+                        .range([0, chartMaxSize]);
+        chartHeight = classroomScale(lowerDomain);
+        chartWidth = classroomScale(upperDomain);
+        chart.attr("width", chartWidth).attr("height", chartHeight)
+      }
 
 
-    function updateLocations(sensors) {
       let sensorWrapper = chart.select('g.sensors');
 
       let t = d3.transition()
@@ -72,14 +76,18 @@ export default function locations() {
 
       _.each(['pulse', 'fill'], (c) => {
 
-        sensorWrapper.selectAll(`circle.${c}`)
+        let circle = sensorWrapper
+          .selectAll(`circle.${c}`)
           .data(sensors)
-          .enter()
-          .append("circle")
-          .attr('class', c)
 
-        sensorWrapper.selectAll(`circle.${c}`)
+        circle.exit().remove();
+
+        circle.enter().append("circle")
+          .merge(circle)
           .transition(t)
+          .attr('class', (sensor) => {
+            return  `${sensor.entityType} ${c}`
+          })
           .attr("cx", (sensor, index) => {
             return classroomScale(sensor[rotate ? 'y': 'x']);
           })
@@ -87,11 +95,19 @@ export default function locations() {
             return classroomScale(sensor[rotate ? 'x': 'y']);
           })
           .attr("r", (sensor) => {
-            return 10 + (c === 'pulse' ? pulseScale(sensor.strength) : 0);
+            let r = 10 + (c === 'pulse' ? pulseScale(sensor.strength) : 0);
+            r = sensor.entityType === 'child' || sensor.entityType === 'teacher' ? r : r/2;
+            return r;
           })
           
       })
     }
+
+    vizElement.addEventListener('dataChanged',
+      updateChart
+    );
+
+    return updateChart;
 
   
 

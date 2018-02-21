@@ -57,7 +57,7 @@ class CameraSegmentBuilderCarousel extends React.Component {
     console.log('moveCarousel::delta::' + delta + '::index::' + index + '::index+delta::' + (index+delta) + '::page::' + this.props.page);
     index += delta;
     if (index < (_.size(this.props.photos[this.props.camera])-1) && index >= 0 ) {
-      let result = this.props.onCarouselChange(delta, index);
+      let result = this.props.onCarouselChange(delta, index, this.props.photos[this.props.camera][index]);
       if (result) {
         result === 'forward' ? index = 16 : index = 34;
       }

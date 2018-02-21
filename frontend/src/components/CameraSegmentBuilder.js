@@ -7,6 +7,7 @@ import {getSenseiToken,  baseUrl, vantagePoints} from './../constants';
 import CameraSegmentBuilderCarousel from './CameraSegmentBuilderCarousel';
 import KeyHandler, {KEYDOWN} from 'react-key-handler';
 import ProximitySegmentsEditor from './ProximitySegmentsEditor';
+import {locations} from './../visualizations';
 
 class CameraSegmentBuilder extends React.Component {
 
@@ -51,7 +52,9 @@ class CameraSegmentBuilder extends React.Component {
   getPhotos(index=0) {
     return _.reduce(this.getCameras(), (current, camera) => {
       let photos = _.get(this.props.cameraData.locations, `${this.state.currentLocation}.${camera}.${this.state.currentDate}`, []);
-      current[camera] = photos.slice(index,index+50)
+      if (!_.isEmpty(photos)) {
+        current[camera] = photos.slice(index,index+50)
+      }
       return current;
     }, {})
   }
@@ -64,13 +67,15 @@ class CameraSegmentBuilder extends React.Component {
     return  _.get(this.props.cameraData.locations, `${this.state.currentLocation}.${this.state.currentCamera}.${this.state.currentDate}`, []);
   }
 
-  handleCarouselChange = (delta, carouselIndex) => {
+  handleCarouselChange = (delta, carouselIndex, photo) => {
     let currentIndex = this.state.index;
     let page = this.state.page;
     if (page < 0) return false;
     let newIndex = currentIndex + delta;
     let pageForward = delta > 0 && _.size(this.getAllPhotos()) > (newIndex+15) && carouselIndex > 35;
     let pageBack = delta < 0 && 0 < (newIndex-15) && carouselIndex <= 15;
+    this.props.showLocationsAt(this.getCurrentTime());
+    this.updateLocations();
     if (pageForward || pageBack) {
       let photos;
       let newIndexModified;
@@ -95,6 +100,7 @@ class CameraSegmentBuilder extends React.Component {
       });
       return false;
     }
+    
   }
 
   handleLocationChange = (event) => {
@@ -111,8 +117,7 @@ class CameraSegmentBuilder extends React.Component {
   }
 
   handleDateChange = (event) => {
-    this.props.fetchPhotos(this.state.currentLocation, this.state.currentCamera, event.target.value);
-    this.props.fetchCameraSegments(this.state.currentLocation, event.target.value);
+    this.props.handleDateChange(this.state.currentLocation, this.state.currentCamera, event.target.value)
     this.setState({currentDate: event.target.value});
   }
 
@@ -136,10 +141,21 @@ class CameraSegmentBuilder extends React.Component {
 
   componentDidMount() {
     this.props.fetchPhotos();
+    setTimeout(locations, 1000);
+  }
+
+  updateLocations() {
+    let vizElement = document.querySelector(`#visualization #locations`);
+    if (vizElement) {
+      var event = new CustomEvent('dataChanged', { detail: this.props.currentObservationsData });
+      vizElement.dispatchEvent(event);
+    }
   }
 
   componentWillReceiveProps(nextProps) {
-    this.setState({ photos: this.getPhotos(), authenticating: nextProps.authenticating });
+    // if (!_.isEmpty(this.props.cameraData.locations)) {
+      this.setState({ photos: this.getPhotos(), authenticating: nextProps.authenticating });
+    // }
   }
 
   switchCamera = (event) => {
@@ -245,7 +261,16 @@ class CameraSegmentBuilder extends React.Component {
               </div>
             </div>
             <div className="col-xs-12 col-sm-6 col-lg-4">
-              <ProximitySegmentsEditor segments={this.props.segments} getCurrentTime={this.getCurrentTime.bind(this)} currentLocation={this.state.currentLocation} onSave={this.props.saveCameraSegment} />
+              <div className="row">
+                <div className="col" id="foundation">
+                  <div id='visualization'><div id='locations'><svg></svg></div></div>
+                </div>
+              </div>
+              <div className="row">
+                <div className="col">
+                  <ProximitySegmentsEditor segments={this.props.segments} getCurrentTime={this.getCurrentTime.bind(this)} currentLocation={this.state.currentLocation} onSave={this.props.saveCameraSegment} />
+                </div>
+              </div>
             </div>
           </div>
         </div>

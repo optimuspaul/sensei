@@ -62,7 +62,6 @@ export default function activityTimeline(data) {
 
     let circle = row.selectAll("circle")
     .data((d) => {
-      console.log("circle d: ", d)
       return d ? d.obs : [];
     })
 

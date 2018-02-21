@@ -5,6 +5,9 @@ import QueryParams from 'query-params';
 import { history } from '../utils';
 import DayPicker from 'react-day-picker';
 import 'react-day-picker/lib/style.css';
+import KeyHandler, {KEYDOWN} from 'react-key-handler';
+import moment from 'moment';
+import { Button } from 'react-bootstrap';
 
 class ActivityTimelineControls extends React.Component {
 
@@ -17,6 +20,7 @@ class ActivityTimelineControls extends React.Component {
     this.handleInteractionTypeSelect = this.handleInteractionTypeSelect.bind(this);
     this.handleZoomSet = this.handleZoomSet.bind(this);
     this.handleZoomChange = this.handleZoomChange.bind(this);
+    this.handleLiveCheckboxChanged = this.handleLiveCheckboxChanged.bind(this);
 
     let params = QueryParams.decode(location.search.slice(1));
 
@@ -122,8 +126,22 @@ class ActivityTimelineControls extends React.Component {
   }
 
   handleZoomSet(event) {
-    this.setState({zoom:event.target.value});
-    this.props.dispatch(this.props.setZoom(event.target.value));
+    let zoom = this.state.zoom;
+    if (event.key) {
+      if (event.key === 'ArrowLeft' && zoom > 1) {
+        zoom--
+      } else if (event.key === 'ArrowRight' && zoom < _.size(_.get(this.props.insights, `currentObservationsData.obs`))) {
+        zoom++
+      }
+    } else {
+      zoom = event.target.value;
+    }
+    this.setState({zoom});
+    this.props.dispatch(this.props.setZoom(zoom));
+  }
+
+  handleLiveCheckboxChanged(event) {
+
   }
 
   handleEntitySelect(event) {
@@ -221,29 +239,50 @@ class ActivityTimelineControls extends React.Component {
       )
     }
 
+    
+
+
+
     let zoomControl = '';
     if (!_.includes(['studentSummary', 'socialGraph'], this.props.insights.ui.visualization)) {
+      let isLocations = this.props.insights.ui.visualization === 'locations';
+      let label = isLocations ? 'Timeline:' : 'Zoom level:'
+      let max = isLocations ? _.size(_.get(this.props.insights, `currentObservationsData.obs`)) : 5;
+      let currentVal = isLocations ? moment(_.get(this.props.insights, `currentObservationsData.obs.${max-this.state.zoom}.timestamp`)).format("h:mm:ss a") : this.state.zoom;
+
+
       zoomControl = (
-        <div className="row" style={{marginBottom: '10px'}}>
-          <div className="col-md-12">
-            <h6> Zoom level: {this.state.zoom} </h6>
-            <input
-              id="zoom-slider"
-              type="range"
-              defaultValue={this.props.insights.ui.zoom}
-              onChange={this.handleZoomChange}
-              min="1"
-              max="5"
-              step="1"
-              onMouseUp={this.handleZoomSet}
-            />
+        <div>
+          <div className="row" style={{marginBottom: '10px'}}>
+            <KeyHandler keyEventName={KEYDOWN} keyValue="ArrowRight" onKeyHandle={this.handleZoomSet} />
+            <KeyHandler keyEventName={KEYDOWN} keyValue="ArrowLeft" onKeyHandle={this.handleZoomSet} />
+            <div className="col-md-12">
+              <label> {label} </label> {currentVal} 
+              <input
+                id="zoom-slider"
+                type="range"
+                defaultValue='1'
+                value={this.state.zoom}
+                min="1"
+                max={max}
+                step="1"
+                onChange={this.handleZoomSet}
+              />
+            </div>
+          </div>
+          <div className="row" style={{marginBottom: '10px'}}>
+            <div className="col-md-12">
+              <Button active={this.props.insights.ui.isLive ? 'active' : ''}
+                bsStyle={this.props.insights.ui.isLive ? 'success' : 'default'}
+                onClick={() => { this.props.dispatch(this.props.toggleLive()) }} >Live</Button>
+            </div>
           </div>
         </div>
       )
     }
 
     let viewpointSelector = '';
-    if (this.props.insights.ui.visualization !== 'socialGraph') {
+    if (!_.includes(['studentSummary', 'socialGraph'], this.props.insights.ui.visualization)) {
       viewpointSelector = (
         <div className="row">
           <div className="col-md-12">
@@ -286,6 +325,7 @@ class ActivityTimelineControls extends React.Component {
                   <option key={`student-summary`} value={`studentSummary`}>Student Summary</option>
                   <option key={`unit-summary`} value={`unitSummary`}>Unit Summary</option>
                   <option key={`social-graph`} value={`socialGraph`}>Social Graph</option>
+                  <option key={`locations`} value={`locations`}>SensorLocations</option>
                 </select>
               </div>
             </form>

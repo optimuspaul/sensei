@@ -44,6 +44,30 @@ export default function sensorMappings(state = initialState, action) {
         },
         status: 'fetched'
       }
+    case 'RECEIVE_LOCATIONS':
+      let obs = _.get(state, 'currentObservationsData.obs', []);
+      let isLive = _.get(state, 'ui.isLive', true);
+      let currentZoom = _.get(state, 'ui.zoom', true);
+      _.each(_.values(action.locations), (locations) => {
+        obs.push(locations)
+      });
+
+      let zoom = isLive ? _.size(obs) : currentZoom;
+      obs = _.orderBy(obs, ['timestamp'], ['desc']);
+      return {
+        ...state,
+        currentObservationsData: {
+          classroomHeight: action.classroomHeight,
+          classroomWidth: action.classroomWidth,
+          obs
+        },
+        ui: {
+          ...state.ui,
+          visualizationTitle: !_.isEmpty(action.sensors) ? `Sensor Locations` : 'No data...',
+          zoom
+        },
+        status: 'fetched'
+      }
     case 'SELECT_ENTITY':
       return {
         ...state,
@@ -80,6 +104,7 @@ export default function sensorMappings(state = initialState, action) {
       return {
         ...state,
         observations: {},
+        currentObservationsData: {},
         ui: {
           ...state.ui,
           currentDate: action.date
@@ -104,8 +129,17 @@ export default function sensorMappings(state = initialState, action) {
           zoom: parseInt(action.zoom)
         }
       }
+    case 'TOGGLE_LIVE':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          isLive: action.isLive
+        }
+      }
     case 'REFRESH_FROM_PARAMS':
       let params = _.pick(action.params, ['currentDate', 'endDate', 'visualization', 'interactionType', 'currentEntityType', 'currentEntityId', 'zoom']);
+      params.zoom = parseInt(params.zoom);
       return {
         ...state,
         observations: state.observations,

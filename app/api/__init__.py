@@ -9,3 +9,4 @@ from areas import *
 from materials import *
 from classrooms import *
 from camera_data import *
+from location_observations import *

@@ -1,7 +1,7 @@
 import {connect} from 'react-redux';
 import _ from 'lodash';
 import ActivityTimelineControls from './../components/ActivityTimelineControls';
-import {selectEntity, selectDate, selectEndDate, selectVisualization, refreshFromParams, selectInteractionType, setZoom, addDay, removeDay} from '../actions/insightsActions';
+import {selectEntity, selectDate, selectEndDate, selectVisualization, refreshFromParams, selectInteractionType, setZoom, toggleLive, addDay, removeDay} from '../actions/insightsActions';
 
 const ActivityTimelineControlsContainer = connect((state) => ({
   insights: state.insights,
@@ -17,7 +17,8 @@ const ActivityTimelineControlsContainer = connect((state) => ({
   setZoom,
   refreshFromParams,
   addDay,
-  removeDay
+  removeDay,
+  toggleLive
 }))(ActivityTimelineControls);
 
 export default ActivityTimelineControlsContainer;
