@@ -1,8 +1,14 @@
 from functools import wraps
 from flask import request, Response, g, current_app
 from ..models import *
+from expiringdict import ExpiringDict
+from datetime import timedelta
 
 class APIAuthWrapper():
+    def __init__(self):
+        max_age = timedelta(hours=5)
+        self.cache = ExpiringDict(max_len=100, max_age_seconds=max_age.seconds)
+
     def auth_service(self):
         return current_app.config["API_AUTH_SERVICE"]
 
@@ -10,12 +16,20 @@ class APIAuthWrapper():
         """This function is called to check if a username /
         password combination is valid.
         """
-        return self.auth_service().check_auth(username, password)
+        res = self.cache.get((username, password))
+        if not res:
+            res = self.auth_service().check_auth(username, password)
+            self.cache[(username, password)] = res
+        return res
 
     def check_token(self, token):
         """This function is called to check if a token is valid.
         """
-        return self.auth_service().check_token(token)
+        res = self.cache.get(token)
+        if not res:
+            res = self.auth_service().check_token(token)
+            self.cache[token] = res
+        return res
 
     def need_authentication_response(self):
         """Sends a 401 response that enables basic auth"""
@@ -31,6 +45,7 @@ class APIAuthWrapper():
     def requires_auth(self, f):
         @wraps(f)
         def decorated(*args, **kwargs):
+
             if request.headers.get('X-SenseiToken'):
                 res = self.check_token(request.headers.get('X-SenseiToken'))
             else:
