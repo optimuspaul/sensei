@@ -6,7 +6,6 @@ from api.api_json import APIJSONEncoder
 from flask_cors import CORS
 from data_publisher import data_publisher
 from location_model_feeder import LocationModelFeeder
-from flask_redis_handle import redis_store
 
 def create_app(config_obj):
     app = Flask(__name__)
@@ -34,7 +33,5 @@ def create_app(config_obj):
 
     location_model_feeder = LocationModelFeeder()
     data_publisher.register_listener(location_model_feeder)
-
-    redis_store.init_app(app)
 
     return app
