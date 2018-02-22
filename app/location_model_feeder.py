@@ -13,4 +13,3 @@ class LocationModelFeeder:
             serialized_data = json.dumps(json_dicts)
             queue_name = 'radio_obs_classroom_%d' % data[0].classroom_id
             redis_store.lpush(queue_name, serialized_data)
-            print("Sending a radio obs frame to the location model via %s" % queue_name)

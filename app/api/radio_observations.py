@@ -26,9 +26,6 @@ def post_radio_observations():
 
     first_event = event_data[0]
 
-    print("instrumentation mark 1: %d" % int((time.time() - mark) * 1000))
-    mark = time.time()
-
     if not all(event['observed_at'] == first_event['observed_at'] for event in event_data):
         abort(400, "All observations must have the same observed_at")
 
@@ -37,26 +34,8 @@ def post_radio_observations():
 
     classroom_id = first_event['classroom_id']
 
-    q = SensorMapping.query.filter_by(classroom_id=classroom_id, end_time=None)
-    print str(q)
-
-    print("instrumentation mark 1.1: %d" % int((time.time() - mark) * 1000))
-    mark = time.time()
-
-    qr = q.all()
-
-    print("instrumentation mark 1.2: %d" % int((time.time() - mark) * 1000))
-    mark = time.time()
-
-    mappings = {m.sensor_id: m for m in qr}
-
-    print("instrumentation mark 1.5: %d" % int((time.time() - mark) * 1000))
-    mark = time.time()
-
+    mappings = {m.sensor_id: m for m in SensorMapping.query.filter_by(classroom_id=classroom_id, end_time=None)}
     relationships = {r.key(): r for r in EntityRelationship.query.filter_by(classroom_id=classroom_id)}
-
-    print("instrumentation mark 2: %d" % int((time.time() - mark) * 1000))
-    mark = time.time()
 
     obs = []
 
@@ -108,9 +87,6 @@ def post_radio_observations():
                 })
 
     db.session.commit() # This stores the new relationships
-
-    print("instrumentation mark 4: %d" % int((time.time() - mark) * 1000))
-    mark = time.time()
 
     if len(obs) > 0:
         batch.commit()
