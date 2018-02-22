@@ -46,14 +46,18 @@ def classrooms_index():
 
 
 # Accelerometer Observations upload #
-@api.route('/api/v1/classrooms/<path:classroom_id>', methods=['POST'])
+@api.route('/api/v1/classrooms', methods=['POST'])
 @api_auth.requires_auth
-def post_classroom(classroom_id):
-    metadata = request.get_json()
+def post_classroom():
+    req = request.get_json()
+    classroom_id = req.get('classroom_id')
+    classroom = req.get('classroom')
     if not classroom_id:
         abort(400, "Missing classroom_id")
+    if not classroom:
+        abort(400, "Missing classroom")
     firebase = current_app.config.get("FIREBASE_SERVICE")
     path = 'classrooms/%s' % (classroom_id)
     classroom_ref = firebase.db.document(path)
-    classroom_ref.update(metadata, firebase_admin.firestore.CreateIfMissingOption(True))
+    classroom_ref.update(classroom, firebase_admin.firestore.CreateIfMissingOption(True))
     return "OK", 201
