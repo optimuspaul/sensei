@@ -19,3 +19,4 @@ app/static/*.html
 npm-debug.log
 *.orig
 .pytest_cache
+*-firebase-adminsdk-*.json
