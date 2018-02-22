@@ -1,6 +1,7 @@
 from flask import current_app, jsonify, g
 from shared import *
 from ..models import *
+import firebase_admin
 
 # Classrooms - index #
 @api.route('/api/v1/classrooms', methods = ['GET'])
@@ -42,3 +43,17 @@ def classrooms_index():
         classroom_json['sensor_mappings'] = sensor_mappings
         output.append(classroom_json)
     return jsonify(output)
+
+
+# Accelerometer Observations upload #
+@api.route('/api/v1/classrooms/<path:classroom_id>', methods=['POST'])
+@api_auth.requires_auth
+def post_classroom(classroom_id):
+    metadata = request.get_json()
+    if not classroom_id:
+        abort(400, "Missing classroom_id")
+    firebase = current_app.config.get("FIREBASE_SERVICE")
+    path = 'classrooms/%s' % (classroom_id)
+    classroom_ref = firebase.db.document(path)
+    classroom_ref.update(metadata, firebase_admin.firestore.CreateIfMissingOption(True))
+    return "OK", 201

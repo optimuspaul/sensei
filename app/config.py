@@ -15,9 +15,9 @@ class Base(object):
     FIREBASE_URL = os.getenv('FIREBASE_URL', 'https://sensei-b9fb6.firebaseio.com')
     API_AUTH_SERVICE = TCAuthService(TC_URL)
     TC_SERVICE = TCService(TC_URL)
-    print os.getenv('FIREBASE_PRIVATE_KEY', '')
+    
     FIREBASE_SERVICE = FirebaseService(FIREBASE_URL, {
-      'private_key': os.getenv('FIREBASE_PRIVATE_KEY', ''),
+      'private_key': os.getenv('FIREBASE_PRIVATE_KEY', False),
       'client_email': os.getenv('FIREBASE_CLIENT_EMAIL', ''),
       'type': 'service_account',
       'token_uri': 'https://accounts.google.com/o/oauth2/token',
