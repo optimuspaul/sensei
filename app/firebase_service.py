@@ -6,10 +6,11 @@ from firebase_admin import auth
 
 
 
-class FirebaseService:
+class FirebaseService():
   
-  def __init__(self, databaseURL, cert_path):
-    cred = credentials.Certificate(cert_path)
+  def __init__(self, databaseURL, creds):
+    print creds
+    cred = credentials.Certificate(creds)
     firebase_admin.initialize_app(cred, options={
         'databaseURL': databaseURL
     })

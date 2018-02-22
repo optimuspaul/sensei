@@ -18,3 +18,5 @@ app/static/*.html
 .DS_Store
 npm-debug.log
 *.orig
+.pytest_cache
+*-firebase-adminsdk-*.json 
