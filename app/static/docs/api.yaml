@@ -24,7 +24,7 @@ paths:
     post:
       summary: Upload radio observations.
       description: |
-        The Radio Observations endpoint provides a way to upload radio observations from sensors to the sensei platform.
+        The Radio Observations endpoint provides a way to upload radio observations from sensors to the sensei platform.  All observations in a single post must share the same observed_at time and classroom_id.
       consumes:
         - application/json
       parameters:

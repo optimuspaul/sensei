@@ -6,7 +6,7 @@ from shared import *
 from ..models import *
 import StringIO
 import urllib, urllib2, base64
-
+from ..data_publisher import data_publisher
 
 # Radio Observations upload #
 @api.route('/api/v1/radio_observations', methods=['POST'])
@@ -24,10 +24,39 @@ def post_radio_observations():
     if not isinstance(event_data, list):
         event_data = [event_data]
 
-    classroom_id = event_data[0]['classroom_id']
+    first_event = event_data[0]
 
-    mappings = {m.sensor_id: m for m in SensorMapping.query.filter_by(classroom_id=classroom_id, end_time=None)}
+    print("instrumentation mark 1: %d" % int((time.time() - mark) * 1000))
+    mark = time.time()
+
+    if not all(event['observed_at'] == first_event['observed_at'] for event in event_data):
+        abort(400, "All observations must have the same observed_at")
+
+    if not all(event['classroom_id'] == first_event['classroom_id'] for event in event_data):
+        abort(400, "All observations must have the same classroom_id")
+
+    classroom_id = first_event['classroom_id']
+
+    q = SensorMapping.query.filter_by(classroom_id=classroom_id, end_time=None)
+    print str(q)
+
+    print("instrumentation mark 1.1: %d" % int((time.time() - mark) * 1000))
+    mark = time.time()
+
+    qr = q.all()
+
+    print("instrumentation mark 1.2: %d" % int((time.time() - mark) * 1000))
+    mark = time.time()
+
+    mappings = {m.sensor_id: m for m in qr}
+
+    print("instrumentation mark 1.5: %d" % int((time.time() - mark) * 1000))
+    mark = time.time()
+
     relationships = {r.key(): r for r in EntityRelationship.query.filter_by(classroom_id=classroom_id)}
+
+    print("instrumentation mark 2: %d" % int((time.time() - mark) * 1000))
+    mark = time.time()
 
     obs = []
 
@@ -79,13 +108,14 @@ def post_radio_observations():
                 })
 
     db.session.commit() # This stores the new relationships
+
+    print("instrumentation mark 4: %d" % int((time.time() - mark) * 1000))
+    mark = time.time()
+
     if len(obs) > 0:
-
         batch.commit()
-
         RadioObservation.bulk_store(obs)
-
-        
+    	data_publisher.publish('radio_obs_frame', obs)
 
     return "OK", 201
 
