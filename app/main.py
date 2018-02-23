@@ -31,6 +31,9 @@ def create_app(config_obj):
     with app.app_context():
         db.create_all()
 
+    redis_store = app.config.get("REDIS_SERVICE")
+    redis_store.init_app(app)
+
     location_model_feeder = LocationModelFeeder()
     data_publisher.register_listener(location_model_feeder)
 

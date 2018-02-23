@@ -75,7 +75,6 @@ def post_radio_observations():
                 path = 'classrooms/%s/radio_observations/%s-%s-%s' % (classroom_id, local_mapping.entity_type.value, local_mapping.entity_id, observed_at)
                 doc_ref = firebase.db.document(path)
                 json_data = ob.as_dict_for_web_resource()
-                print "json_data: %s" % json_data
 
                 batch.set(doc_ref, {
                     'localType': u'%s' % json_data['local_type'],
