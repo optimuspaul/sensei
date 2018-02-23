@@ -56,5 +56,8 @@ class MockFirebaseService():
         self.db = MockFirebaseAdmin()
 
 class MockRedis():
+    def init_app(self, app):
+        pass
+
     def lpush(self, queue, object):
         return True
