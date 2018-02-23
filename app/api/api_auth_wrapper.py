@@ -6,7 +6,7 @@ from datetime import timedelta
 
 class APIAuthWrapper():
     def __init__(self):
-        max_age = timedelta(hours=5)
+        max_age = timedelta(minutes=10)
         self.cache = ExpiringDict(max_len=100, max_age_seconds=max_age.seconds)
 
     def auth_service(self):
