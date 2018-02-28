@@ -272,7 +272,7 @@ class ActivityTimelineControls extends React.Component {
           </div>
           <div className="row" style={{marginBottom: '10px'}}>
             <div className="col-md-12">
-              <Button active={this.props.insights.ui.isLive ? 'active' : ''}
+              <Button active={this.props.insights.ui.isLive}
                 bsStyle={this.props.insights.ui.isLive ? 'success' : 'default'}
                 onClick={() => { this.props.dispatch(this.props.toggleLive()) }} >Live</Button>
             </div>
@@ -282,7 +282,7 @@ class ActivityTimelineControls extends React.Component {
     }
 
     let viewpointSelector = '';
-    if (!_.includes(['studentSummary', 'socialGraph'], this.props.insights.ui.visualization)) {
+    if (!_.includes(['studentSummary', 'socialGraph', 'locations'], this.props.insights.ui.visualization)) {
       viewpointSelector = (
         <div className="row">
           <div className="col-md-12">
@@ -325,7 +325,7 @@ class ActivityTimelineControls extends React.Component {
                   <option key={`student-summary`} value={`studentSummary`}>Student Summary</option>
                   <option key={`unit-summary`} value={`unitSummary`}>Unit Summary</option>
                   <option key={`social-graph`} value={`socialGraph`}>Social Graph</option>
-                  <option key={`locations`} value={`locations`}>SensorLocations</option>
+                  <option key={`locations`} value={`locations`}>Sensor Locations</option>
                 </select>
               </div>
             </form>

@@ -202,7 +202,7 @@ export const fetchLocations = (date) => {
           return Promise.reject()
         }
         let classroom = doc.data();
-        unsubscribe = doc.ref.collection(`location_observations`)
+        unsubscribe = doc.ref.collection(`entity_locations`)
           .where('observedAt', '>', date)
           .where('observedAt', '<', endDate)
           .orderBy('observedAt', 'desc')

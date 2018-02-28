@@ -17,7 +17,7 @@ export default function locations() {
                       .domain([0, 5])
                       .range([5, 20]);
   let pulseScale = d3.scaleLinear()
-                      .domain([0, 5])
+                      .domain([3, 0])
                       .range([10, 0]); 
   let state = store.getState();
   let storeEntities = state.entities;
@@ -95,7 +95,7 @@ export default function locations() {
             return classroomScale(sensor[rotate ? 'x': 'y']);
           })
           .attr("r", (sensor) => {
-            let r = 10 + (c === 'pulse' ? pulseScale(sensor.strength) : 0);
+            let r = 10 + (c === 'pulse' ? pulseScale((sensor.xStdDev+sensor.yStdDev)/2) : 0);
             r = sensor.entityType === 'child' || sensor.entityType === 'teacher' ? r : r/2;
             return r;
           })
