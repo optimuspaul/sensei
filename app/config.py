@@ -3,7 +3,6 @@ from test_mocks import *
 from tc_auth_service import TCAuthService
 from tc_service import TCService
 from firebase_service import FirebaseService
-from flask_redis import FlaskRedis
 
 ######################################################
 # CONFIG PARAMS
@@ -16,7 +15,7 @@ class Base(object):
     FIREBASE_URL = os.getenv('FIREBASE_URL', 'https://sensei-b9fb6.firebaseio.com')
     API_AUTH_SERVICE = TCAuthService(TC_URL)
     TC_SERVICE = TCService(TC_URL)
-    REDIS_SERVICE = FlaskRedis()
+    REDIS_URL = os.getenv('REDIS_URL')
 
     FIREBASE_SERVICE = FirebaseService(FIREBASE_URL, {
       'private_key': os.getenv('FIREBASE_PRIVATE_KEY', False),
@@ -39,4 +38,3 @@ class TestConfig(Base):
     API_AUTH_SERVICE = MockAuthService()
     TC_SERVICE = MockTCService()
     FIREBASE_SERVICE = MockFirebaseService('test', 'test')
-    REDIS_SERVICE = MockRedis()

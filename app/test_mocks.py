@@ -57,7 +57,7 @@ class MockFirebaseService():
 
 class MockRedis():
     def init_app(self, app):
-        pass
+        app.extensions['redis'] = self
 
     def lpush(self, queue, object):
         return True

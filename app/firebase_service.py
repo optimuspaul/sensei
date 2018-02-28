@@ -7,7 +7,7 @@ from firebase_admin import auth
 
 
 class FirebaseService():
-  
+
   def __init__(self, databaseURL, creds):
     if creds.get('private_key'):
         cred = credentials.Certificate(creds)
@@ -16,6 +16,3 @@ class FirebaseService():
         })
         self.db = firebase_admin.firestore.client();
         self.auth = firebase_admin.auth;
-    
-
-

@@ -6,6 +6,8 @@ from api.api_json import APIJSONEncoder
 from flask_cors import CORS
 from data_publisher import data_publisher
 from location_model_feeder import LocationModelFeeder
+from flask_redis import FlaskRedis
+from test_mocks import MockRedis
 
 def create_app(config_obj):
     app = Flask(__name__)
@@ -31,7 +33,10 @@ def create_app(config_obj):
     with app.app_context():
         db.create_all()
 
-    redis_store = app.config.get("REDIS_SERVICE")
+    if app.config.get("REDIS_URL"):
+        redis_store = FlaskRedis()
+    else:
+        redis_store = MockRedis()
     redis_store.init_app(app)
 
     location_model_feeder = LocationModelFeeder()

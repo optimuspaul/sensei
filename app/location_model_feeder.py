@@ -11,5 +11,5 @@ class LocationModelFeeder:
             json_dicts = [ob.as_dict_for_web_resource() for ob in data]
             serialized_data = json.dumps(json_dicts)
             queue_name = 'radio_obs_classroom_%d' % data[0].classroom_id
-            redis = current_app.config.get("REDIS_SERVICE")
+            redis = current_app.extensions['redis']
             redis.lpush(queue_name, serialized_data)
