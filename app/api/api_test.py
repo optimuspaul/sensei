@@ -91,9 +91,9 @@ class ApiTestCase(unittest.TestCase):
 
         radio_ob2 = dict(
             classroom_id=1,
-            local_id=1,
-            remote_id=2,
-            observed_at=one_hour_ago.isoformat(),
+            local_id=2,
+            remote_id=1,
+            observed_at=now.isoformat(),
         )
         event_data = json.dumps([radio_ob, radio_ob2])
         result = self.api_post_json('radio_observations', event_data, True)
