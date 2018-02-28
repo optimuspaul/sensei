@@ -19,11 +19,61 @@ const functions = require('firebase-functions'),
       admin = require('firebase-admin'),
       logging = require('@google-cloud/logging')(),
       https = require('https'),
+      _ = require('lodash'),
       crypto = require('crypto');
 
 admin.initializeApp(functions.config().firebase);
 
 const db = admin.firestore();
+
+
+exports.createStripeSubscription = functions.firestore.document('/classrooms/{classroomId}/locationReports/{locationReportId}').onCreate(event => {
+
+  // This onWrite will trigger whenever anything is written to the path, so
+  // noop if the charge was deleted, errored out, or the Stripe API returned a result (id exists)
+  if (!event.data.exists) return null;
+
+  const currentLoc = event.data.data();
+
+  const currentEntityUid = currentLoc.entityId;
+
+  const date = currentLoc.observedAt;
+  const dateKey = `${date.getMonth()}-${date.getDate()}-${date.getYear()}`;
+
+  const quadrantX = parseInt(currentLoc.x)
+  const quadrantY = parseInt(currentLoc.y)
+
+  return db.doc(`/classrooms/${event.params.classroomId}/interaction_periods/${dateKey}`)
+    .get()
+    .then(doc => {
+      if (doc.exists) {
+        let ips = doc.data();
+        let quadrant = _.get(ips, `grid.${quadrantX}.${quadrantY}`, {});
+        let interactions = _.filter(quadrant, (location, entityUid) => {
+          return location.observedAt === currentLoc.observedAt;
+        });
+        
+        entities[currentEntityUid] = entities[currentEntityUid] || {}
+        let updatedSegments = _.reduce(entities, (current, entity, entityUid) => {
+          let entitySegments _.get(entity, `potential.${currentEntityUid}`, []);
+
+        }, {})
+      }
+      
+  }).then(response => {
+      // If the result is successful, write it back to the database
+      return event.data.ref.set(response);
+    }, error => {
+      // We want to capture errors and render them in a user-friendly way, while
+      // still logging an exception with Stackdriver
+      return event.data.ref.update({error: userFacingMessage(error)}).then(() => {
+        return reportError(error, {user: event.params.userId});
+      });
+    }
+  );
+});
+
+
 
 
 // To keep on top of errors, we should raise a verbose error report with Stackdriver rather
