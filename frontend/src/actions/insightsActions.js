@@ -133,7 +133,7 @@ export const updateCurrentVisualization = () => {
 
     switch(visualization) {
       case 'locations':
-        dispatch(fetchLocations());
+        dispatch(fetchLocations(currentDate));
         break;
       case 'activityTimeline':
         dispatch(fetchObservations(currentEntityId, currentEntityType, currentDate, interactionType));
@@ -178,7 +178,7 @@ export const fetchLocations = (date) => {
     let state = getState();
     date = date || _.get(state, 'insights.ui.currentDate');
     date = date ? new Date(date) : new Date();
-    date.setHours(0);
+    date.setHours(date.getHours()+(date.getTimezoneOffset()/60));
 
     if (prevDate === date) {
       return;
@@ -190,12 +190,12 @@ export const fetchLocations = (date) => {
     let entityType = _.get(state, 'insights.ui.currentEntityType');
 
     let endDate = new Date(date);
-    endDate.setDate(endDate.getDate() + 1);
+    endDate.setHours(23);
 
     unsubscribe && unsubscribe();
 
     firebase.firestore()
-      .doc(`/classrooms/${getClassroomId()}`)
+      .doc(`/classrooms/${/*getClassroomId()*/735}`)
       .get()
       .then((doc) => {
         if (!doc.exists) {
@@ -203,15 +203,15 @@ export const fetchLocations = (date) => {
         }
         let classroom = doc.data();
         unsubscribe = doc.ref.collection(`entity_locations`)
-          .where('observedAt', '>', date)
-          .where('observedAt', '<', endDate)
-          .orderBy('observedAt', 'desc')
+          .where('timestamp', '>', date)
+          .where('timestamp', '<', endDate)
+          .orderBy('timestamp', 'desc')
           .onSnapshot(function(snapshot) {
             let locations = _.filter(snapshot.docChanges, {type: "added"});
             let segmentedLocations = _.reduce(locations, (current, location) => {
               let data = location.doc.data();
-              let dateString = data.observedAt.toISOString();
-              current[dateString] = current[dateString] || {sensors: [], timestamp: data.observedAt};
+              let dateString = data.timestamp.toISOString();
+              current[dateString] = current[dateString] || {sensors: [], timestamp: data.timestamp};
               current[dateString].sensors.push(data);
               return current;
             }, {})

@@ -1,11 +1,10 @@
-#foundation #visualization.locations svg {
+/*#foundation #visualization.locations svg {
   border: 3px solid black;
 }
 
 #foundation #visualization.locations svg .sensors circle {
   cursor: pointer;
   stroke: red;
-  /*stroke: black; */
   stroke-width: 2px;
   stroke-opacity: 1;
 }
@@ -21,4 +20,4 @@
   animation-duration: 2s;
   animation-name: pulse;
   animation-iteration-count: infinite;
-}
+}*/
