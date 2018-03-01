@@ -7,7 +7,7 @@
   stroke: red;
   /*stroke: black; */
   stroke-width: 2px;
-  stroke-opacity: 0.2;
+  stroke-opacity: 0.15;
   fill: #ff0000;
   opacity: 0.6;
 }
@@ -53,7 +53,7 @@
   /*fill: white;*/
   /*fill-opacity: 0;*/
   /*transform-origin: 50% 50%;*/
-  animation-duration: 2s;
+  animation-duration: 1s;
   animation-name: pulse;
   animation-timing-function: ease-in;
   animation-iteration-count: infinite;
