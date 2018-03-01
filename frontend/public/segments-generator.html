@@ -22,6 +22,9 @@
 
       let inflectionPoint = 5;
 
+      let i = 1;
+
+
       db.collection(`/classrooms/735/entity_locations`)
         .where("timestamp", ">", startDate)
         .orderBy("timestamp", "asc")
@@ -35,8 +38,6 @@
             current[data.timestamp.toISOString()].push(data);
             return current;
           }, {});
-
-          let i=1;
 
           let segments = _.reduce(locationsByTimestamp, (current, locations, timestamp) => {
             _.each(locations, (location) => {
@@ -52,60 +53,54 @@
                   mod = 1 + 1/(1/(1-(delta*3)))
                 }
 
-                let threshold = _.get(current, `${location.entityUid}.${loc.entityUid}.threshold`, 0);
-                let newThreshold = threshold+mod;
-                newThreshold = newThreshold < 0 ? 0 : newThreshold;
-                _.set(current, `${location.entityUid}.${loc.entityUid}.threshold`, newThreshold);
-                _.set(current, `${location.entityUid}.${loc.entityUid}.prevThreshold`, threshold);
-                if (threshold >= inflectionPoint && newThreshold < inflectionPoint) {
+                let prevThreshold = _.get(current, `${location.entityUid}.${loc.entityUid}.threshold`, 0);
+                let threshold = prevThreshold+mod;
+                threshold = threshold < 0 ? 0 : threshold;
+                _.set(current, `${location.entityUid}.${loc.entityUid}.threshold`, threshold);
+                _.set(current, `${location.entityUid}.${loc.entityUid}.prevThreshold`, prevThreshold);
+                
+                if (prevThreshold >= inflectionPoint && threshold < inflectionPoint) {
                   let locationPeriods = _.get(current, `${location.entityUid}.interactionPeriods`, [])
                   currentPeriod.endTime = timestamp
                   locationPeriods.push(currentPeriod);
                   locationPeriods = _.orderBy(locationPeriods, ['startTime'], ['asc'])
                   _.set(current, `${location.entityUid}.interactionPeriods`, locationPeriods);
                   _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`, {});
-                } else if (newThreshold >= inflectionPoint && threshold < inflectionPoint) {
+                } else if (threshold >= inflectionPoint && prevThreshold < inflectionPoint) {
                   _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`, {
                     startTime: location.timestamp, 
                     targetEntityId: loc.entityId, 
                     targetEntityType: loc.entityType
                   });
                 } else {
-                  _.set(current, `${location.entityUid}.${loc.entityUid}.endTime`, timestamp);
+                  _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod.endTime`, timestamp);
                 }
-                _.set(current, `${location.entityUid}.${loc.entityUid}.threshold`, newThreshold);
+
               });
             });
 
-            segmentsOverTime.push(_.merge({}, current));
+            render(_.merge({}, current));
             
             return current;
           }, {})
 
-          _.each(segmentsOverTime, (segments, i) => {
-            setTimeout(() => { 
-              let segmentsEl = document.querySelector("#segments");
-              segmentsEl.innerHTML = '';
-
-              let svelt = _.reduce(segments, (current, seg, key) => {
-                current[key] = _.pick(seg, ['interactionPeriods']);
-                _.each(seg, (s, k) => {
-                  // if (s.threshold !== 0 && s.newThreshold !== 0) {
-                    _.set(current, `${key}.${k}`, s);
-                  // }
-                });
-                return current;
-              }, {});
-              _.each(svelt, (s, k) => {
-                let pre = document.createElement('pre');
-                pre.innerHTML = output({[k]: s});
-                segmentsEl.appendChild(pre);
-              })
-              // output(svelt)
-            }, (400*(i+1)));
-          });
-
+          
         })
+
+      
+
+      function render(segments) {
+        setTimeout(() => { 
+          let segmentsEl = document.querySelector("#segments");
+          segmentsEl.innerHTML = '';
+          _.each(segments, (s, k) => {
+            let pre = document.createElement('pre');
+            pre.innerHTML = output({[k]: s});
+            segmentsEl.appendChild(pre);
+          })
+        }, (400*(i)));
+        i++;
+      }
 
       function output(obj) {
 
