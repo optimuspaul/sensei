@@ -195,7 +195,7 @@ export const fetchLocations = (date) => {
     unsubscribe && unsubscribe();
 
     firebase.firestore()
-      .doc(`/classrooms/${getClassroomId()}`)
+      .doc(`/classrooms/${/*getClassroomId()*/735}`)
       .get()
       .then((doc) => {
         if (!doc.exists) {

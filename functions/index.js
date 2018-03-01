@@ -27,7 +27,7 @@ admin.initializeApp(functions.config().firebase);
 const db = admin.firestore();
 
 
-exports.createStripeSubscription = functions.firestore.document('/classrooms/{classroomId}/locationReports/{locationReportId}').onCreate(event => {
+exports.createStripeSubscription = functions.firestore.document('/classrooms/{classroomId}/entity_locations/{entityLocationsId}').onCreate(event => {
 
   // This onWrite will trigger whenever anything is written to the path, so
   // noop if the charge was deleted, errored out, or the Stripe API returned a result (id exists)
@@ -35,30 +35,67 @@ exports.createStripeSubscription = functions.firestore.document('/classrooms/{cl
 
   const currentLoc = event.data.data();
 
-  const currentEntityUid = currentLoc.entityId;
+  const currentEntityUid = `${currentLoc.entityType}-${currentLoc.entityId}`;
 
   const date = currentLoc.observedAt;
   const dateKey = `${date.getMonth()}-${date.getDate()}-${date.getYear()}`;
 
+  let startDate = new Date(date);
+  startDate.setHours(0);
+  startDate.setMinutes(0);
+
   const quadrantX = parseInt(currentLoc.x)
   const quadrantY = parseInt(currentLoc.y)
 
-  return db.doc(`/classrooms/${event.params.classroomId}/interaction_periods/${dateKey}`)
-    .get()
-    .then(doc => {
-      if (doc.exists) {
-        let ips = doc.data();
-        let quadrant = _.get(ips, `grid.${quadrantX}.${quadrantY}`, {});
-        let interactions = _.filter(quadrant, (location, entityUid) => {
-          return location.observedAt === currentLoc.observedAt;
-        });
-        
-        entities[currentEntityUid] = entities[currentEntityUid] || {}
-        let updatedSegments = _.reduce(entities, (current, entity, entityUid) => {
-          let entitySegments _.get(entity, `potential.${currentEntityUid}`, []);
+  return db.collection(`/classrooms/${event.params.classroomId}/entity_locations`)
+    .where("timestamp", ">", startDate)
+    .orderBy("timestamp", "asc")
+    .then(querySnapshot => {
 
-        }, {})
-      }
+      let locationsByTimestamp = _.reduce(querySnapshot, (current, doc) => {
+        let data = doc.data();
+        current[data.timestamp.toISOString()] = current[data.timestamp.toISOString()] || [];
+        data.entityUid = `${data.entityType}-${data.entityId}`;
+        current[data.timestamp.toISOString()].push(data);
+      }, {});
+
+      let segments = _.reduce(locationsByTimestamp, (current, locations, timestamp) => {
+        _.each(locations, (location) => {
+          _.each(otherLocations, (loc) => {
+            if (loc.entityUid === location.entityUid) return;
+            let currentPeriod = _.get(current, `${location.entityUid}.currentPeriod`);
+            let threshold = _.get(current, `${location.entityUid}.threshold`, 0);
+            newThreshold = Math.hypot(loc.x - location.x, loc.y-location.y) < 1 ? threshold+1 : threshold/2;
+            if (threshold >= 1 && newThreshold < 1) {
+              let locationPeriods = _.get(current, `${location.entityUid}.interactionPeriods`, [])
+              currentPeriod.endTime = location.timestamp
+              locationPeriods.push(currentPeriod);
+              _.set(current, `${location.entityUid}.interactionPeriods`, locationPeriods);
+            } else if (threshold >= 1 && newThreshold < 1) {
+              _.set(current, `${location.entityUid}.currentPeriod`, {
+                startTime: location.timestamp, 
+                targetEntityId: loc.entityId, 
+                targetEntityType: loc.entityType
+              });
+            }
+            _.set(current, `${location.entityUid}.threshold`, newThreshold);
+          });
+        })
+      }, {})
+      
+        // let ips = doc.data();
+        // ips = _.set(ips, `${date.toISOString()}.grid.${quadrantX}.${quadrantY}`, currentLoc);
+        // let currentGrid = _.get(ips, `${date.toISOString()}.grid`);
+        // let currentPeriods = _.get(ips, `${date.toISOString()}.grid`);
+
+        // ips = _.reduce(currentGrid, (current, xQuad, x) => {
+          
+        //   let newXQuad = _.reduce(xQuad, (current, yQuad, y) => {
+
+        //   }, ips);
+        //   _.set(current, `${date.toISOString()}.grid.${x}`, newXQuad);
+
+        // }, ips)
       
   }).then(response => {
       // If the result is successful, write it back to the database
