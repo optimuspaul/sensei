@@ -6,7 +6,7 @@ from shared import *
 from ..models import *
 import StringIO
 import urllib, urllib2, base64
-
+from ..data_publisher import data_publisher
 
 # Radio Observations upload #
 @api.route('/api/v1/radio_observations', methods=['POST'])
@@ -24,7 +24,15 @@ def post_radio_observations():
     if not isinstance(event_data, list):
         event_data = [event_data]
 
-    classroom_id = event_data[0]['classroom_id']
+    first_event = event_data[0]
+
+    if not all(event['observed_at'] == first_event['observed_at'] for event in event_data):
+        abort(400, "All observations must have the same observed_at")
+
+    if not all(event['classroom_id'] == first_event['classroom_id'] for event in event_data):
+        abort(400, "All observations must have the same classroom_id")
+
+    classroom_id = first_event['classroom_id']
 
     mappings = {m.sensor_id: m for m in SensorMapping.query.filter_by(classroom_id=classroom_id, end_time=None)}
     relationships = {r.key(): r for r in EntityRelationship.query.filter_by(classroom_id=classroom_id)}
@@ -67,7 +75,6 @@ def post_radio_observations():
                 path = 'classrooms/%s/radio_observations/%s-%s-%s' % (classroom_id, local_mapping.entity_type.value, local_mapping.entity_id, observed_at)
                 doc_ref = firebase.db.document(path)
                 json_data = ob.as_dict_for_web_resource()
-                print "json_data: %s" % json_data
 
                 batch.set(doc_ref, {
                     'localType': u'%s' % json_data['local_type'],
@@ -79,13 +86,11 @@ def post_radio_observations():
                 })
 
     db.session.commit() # This stores the new relationships
+
     if len(obs) > 0:
-
         batch.commit()
-
         RadioObservation.bulk_store(obs)
-
-        
+    	data_publisher.publish('radio_obs_frame', obs)
 
     return "OK", 201
 

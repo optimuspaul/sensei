@@ -19,4 +19,6 @@ app/static/*.html
 npm-debug.log
 *.orig
 .pytest_cache
-*-firebase-adminsdk-*.json
+*-firebase-adminsdk-*.json 
+*.env
+.localenv.sh

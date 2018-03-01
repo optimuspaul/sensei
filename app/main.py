@@ -4,6 +4,10 @@ from models import db,migrate
 from api import api
 from api.api_json import APIJSONEncoder
 from flask_cors import CORS
+from data_publisher import data_publisher
+from location_model_feeder import LocationModelFeeder
+from flask_redis import FlaskRedis
+from test_mocks import MockRedis
 
 def create_app(config_obj):
     app = Flask(__name__)
@@ -24,8 +28,18 @@ def create_app(config_obj):
         return app.send_static_file('bundle.css')
     @app.route('/assets/<filename>')
     def main_assets(filename):
-        print "filename: %s" % filename
+        print("filename: %s" % filename)
         return app.send_static_file(filename)
     with app.app_context():
         db.create_all()
+
+    if app.config.get("REDIS_URL"):
+        redis_store = FlaskRedis()
+    else:
+        redis_store = MockRedis()
+    redis_store.init_app(app)
+
+    location_model_feeder = LocationModelFeeder()
+    data_publisher.register_listener(location_model_feeder)
+
     return app

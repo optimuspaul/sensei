@@ -17,8 +17,8 @@ export default function locations() {
                       .domain([0, 5])
                       .range([5, 20]);
   let pulseScale = d3.scaleLinear()
-                      .domain([0, 5])
-                      .range([10, 0]); 
+                      .domain([0, 1])
+                      .range([0, 10]); 
   let state = store.getState();
   let storeEntities = state.entities;
   let vizElement = document.querySelector("#visualization #locations");
@@ -74,7 +74,7 @@ export default function locations() {
         .duration(1000)
         .ease(d3.easeCubic);
 
-      _.each(['pulse', 'fill'], (c) => {
+      _.each(['fill'], (c) => {
 
         let circle = sensorWrapper
           .selectAll(`circle.${c}`)
@@ -95,9 +95,12 @@ export default function locations() {
             return classroomScale(sensor[rotate ? 'x': 'y']);
           })
           .attr("r", (sensor) => {
-            let r = 10 + (c === 'pulse' ? pulseScale(sensor.strength) : 0);
+            let r = 10 + (c === 'pulse' ? pulseScale(10*(sensor.xStdDev+sensor.yStdDev)/2) : 0);
             r = sensor.entityType === 'child' || sensor.entityType === 'teacher' ? r : r/2;
             return r;
+          })
+          .attr("style", (sensor) => {
+            return `stroke-width: ${pulseScale(10*(sensor.xStdDev+sensor.yStdDev)/2)}`
           })
           
       })

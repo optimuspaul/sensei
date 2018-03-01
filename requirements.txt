@@ -1,6 +1,6 @@
 Flask==0.12
 Flask-SQLAlchemy==2.1
-psycopg2==2.6.2
+psycopg2==2.7
 SQLAlchemy==1.1.5
 Werkzeug==0.12.1
 transitions
@@ -16,3 +16,6 @@ pytz==2017.2
 tzlocal==1.4
 boto3==1.4.7
 firebase-admin==2.8.0
+redis==2.10.6
+flask-redis==0.3.0
+expiringdict==1.1.4

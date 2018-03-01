@@ -35,9 +35,6 @@ class MockTCService():
                 first_name='Kid',
                 last_name='Tester')])
 
-
-
-
 class MockFirestoreObject():
     def set(self, ref=True, data=True, opts=True):
         return True
@@ -52,8 +49,15 @@ class MockFirebaseAdmin():
     def document(self, path='test'):
         return MockFirestoreObject()
 
-class MockFirebaseService():  
+class MockFirebaseService():
     def __init__(self, databaseURL=True, cert_path=True):
         self.url = databaseURL
         self.cert_path = cert_path
         self.db = MockFirebaseAdmin()
+
+class MockRedis():
+    def init_app(self, app):
+        app.extensions['redis'] = self
+
+    def lpush(self, queue, object):
+        return True
