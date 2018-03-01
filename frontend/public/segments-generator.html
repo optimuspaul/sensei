@@ -1,0 +1,153 @@
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.5/lodash.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.9.0/firebase.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.9.1/firebase-firestore.js"></script>
+    <script>
+
+      var config = {
+        apiKey: "AIzaSyDzq21S_rOxnJsBS9j4qBY1HPmQvghcawY",
+        authDomain: "sensei-b9fb6.firebaseapp.com",
+        databaseURL: "https://sensei-b9fb6.firebaseio.com",
+        projectId: "sensei-b9fb6",
+        storageBucket: "sensei-b9fb6.appspot.com",
+        messagingSenderId: "8499900719"
+      };
+      firebase.initializeApp(config);
+      let db = firebase.firestore();
+
+      let startDate = new Date("02-28-2018");
+
+      let segmentsOverTime = []
+
+      let inflectionPoint = 5;
+
+      db.collection(`/classrooms/735/entity_locations`)
+        .where("timestamp", ">", startDate)
+        .orderBy("timestamp", "asc")
+        .limit(1000)
+        .onSnapshot((querySnapshot) => {
+          let docs = querySnapshot.docs || [];
+          let locationsByTimestamp = _.reduce(docs, (current, doc) => {
+            let data = doc.data();
+            current[data.timestamp.toISOString()] = current[data.timestamp.toISOString()] || [];
+            data.entityUid = `${data.entityType}-${data.entityId}`;
+            current[data.timestamp.toISOString()].push(data);
+            return current;
+          }, {});
+
+          let i=1;
+
+          let segments = _.reduce(locationsByTimestamp, (current, locations, timestamp) => {
+            _.each(locations, (location) => {
+              _.each(locations, (loc) => {
+                if (loc.entityUid === location.entityUid) return;
+                let currentPeriod = _.get(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`, {});
+
+                if (_.isNaN(loc.x) || _.isNaN(location.x)) {
+                  mod = -10;
+                } else {
+                  let delta =  Math.hypot(loc.x - location.x, loc.y-location.y);
+                  delta = delta === 0 ? 0.001 : delta;
+                  mod = 1 + 1/(1/(1-(delta*3)))
+                }
+
+                let threshold = _.get(current, `${location.entityUid}.${loc.entityUid}.threshold`, 0);
+                let newThreshold = threshold+mod;
+                newThreshold = newThreshold < 0 ? 0 : newThreshold;
+                _.set(current, `${location.entityUid}.${loc.entityUid}.threshold`, newThreshold);
+                _.set(current, `${location.entityUid}.${loc.entityUid}.prevThreshold`, threshold);
+                if (threshold >= inflectionPoint && newThreshold < inflectionPoint) {
+                  let locationPeriods = _.get(current, `${location.entityUid}.interactionPeriods`, [])
+                  currentPeriod.endTime = timestamp
+                  locationPeriods.push(currentPeriod);
+                  locationPeriods = _.orderBy(locationPeriods, ['startTime'], ['asc'])
+                  _.set(current, `${location.entityUid}.interactionPeriods`, locationPeriods);
+                  _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`, {});
+                } else if (newThreshold >= inflectionPoint && threshold < inflectionPoint) {
+                  _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`, {
+                    startTime: location.timestamp, 
+                    targetEntityId: loc.entityId, 
+                    targetEntityType: loc.entityType
+                  });
+                } else {
+                  _.set(current, `${location.entityUid}.${loc.entityUid}.endTime`, timestamp);
+                }
+                _.set(current, `${location.entityUid}.${loc.entityUid}.threshold`, newThreshold);
+              });
+            });
+
+            segmentsOverTime.push(_.merge({}, current));
+            
+            return current;
+          }, {})
+
+          _.each(segmentsOverTime, (segments, i) => {
+            setTimeout(() => { 
+              let segmentsEl = document.querySelector("#segments");
+              segmentsEl.innerHTML = '';
+
+              let svelt = _.reduce(segments, (current, seg, key) => {
+                current[key] = _.pick(seg, ['interactionPeriods']);
+                _.each(seg, (s, k) => {
+                  // if (s.threshold !== 0 && s.newThreshold !== 0) {
+                    _.set(current, `${key}.${k}`, s);
+                  // }
+                });
+                return current;
+              }, {});
+              _.each(svelt, (s, k) => {
+                let pre = document.createElement('pre');
+                pre.innerHTML = output({[k]: s});
+                segmentsEl.appendChild(pre);
+              })
+              // output(svelt)
+            }, (400*(i+1)));
+          });
+
+        })
+
+      function output(obj) {
+
+
+        let json = JSON.stringify(obj, undefined, 2);
+        
+
+          if (typeof json != 'string') {
+               json = JSON.stringify(json, undefined, 2);
+          }
+          json = json.replace(/&/g, '&nbsp;').replace(/</g, '&lt;').replace(/>/g, '&nbsp;');
+          return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+              var cls = 'number';
+              if (/^"/.test(match)) {
+                  if (/:$/.test(match)) {
+                      cls = 'key';
+                  } else {
+                      cls = 'string';
+                  }
+              } else if (/true|false/.test(match)) {
+                  cls = 'boolean';
+              } else if (/null/.test(match)) {
+                  cls = 'null';
+              }
+              return '<span class="' + cls + '">' + match + '</span>';
+          });
+      }
+
+    </script>
+
+    <style>
+      body { width: 10000px; }
+      pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; font-size:8px; float: left; width: 300px; }
+      .string { color: green; }
+      .number { color: darkorange; }
+      .boolean { color: blue; }
+      .null { color: magenta; }
+      .key { color: red; }
+    </style>
+  </head>
+  <body>
+    <div id="segments"></div>
+  </body>
+
+  </html>
