@@ -46,11 +46,10 @@ def classrooms_index():
 
 
 # Accelerometer Observations upload #
-@api.route('/api/v1/classrooms', methods=['POST'])
+@api.route('/api/v1/classrooms/<int:id>', methods = ['PUT'])
 @api_auth.requires_auth
-def post_classroom():
+def post_classroom(classroom_id):
     req = request.get_json()
-    classroom_id = req.get('classroom_id')
     classroom = req.get('classroom')
     if not classroom_id:
         abort(400, "Missing classroom_id")
