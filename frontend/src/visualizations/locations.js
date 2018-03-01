@@ -18,7 +18,7 @@ export default function locations() {
                       .range([5, 20]);
   let pulseScale = d3.scaleLinear()
                       .domain([0, 1])
-                      .range([0, 10]); 
+                      .range([0, 7]); 
   let state = store.getState();
   let storeEntities = state.entities;
   let vizElement = document.querySelector("#visualization #locations");
@@ -74,10 +74,9 @@ export default function locations() {
         .duration(1000)
         .ease(d3.easeCubic);
 
-      _.each(['fill'], (c) => {
 
         let circle = sensorWrapper
-          .selectAll(`circle.${c}`)
+          .selectAll(`circle.fill`)
           .data(sensors)
 
         circle.exit().remove();
@@ -86,7 +85,7 @@ export default function locations() {
           .merge(circle)
           .transition(t)
           .attr('class', (sensor) => {
-            return  `${sensor.entityType} ${c}`
+            return  `${sensor.entityType} fill`
           })
           .attr("cx", (sensor, index) => {
             return classroomScale(sensor[rotate ? 'y': 'x']);
@@ -94,16 +93,11 @@ export default function locations() {
           .attr("cy", (sensor) => {
             return classroomScale(sensor[rotate ? 'x': 'y']);
           })
-          .attr("r", (sensor) => {
-            let r = 10 + (c === 'pulse' ? pulseScale(10*(sensor.xStdDev+sensor.yStdDev)/2) : 0);
-            r = sensor.entityType === 'child' || sensor.entityType === 'teacher' ? r : r/2;
-            return r;
-          })
+          .attr("r", 10)
           .attr("style", (sensor) => {
             return `stroke-width: ${pulseScale(10*(sensor.xStdDev+sensor.yStdDev)/2)}`
           })
           
-      })
     }
 
     vizElement.addEventListener('dataChanged',
