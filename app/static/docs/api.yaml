@@ -735,6 +735,15 @@ definitions:
       name:
         type: string
         description: Name of the area.
+      x_position:
+        type: number
+        description: The area's x coordinate within its classroom
+      y_position:
+        type: number
+        description: The area's y coordinate within its classroom
+      z_position:
+        type: number
+        description: The area's z coordinate within its classroom
   Material:
     type: object
     description: Classroom materials that children engage with for lessons.
