@@ -34,82 +34,137 @@ exports.createStripeSubscription = functions.firestore.document('/classrooms/{cl
   if (!event.data.exists) return null;
 
   const currentLoc = event.data.data();
+  const classroomId = event.params.classroomId;
+  const INFLECTION_POINT = 3;
 
   const currentEntityUid = `${currentLoc.entityType}-${currentLoc.entityId}`;
 
-  const date = currentLoc.observedAt;
+  const date = currentLoc.timestamp;
   const dateKey = `${date.getMonth()}-${date.getDate()}-${date.getYear()}`;
+
+  
 
   let startDate = new Date(date);
   startDate.setHours(0);
   startDate.setMinutes(0);
 
-  const quadrantX = parseInt(currentLoc.x)
-  const quadrantY = parseInt(currentLoc.y)
-
-  return db.collection(`/classrooms/${event.params.classroomId}/entity_locations`)
-    .where("timestamp", ">", startDate)
-    .orderBy("timestamp", "asc")
-    .then(querySnapshot => {
-
-      let locationsByTimestamp = _.reduce(querySnapshot, (current, doc) => {
+  db.doc(`/classrooms/${classroomId}`).get()
+    .then((doc) => {
+      if (doc.exists) {
         let data = doc.data();
-        current[data.timestamp.toISOString()] = current[data.timestamp.toISOString()] || [];
-        data.entityUid = `${data.entityType}-${data.entityId}`;
-        current[data.timestamp.toISOString()].push(data);
-      }, {});
+        if (!data.interactions || !data.interactions.updatedAt || (currentLoc.timestamp - data.interactions.updatedAt) < (1000*60) ) {
+          Promise.resolve(doc)
+        }
+      }
+    })
+    .then((classroom) => {
+      let data = classroom.data();
 
-      let segments = _.reduce(locationsByTimestamp, (current, locations, timestamp) => {
-        _.each(locations, (location) => {
-          _.each(otherLocations, (loc) => {
-            if (loc.entityUid === location.entityUid) return;
-            let currentPeriod = _.get(current, `${location.entityUid}.currentPeriod`);
-            let threshold = _.get(current, `${location.entityUid}.threshold`, 0);
-            newThreshold = Math.hypot(loc.x - location.x, loc.y-location.y) < 1 ? threshold+1 : threshold/2;
-            if (threshold >= 1 && newThreshold < 1) {
-              let locationPeriods = _.get(current, `${location.entityUid}.interactionPeriods`, [])
-              currentPeriod.endTime = location.timestamp
-              locationPeriods.push(currentPeriod);
-              _.set(current, `${location.entityUid}.interactionPeriods`, locationPeriods);
-            } else if (threshold >= 1 && newThreshold < 1) {
-              _.set(current, `${location.entityUid}.currentPeriod`, {
-                startTime: location.timestamp, 
-                targetEntityId: loc.entityId, 
-                targetEntityType: loc.entityType
+      if (!data.interactions.updatedAt) {
+        return classroom.ref.set({
+          interactions: {
+            updatedAt: currentLoc.timestamp
+          }
+        }, {
+          merge: true
+        });
+      }
+
+      return db.collection(`/classrooms/${classroomId}/entity_locations`)
+        .where("timestamp", ">=", data.interactions.updatedAt)
+        .where("timestamp", "<", currentLoc.timestamp)
+        .orderBy("timestamp", "asc")
+        .get()
+        .then((querySnapshot) => {
+          let locationsByTimestamp = groupLocationsByTimestamp(querySnapshot.docs)
+          let entities = updateEntities(locationsByTimestamp, data.interactions.entities)
+          let batch = db.batch();
+            _.each(entities, (entity, entityUid) => {
+              _.each(entity.interactionPeriods, (ip) => {
+                let ipRef = db.doc(`/classrooms/${classroomId}/interaction_periods/${entityUid}-${ip.startTime.toISOString()}`);
+                batch.set(ipRef, ip);
+                _.set(entities, `${entityUid}.interactionPeriods`, []);
               });
-            }
-            _.set(current, `${location.entityUid}.threshold`, newThreshold);
-          });
-        })
-      }, {})
-      
-        // let ips = doc.data();
-        // ips = _.set(ips, `${date.toISOString()}.grid.${quadrantX}.${quadrantY}`, currentLoc);
-        // let currentGrid = _.get(ips, `${date.toISOString()}.grid`);
-        // let currentPeriods = _.get(ips, `${date.toISOString()}.grid`);
+            });
 
-        // ips = _.reduce(currentGrid, (current, xQuad, x) => {
-          
-        //   let newXQuad = _.reduce(xQuad, (current, yQuad, y) => {
+          return batch.commit()
+            .then(() => {
+              return classroom.ref.set({
+                interactions: {
+                  updatedAt: Date.parse(_.last(_.keys(locationsByTimestamp))),
+                  entities
+                }
+              }, {merge: true});
+            });
+        });
 
-        //   }, ips);
-        //   _.set(current, `${date.toISOString()}.grid.${x}`, newXQuad);
-
-        // }, ips)
-      
-  }).then(response => {
-      // If the result is successful, write it back to the database
-      return event.data.ref.set(response);
-    }, error => {
-      // We want to capture errors and render them in a user-friendly way, while
-      // still logging an exception with Stackdriver
-      return event.data.ref.update({error: userFacingMessage(error)}).then(() => {
-        return reportError(error, {user: event.params.userId});
-      });
-    }
-  );
+    })
+    .catch(error => {
+      reportError(error, {params: event.params});
+    });
 });
 
+
+function groupLocationsByTimestamp(locationDocs) {
+  return _.reduce(locationDocs, (current, doc) => {
+    let data = doc.data();
+    current[data.timestamp.toISOString()] = current[data.timestamp.toISOString()] || [];
+    data.entityUid = `${data.entityType}-${data.entityId}`;
+    current[data.timestamp.toISOString()].push(data);
+    return current;
+  }, {});
+}
+
+function updateEntities(locationsByTimestamp, entities = {}) {
+  return _.reduce(locationsByTimestamp, (current, locations, timestamp) => {
+    timestamp = new Date(timestamp);
+    _.each(locations, (location) => {
+      _.each(locations, (loc) => {
+        if (loc.entityUid === location.entityUid) return;
+        let currentPeriod = _.get(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`);
+        let prevIpq = _.get(current, `${location.entityUid}.${loc.entityUid}.ipq`, 0);
+        let ipq = calcIpq(prevIpq, location, loc, currentPeriod, timestamp);
+        _.set(current, `${location.entityUid}.${loc.entityUid}.ipq`, ipq);
+        
+        if (prevIpq >= INFLECTION_POINT && ipq < INFLECTION_POINT) {
+          let locationPeriods = _.get(current, `${location.entityUid}.interactionPeriods`, [])
+          currentPeriod.endTime = new Date(timestamp);
+          locationPeriods.push(currentPeriod);
+          _.set(current, `${location.entityUid}.interactionPeriods`, locationPeriods);
+          _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`, {});
+        } else if (ipq >= INFLECTION_POINT && prevIpq < INFLECTION_POINT) {
+          _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`, {
+            startTime: location.timestamp, 
+            targetEntityId: loc.entityId, 
+            targetEntityType: loc.entityType
+          });
+        }
+        _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod.endTime`, new Date(timestamp));
+      });
+    });
+    render(_.merge({}, current));
+    return current;
+  }, entities)
+}
+
+function calcIpq(prevIpq, loc1, loc2, currentPeriod = {}, currentTimestamp) {
+  let mod = 0;
+  if (_.isNaN(loc2.x) || _.isNaN(loc1.x)) {
+    mod = -10;
+  } else {
+    let delta =  Math.hypot(loc2.x - loc1.x, loc2.y-loc1.y);
+    delta = delta === 0 ? 0.001 : delta;
+    mod = 1 + 1/(1/(1-(delta*3)));
+    let latestTime = currentPeriod.endTime || currentPeriod.startTime;
+    if (latestTime) {
+      mod += (1-((currentTimestamp - latestTime)/10000));
+    }
+  }
+  let ipq = prevIpq+mod;
+  ipq = ipq - (5*(1/Math.pow(ipq-10,2)));
+  ipq = ipq < 0 ? 0 : ipq;
+  return ipq;
+}
 
 
 
