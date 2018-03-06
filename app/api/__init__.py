@@ -9,5 +9,5 @@ from areas import *
 from materials import *
 from classrooms import *
 from camera_data import *
-from location_observations import *
+from entity_locations import *
 from fb_token import *

@@ -9,9 +9,9 @@ import urllib, urllib2, base64
 from dateutil.parser import parse
 
 # Accelerometer Observations upload #
-@api.route('/api/v1/location_observations', methods=['POST'])
+@api.route('/api/v1/entity_locations', methods=['POST'])
 @api_auth.requires_auth
-def post_location_observations():
+def post_entity_locations():
     firebase = current_app.config.get("FIREBASE_SERVICE")
     if request.headers.get('Content-Encoding') == 'gzip':
         file = StringIO.StringIO(request.data)
@@ -39,17 +39,18 @@ def post_location_observations():
         print "mapping: %s" % mapping
         print "mappings: %s" % mappings
         if mapping:
-            ob = LocationObservation(
+            ob = EntityLocation(
                     event.get('classroom_id'),
-                    event.get('observed_at'),
+                    event.get('timestamp'),
                     mapping.entity_id,
                     mapping.entity_type,
-                    event.get('x_coord'),
-                    event.get('y_coord'),
-                    event.get('strength'))
+                    event.get('x'),
+                    event.get('xStdDev'),
+                    event.get('y'),
+                    event.get('yStdDev'))
             obs.append(ob)
-            observed_at = event.get('observed_at')
-            path = 'classrooms/%s/location_observations/%s-%s-%s' % (classroom_id, mapping.entity_type.value, mapping.entity_id, observed_at)
+            timestamp = event.get('timestamp')
+            path = 'classrooms/%s/entity_locations/%s-%s-%s' % (classroom_id, mapping.entity_type.value, mapping.entity_id, timestamp)
             doc_ref = firebase.db.document(path)
             json_data = ob.as_dict_for_web_resource()
             print "json_data: %s" % json_data
@@ -57,22 +58,23 @@ def post_location_observations():
             batch.set(doc_ref, {
                 'entityType': u'%s' % json_data['entity_type'],
                 'entityId': json_data['entity_id'],
-                'strength': json_data['strength'],
-                'x': json_data['x_coord'],
-                'y': json_data['y_coord'],
-                'observedAt': parse(observed_at)
+                'x': json_data['x'],
+                'xStdDev': json_data['xStdDev'],
+                'y': json_data['y'],
+                'yStdDev': json_data['yStdDev'],
+                'timestamp': parse(timestamp)
             })
 
     if len(obs) > 0:
         batch.commit()
-        LocationObservation.bulk_store(obs)
+        EntityLocation.bulk_store(obs)
     return "OK", 201
 
 
 
-@api.route('/api/v1/location_observations', methods=['GET'])
+@api.route('/api/v1/entity_locations', methods=['GET'])
 @api_auth.requires_auth
-def location_observations_index():
+def entity_locations():
     classroom_id = request.args.get('classroom_id')
     if not classroom_id:
         abort(400, "Missing classroom_id parameter")
@@ -97,17 +99,17 @@ def location_observations_index():
     entities.sort()
     entities_idx = dict((e,i) for (i,e) in enumerate(entities))
 
-    obs = LocationObservation.query.filter(
-        LocationObservation.classroom_id==classroom_id,
-        LocationObservation.observed_at >= start_time,
-        LocationObservation.observed_at <= end_time,
-        LocationObservation.entity_id==entity_id,
-        LocationObservation.entity_type==entity_type
+    obs = EntityLocation.query.filter(
+        EntityLocation.classroom_id==classroom_id,
+        EntityLocation.timestamp >= start_time,
+        EntityLocation.timestamp <= end_time,
+        EntityLocation.entity_id==entity_id,
+        EntityLocation.entity_type==entity_type
     ).all()
 
     timestamps = set()
     for ob in obs:
-        timestamps.add(ob.observed_at)
+        timestamps.add(ob.timestamp)
     timestamps = list(timestamps)
     timestamps.sort()
 
@@ -117,8 +119,8 @@ def location_observations_index():
 
     for ob in obs:
         (entity_idx, direction) = relationships_idx[ob.relationship_id]
-        output[entity_idx, timestamps_idx[ob.observed_at], 0] = ob.x_coord
-        output[entity_idx, timestamps_idx[ob.observed_at], 1] = ob.y_coord
+        output[entity_idx, timestamps_idx[ob.timestamp], 0] = ob.x
+        output[entity_idx, timestamps_idx[ob.timestamp], 1] = ob.y
 
     return jsonify({
         'obs': output.tolist(),

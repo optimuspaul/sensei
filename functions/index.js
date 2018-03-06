@@ -25,9 +25,10 @@ const functions = require('firebase-functions'),
 admin.initializeApp(functions.config().firebase);
 
 const db = admin.firestore();
+const INFLECTION_POINT = 6;
 
 
-exports.createStripeSubscription = functions.firestore.document('/classrooms/{classroomId}/entity_locations/{entityLocationsId}').onCreate(event => {
+exports.generateInteractionPeriods = functions.firestore.document('/classrooms/{classroomId}/entity_locations/{entityLocationId}').onCreate(event => {
 
   // This onWrite will trigger whenever anything is written to the path, so
   // noop if the charge was deleted, errored out, or the Stripe API returned a result (id exists)
@@ -35,71 +36,92 @@ exports.createStripeSubscription = functions.firestore.document('/classrooms/{cl
 
   const currentLoc = event.data.data();
   const classroomId = event.params.classroomId;
-  const INFLECTION_POINT = 3;
-
+  const entityLocationId = event.params.entityLocationId;
   const currentEntityUid = `${currentLoc.entityType}-${currentLoc.entityId}`;
-
   const date = currentLoc.timestamp;
   const dateKey = `${date.getMonth()}-${date.getDate()}-${date.getYear()}`;
-
-  
 
   let startDate = new Date(date);
   startDate.setHours(0);
   startDate.setMinutes(0);
 
-  db.doc(`/classrooms/${classroomId}`).get()
+  return db.doc(`/classrooms/${classroomId}`)
+    .get()
     .then((doc) => {
       if (doc.exists) {
         let data = doc.data();
-        if (!data.interactions || !data.interactions.updatedAt || (currentLoc.timestamp - data.interactions.updatedAt) < (1000*60) ) {
-          Promise.resolve(doc)
+        if (!data.interactions || !data.interactions.updatedAt || (currentLoc.timestamp - data.interactions.updatedAt) > (1000*60) ) {
+          console.log("updating", "\n\ncurrentEntityUid: ", currentEntityUid, "\n\nentityLocationId", entityLocationId, "\n\ndate: ", date, "\n\ndateKey: ", dateKey, "\n\nclassroomId: ", classroomId, "\n\ncurrentLoc: ", currentLoc)
+          return Promise.resolve(doc)
         }
       }
     })
     .then((classroom) => {
       let data = classroom.data();
-
-      if (!data.interactions.updatedAt) {
-        return classroom.ref.set({
-          interactions: {
-            updatedAt: currentLoc.timestamp
-          }
-        }, {
-          merge: true
-        });
-      }
-
-      return db.collection(`/classrooms/${classroomId}/entity_locations`)
+      console.log("setting updatedAt for classroom interactions object", data)
+      return classroom.ref.set({
+        interactions: {
+          updatedAt: currentLoc.timestamp
+        }
+      }, {
+        merge: true
+      })
+      .then(() => {
+        console.log("getting latest entity_locations to process")
+        return db.collection(`/classrooms/${classroomId}/entity_locations`)
         .where("timestamp", ">=", data.interactions.updatedAt)
         .where("timestamp", "<", currentLoc.timestamp)
         .orderBy("timestamp", "asc")
         .get()
-        .then((querySnapshot) => {
-          let locationsByTimestamp = groupLocationsByTimestamp(querySnapshot.docs)
-          let entities = updateEntities(locationsByTimestamp, data.interactions.entities)
-          let batch = db.batch();
-            _.each(entities, (entity, entityUid) => {
-              _.each(entity.interactionPeriods, (ip) => {
-                let ipRef = db.doc(`/classrooms/${classroomId}/interaction_periods/${entityUid}-${ip.startTime.toISOString()}`);
-                batch.set(ipRef, ip);
-                _.set(entities, `${entityUid}.interactionPeriods`, []);
-              });
+      })
+      .then((querySnapshot) => {
+        let entities;
+        console.log("grouping locations by timestamp")
+        let locationsByTimestamp = groupLocationsByTimestamp(querySnapshot.docs)
+        console.log("locationsByTimestamp:", locationsByTimestamp)
+        try {
+          console.log("Updating entities", data.interactions.entities);
+          entities = updateEntities(locationsByTimestamp, data.interactions.entities)
+          console.log("entites:", entities);
+        } catch (e) {
+          console.log("error updating entities:", e);
+        }
+        let batch;
+        try {
+          console.log("batching writes")
+          batch = db.batch();
+          _.each(entities, (entity, entityUid) => {
+            _.each(entity.interactionPeriods, (ip) => {
+              let ipRef = db.doc(`/classrooms/${classroomId}/interaction_periods/${entityUid}-${ip.startTime.toISOString()}`);
+              batch.set(ipRef, ip);
+              _.set(entities, `${entityUid}.interactionPeriods`, []);
             });
-
+          });
+        } catch(e) {
+          console.log("error batching writes!", e);
+        }
+        console.log("committing batch writes");
+        try {
           return batch.commit()
             .then(() => {
+              console.log("updating classroom interactions object", classroom.id, classroom.data(), entities, new Date(_.last(_.keys(locationsByTimestamp))))
               return classroom.ref.set({
                 interactions: {
-                  updatedAt: Date.parse(_.last(_.keys(locationsByTimestamp))),
+                  updatedAt: new Date(_.last(_.keys(locationsByTimestamp))),
                   entities
                 }
               }, {merge: true});
-            });
-        });
-
+            })
+            .catch((error) => {
+              console.log("error committing batch writes and updating classroom", error);
+            })
+        } catch(e) {
+          console.log("error committing batch writes", e);
+        }
+      });
     })
     .catch(error => {
+      console.log("ERROR", error);
       reportError(error, {params: event.params});
     });
 });
@@ -142,7 +164,6 @@ function updateEntities(locationsByTimestamp, entities = {}) {
         _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod.endTime`, new Date(timestamp));
       });
     });
-    render(_.merge({}, current));
     return current;
   }, entities)
 }
