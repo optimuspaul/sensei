@@ -60,4 +60,7 @@ class MockRedis():
         app.extensions['redis'] = self
 
     def lpush(self, queue, object):
-        return True
+        return 1
+
+    def ltrim(self, queue, start, stop):
+        return "OK"

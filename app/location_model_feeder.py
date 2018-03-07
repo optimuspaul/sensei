@@ -13,3 +13,4 @@ class LocationModelFeeder:
             queue_name = 'radio_obs_classroom_%d' % data[0].classroom_id
             redis = current_app.extensions['redis']
             redis.lpush(queue_name, serialized_data)
+            redis.ltrim(queue_name, 0, 600)  # Keep 1 hours worth
