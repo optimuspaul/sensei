@@ -116,7 +116,7 @@ class ActivityTimelineControls extends React.Component {
     this.setState({zoom: params.zoom})
     if (!_.isEqual(this.props.insights.ui, nextProps.insights.ui) && !_.isEqual(params, nextProps.insights.ui)) {
       history.push({
-        search: QueryParams.encode(_.merge(params, nextProps.insights.ui))
+        search: QueryParams.encode(_.merge(params, _.omit(nextProps.insights.ui, ['visualizationTitle'])))
       });
     }
   }
@@ -272,7 +272,7 @@ class ActivityTimelineControls extends React.Component {
           </div>
           <div className="row" style={{marginBottom: '10px'}}>
             <div className="col-md-12">
-              <Button active={this.props.insights.ui.isLive}
+              <Button active={this.props.insights.ui.isLive ? true : false}
                 bsStyle={this.props.insights.ui.isLive ? 'success' : 'default'}
                 onClick={() => { this.props.dispatch(this.props.toggleLive()) }} >Live</Button>
             </div>
