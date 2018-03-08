@@ -48,6 +48,8 @@ export default function locations() {
         }
       }
 
+     
+
       if (classroomLength !== data.classroomLength || classroomWidth !== data.classroomWidth) {
         classroomLength = data.classroomLength;
         classroomWidth = data.classroomWidth;
@@ -79,9 +81,17 @@ export default function locations() {
             return  `${sensor.entityType} ${c}`
           })
           .attr("cx", (sensor, index) => {
-            return classroomScale(sensor.x);
+            let x = sensor.x;
+            if (sensor.entityType === 'area') {
+              x = _.get(store.getState(), `entities.areas.${sensor.entityId}.xPosition`, sensor.x)
+            }
+            return classroomScale(x);
           })
           .attr("cy", (sensor) => {
+            let y = sensor.y;
+            if (sensor.entityType === 'area') {
+              y = _.get(store.getState(), `entities.areas.${sensor.entityId}.yPosition`, sensor.x)
+            }
             return classroomScale(sensor.y);
           })
           .attr("r", (sensor) => {
