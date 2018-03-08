@@ -52,7 +52,7 @@ export default function sensorMappings(state = initialState, action) {
         obs.push(locations)
       });
 
-      let zoom = isLive ? _.size(obs) : currentZoom;
+      let zoom = isLive ? _.size(obs) : parseInt(currentZoom, 10);
       obs = _.orderBy(obs, ['timestamp'], ['desc']);
       return {
         ...state,
@@ -63,7 +63,7 @@ export default function sensorMappings(state = initialState, action) {
         },
         ui: {
           ...state.ui,
-          visualizationTitle: !_.isEmpty(action.sensors) ? `Sensor Locations` : 'No data...',
+          visualizationTitle: !_.isEmpty(action.locations) ? `Sensor Locations <small class="lgnd"><strong class="children">◼</strong> students <strong class="materials">◼</strong> materials <strong class="teachers">◼</strong> teachers <strong class="areas">◼</strong> areas</small>` : 'No data...',
           zoom
         },
         status: 'fetched'
