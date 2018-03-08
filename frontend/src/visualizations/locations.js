@@ -9,9 +9,10 @@ import _ from 'lodash';
 export default function locations() {
 
   let chartWidth,
-      rotate,
       classroomScale,
-      chartHeight;
+      chartHeight,
+      classroomLength = 0, 
+      classroomWidth = 0;
 
   let radiusScale = d3.scaleLinear()
                       .domain([0, 5])
@@ -22,21 +23,16 @@ export default function locations() {
   let state = store.getState();
   let storeEntities = state.entities;
   let vizElement = document.querySelector("#visualization #locations");
-  let chartMaxSize = _.get(vizElement, 'parentElement.offsetWidth', 800) - 20;
+  chartWidth = _.get(vizElement, 'parentElement.offsetWidth', 800) - 20;
 
   let chart = d3.select("#visualization #locations svg")
   chart.append('g')
-    .attr("class", 'sensors')
-
-  
-
+    .attr("class", 'sensors');
 
 
     let updateChart = (event) => {
 
       let sensors = []
-      let classroomHeight = 0, 
-      classroomWidth = 0;
 
       let data = event.detail
 
@@ -47,26 +43,20 @@ export default function locations() {
         sensors = _.get(data, `obs.${currentIndex}.sensors`);
       } else {
         data = {
-          classroomHeight: 0,
+          classroomLength: 0,
           classroomWidth: 0
         }
       }
 
-      if (classroomHeight !== data.classroomHeight || classroomWidth !== data.classroomWidth) {
-        classroomHeight = data.classroomHeight;
+      if (classroomLength !== data.classroomLength || classroomWidth !== data.classroomWidth) {
+        classroomLength = data.classroomLength;
         classroomWidth = data.classroomWidth;
-        rotate = classroomWidth >= classroomHeight;
-        let upperDomain = rotate ? classroomWidth : classroomHeight;
-        let lowerDomain = rotate ? classroomHeight : classroomWidth;
-        
         classroomScale = d3.scaleLinear()
-                        .domain([0, upperDomain])
-                        .range([0, chartMaxSize]);
-        chartHeight = classroomScale(lowerDomain);
-        chartWidth = classroomScale(upperDomain);
+                        .domain([0, classroomLength])
+                        .range([0, chartWidth]);
+        chartHeight = classroomScale(classroomWidth);
         chart.attr("width", chartWidth).attr("height", chartHeight)
       }
-
 
       let sensorWrapper = chart.select('g.sensors');
 
@@ -89,10 +79,10 @@ export default function locations() {
             return  `${sensor.entityType} ${c}`
           })
           .attr("cx", (sensor, index) => {
-            return classroomScale(sensor[rotate ? 'y': 'x']);
+            return classroomScale(sensor.x);
           })
           .attr("cy", (sensor) => {
-            return classroomScale(sensor[rotate ? 'x': 'y']);
+            return classroomScale(sensor.y);
           })
           .attr("r", (sensor) => {
             let r = 10 + (c === 'pulse' ? pulseScale(10*(sensor.xStdDev+sensor.yStdDev)/2) : 0);

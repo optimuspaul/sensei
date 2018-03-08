@@ -323,7 +323,7 @@ while sim_time < end_time:
         accel_obs.append(accel_event)
         for other in sensors:
             if sensor.sensor_id == other.sensor_id:
-                stdDevs = [np.random.uniform(0, 5), np.random.uniform(0, 5)]
+                stdDevs = [np.random.uniform(0, 1), np.random.uniform(0, 1)]
                 print "location: %s " % sensor.pos
                 loc_ob = EntityLocation(CLASSROOM_ID, sensor.sensor_id, sim_time.isoformat(), sensor.pos, stdDevs)
                 entity_locs.append(loc_ob)

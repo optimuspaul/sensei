@@ -157,13 +157,13 @@ export const updateCurrentVisualization = () => {
 
 
 export const RECEIVE_LOCATIONS = 'RECEIVE_LOCATIONS';
-export const receiveLocations = (locations, classroomHeight, classroomWidth) => {
+export const receiveLocations = (locations, classroomLength, classroomWidth) => {
   return (dispatch, getState) => {
     let state = getState();
     dispatch({
       type: RECEIVE_LOCATIONS,
       locations,
-      classroomHeight,
+      classroomLength,
       classroomWidth
     });
   }
@@ -195,7 +195,7 @@ export const fetchLocations = (date) => {
     unsubscribe && unsubscribe();
 
     firebase.firestore()
-      .doc(`/classrooms/${/*getClassroomId()*/735}`)
+      .doc(`/classrooms/${getClassroomId()}`)
       .get()
       .then((doc) => {
         if (!doc.exists) {
@@ -215,7 +215,7 @@ export const fetchLocations = (date) => {
               current[dateString].sensors.push(data);
               return current;
             }, {})
-              dispatch(receiveLocations(segmentedLocations, classroom.height, classroom.width));
+              dispatch(receiveLocations(segmentedLocations, classroom.length, classroom.width));
           });
       })
   }

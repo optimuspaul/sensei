@@ -26,7 +26,11 @@ export const getSenseiToken = () => {
 }
 
 export const getClassroomId = () => {
-  let classroomId = _.get(window, 'tc.env.currentClassroomId');
+  let classroomId;
+  if (localStorage.getItem('classroomId')) {
+    return localStorage.getItem('classroomId');
+  }
+  classroomId = _.get(window, 'tc.env.currentClassroomId');
   if (classroomId === "" || classroomId === "all") {
     classroomId = _.get(window, 'tc.env.firstClassroomId');
   }

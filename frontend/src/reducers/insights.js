@@ -57,7 +57,7 @@ export default function sensorMappings(state = initialState, action) {
       return {
         ...state,
         currentObservationsData: {
-          classroomHeight: action.classroomHeight,
+          classroomLength: action.classroomLength,
           classroomWidth: action.classroomWidth,
           obs
         },
