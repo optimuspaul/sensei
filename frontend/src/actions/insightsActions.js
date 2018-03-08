@@ -215,7 +215,7 @@ export const fetchLocations = (date) => {
               current[dateString].sensors.push(data);
               return current;
             }, {})
-              dispatch(receiveLocations(segmentedLocations, classroom.height, classroom.width));
+              dispatch(receiveLocations(segmentedLocations, classroom.length, classroom.width));
           });
       })
   }

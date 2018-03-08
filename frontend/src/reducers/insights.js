@@ -63,7 +63,7 @@ export default function sensorMappings(state = initialState, action) {
         },
         ui: {
           ...state.ui,
-          visualizationTitle: !_.isEmpty(action.sensors) ? `Sensor Locations` : 'No data...',
+          visualizationTitle: !_.isEmpty(obs) ? `Sensor Locations` : 'No data...',
           zoom
         },
         status: 'fetched'

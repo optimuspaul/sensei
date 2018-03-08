@@ -9,9 +9,10 @@ import _ from 'lodash';
 export default function locations() {
 
   let chartWidth,
-      rotate,
       classroomScale,
-      chartHeight;
+      chartHeight,
+      classroomLength = 0, 
+      classroomWidth = 0;
 
   let radiusScale = d3.scaleLinear()
                       .domain([0, 5])
@@ -22,16 +23,11 @@ export default function locations() {
   let state = store.getState();
   let storeEntities = state.entities;
   let vizElement = document.querySelector("#visualization #locations");
-  let chartMaxWidth = _.get(vizElement, 'parentElement.offsetWidth', 800) - 20;
+  chartWidth = _.get(vizElement, 'parentElement.offsetWidth', 800) - 20;
 
   let chart = d3.select("#visualization #locations svg")
   chart.append('g')
-    .attr("class", 'sensors')
-
-  
-
-    let classroomLength = 0, 
-    classroomWidth = 0;
+    .attr("class", 'sensors');
 
 
     let updateChart = (event) => {
@@ -53,11 +49,12 @@ export default function locations() {
       }
 
       if (classroomLength !== data.classroomLength || classroomWidth !== data.classroomWidth) {
+        classroomLength = data.classroomLength;
+        classroomWidth = data.classroomWidth;
         classroomScale = d3.scaleLinear()
-                        .domain([0, upperDomain])
-                        .range([0, chartMaxWidth]);
-        chartHeight = classroomScale(data.classroomWidth);
-        chartWidth = classroomScale(data.classroomLength);
+                        .domain([0, classroomLength])
+                        .range([0, chartWidth]);
+        chartHeight = classroomScale(classroomWidth);
         chart.attr("width", chartWidth).attr("height", chartHeight)
       }
 
@@ -82,10 +79,10 @@ export default function locations() {
             return  `${sensor.entityType} ${c}`
           })
           .attr("cx", (sensor, index) => {
-            return classroomScale(sensor[rotate ? 'y': 'x']);
+            return classroomScale(sensor.x);
           })
           .attr("cy", (sensor) => {
-            return classroomScale(sensor[rotate ? 'x': 'y']);
+            return classroomScale(sensor.y);
           })
           .attr("r", (sensor) => {
             let r = 10 + (c === 'pulse' ? pulseScale(10*(sensor.xStdDev+sensor.yStdDev)/2) : 0);
