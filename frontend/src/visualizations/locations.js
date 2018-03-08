@@ -90,7 +90,7 @@ export default function locations() {
           .attr("cy", (sensor) => {
             let y = sensor.y;
             if (sensor.entityType === 'area') {
-              y = _.get(store.getState(), `entities.areas.${sensor.entityId}.yPosition`, sensor.x)
+              y = _.get(store.getState(), `entities.areas.${sensor.entityId}.yPosition`, sensor.y)
             }
             return classroomScale(sensor.y);
           })
