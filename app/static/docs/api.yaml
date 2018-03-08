@@ -556,23 +556,25 @@ paths:
               $ref: '#/definitions/Classroom'
         401:
           description: Unauthorized
-    post:
+  /classrooms/{id}:
+    put:
       summary: Update classroom metadata.
       description: |
         This is a proxy api that takes json data and applies it to the classroom's firebase location in the form of a generic unstructured document (javascript object). All changes are merges.
       consumes:
         - application/json
       parameters:
+        - name: id
+          in: path
+          description: The id of the classroom to update.
+          required: true
+          type: integer
         - name: classroom
           in: body
           description: a json object containing metadata about the given classroom.
           required: true
-          type: object
-        - name: classroom_id
-          in: body
-          description: The id of the classroom to retrieve interaction totals for.
-          required: true
-          type: integer
+          schema:
+            type: object
       security:
         - basicAuth: []
         - apiKeyAuth: []
