@@ -116,7 +116,7 @@ class ActivityTimelineControls extends React.Component {
     this.setState({zoom: params.zoom})
     if (!_.isEqual(this.props.insights.ui, nextProps.insights.ui) && !_.isEqual(params, nextProps.insights.ui)) {
       history.push({
-        search: QueryParams.encode(_.merge(params, nextProps.insights.ui))
+        search: QueryParams.encode(_.merge(params, _.omit(nextProps.insights.ui, ['visualizationTitle'])))
       });
     }
   }
