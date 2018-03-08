@@ -44,6 +44,55 @@ export default function sensorMappings(state = initialState, action) {
         },
         status: 'fetched'
       }
+    case 'RECEIVE_INTERACTION_PERIODS':
+      date = state.ui.currentDate;
+      entityUid = `${action.entityType}-${action.entityId}`;
+      let ips = _.get(state, 'currentObservationsData.obs', []);
+      _.each(_.values(action.interactionPeriods), (interactionPeriod) => {
+        ips.push(interactionPeriod);
+      });
+
+      let transformedIps = _.reduce(ips, (current, ip) => {
+        let index = _.findIndex(current.entities, (entity) => {
+          return entity[0] === ip.targetEntityType && entity[1] === ip.targetEntityId;
+        })
+        if (index === -1) {
+          current.entities.push([ip.targetEntityType, ip.targetEntityId])
+          index = _.size(current.entities)-1;
+        }
+        current.obs[index] = current.obs[index] || [];
+        current.obs[index].push([ip.startTime.toISOString(), ip.endTime.toISOString()])
+        if(current.timestamps[0]) {
+          let earliestTimestamp = new Date(current.timestamps[0]);
+          current.timestamps[0] = earliestTimestamp > ip.startTime ? ip.startTime.toISOString() : current.timestamps[0];
+        } else {
+          current.timestamps[0] = ip.startTime.toISOString();
+        }
+        if(current.timestamps[1]) {
+          let latestTimestamp = new Date(current.timestamps[1]);
+          current.timestamps[1] = latestTimestamp > ip.endTime ? ip.endTime.toISOString() : current.timestamps[1];
+        } else {
+          current.timestamps[1] = ip.endTime.toISOString();
+        }
+        return current;
+      }, {entities: [], obs: [], timestamps: []})
+
+      return {
+        ...state,
+        observations: {
+          ...state.observations,
+          [entityUid]: {
+            ...state.observations[entityUid],
+            [date]: transformedIps
+          }
+        },
+        currentObservationsData: transformedIps,
+        ui: {
+          ...state.ui,
+          visualizationTitle: hasData ? `${entityName} <small>${dateString}</small>` : 'No data...'
+        },
+        status: 'fetched'
+      }
     case 'RECEIVE_LOCATIONS':
       let obs = _.get(state, 'currentObservationsData.obs', []);
       let isLive = _.get(state, 'ui.isLive', true);

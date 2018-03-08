@@ -51,36 +51,100 @@ export const fetchObservations = (entityId, entityType, date) => {
     })
   }
 }
+// export const fetchInteractionPeriods = (entityId, entityType, date) => {
+//   return (dispatch, getState) => {
+//     let state = getState();
+//     date = date || _.get(state, 'insights.ui.currentDate');
+//     date = date ? new Date(date) : new Date();
+//     date.setHours(0);
+
+    
+
+//     let endDate = _.get(state, 'insights.ui.endDate');
+//     endDate = endDate || _.get(state, 'insights.ui.endDate');
+//     endDate = endDate ? new Date(endDate) : new Date();
+//     endDate.setHours(23);
+//     let startTime = encodeURIComponent(date.toISOString());
+//     let endTime = encodeURIComponent(endDate.toISOString());
+
+
+//     fetch(`${baseUrl()}/api/v1/interaction_periods?classroom_id=${getClassroomId()}&entity_id=${entityId}&entity_type=${entityType}&start_time=${startTime}&end_time=${endTime}`, {
+//       headers: {
+//         'X-SenseiToken': getSenseiToken(),
+//         'Content-Type': 'application/json'
+//       }
+//     }).then(function(response) {
+//       return (response && response.text()) || ''
+//     }).then((body) => {
+//       let observations = JSON.parse(body);
+//       dispatch(addObservations(entityId, entityType, observations));
+//     })
+//   }
+// }
+
+
+let prevInteractionPeriodDate, unsubscribeFromInteractionPeriods;
+export const FETCH_INTERACTION_PERIODS = 'FETCH_INTERACTION_PERIODS'
 export const fetchInteractionPeriods = (entityId, entityType, date) => {
   return (dispatch, getState) => {
     let state = getState();
     date = date || _.get(state, 'insights.ui.currentDate');
     date = date ? new Date(date) : new Date();
-    date.setHours(0);
-
-    
+    date.setHours(date.getHours()+(date.getTimezoneOffset()/60));
 
     let endDate = _.get(state, 'insights.ui.endDate');
     endDate = endDate || _.get(state, 'insights.ui.endDate');
     endDate = endDate ? new Date(endDate) : new Date();
     endDate.setHours(23);
-    let startTime = encodeURIComponent(date.toISOString());
-    let endTime = encodeURIComponent(endDate.toISOString());
 
+    if (prevInteractionPeriodDate === date) {
+      return;
+    } else {
+      prevInteractionPeriodDate = date;
+    }
 
-    fetch(`${baseUrl()}/api/v1/interaction_periods?classroom_id=${getClassroomId()}&entity_id=${entityId}&entity_type=${entityType}&start_time=${startTime}&end_time=${endTime}`, {
-      headers: {
-        'X-SenseiToken': getSenseiToken(),
-        'Content-Type': 'application/json'
-      }
-    }).then(function(response) {
-      return (response && response.text()) || ''
-    }).then((body) => {
-      let observations = JSON.parse(body);
-      dispatch(addObservations(entityId, entityType, observations));
-    })
+    let entityId = _.get(state, 'insights.ui.currentEntityId');
+    let entityType = _.get(state, 'insights.ui.currentEntityType');
+
+    unsubscribeFromInteractionPeriods && unsubscribeFromInteractionPeriods();
+
+    firebase.firestore()
+      .doc(`/classrooms/${getClassroomId()}`)
+      .get()
+      .then((doc) => {
+        if (!doc.exists) {
+          return Promise.reject()
+        }
+        let classroom = doc.data();
+        unsubscribeFromInteractionPeriods = doc.ref.collection(`interaction_periods`)
+          .where('endTime', '>', date)
+          .where('endTime', '<', endDate)
+          .orderBy('endTime', 'desc')
+          .onSnapshot(function(snapshot) {
+            let docs = _.filter(snapshot.docChanges, {type: "added"});
+            let ips = _.map(snapshot.docs, doc => doc.data());
+            if (!_.isEmpty(ips)) {
+              dispatch(receiveInteractionPeriods(entityId, entityType, ips));
+            }
+          });
+      })
   }
 }
+
+export const RECEIVE_INTERACTION_PERIODS = 'RECEIVE_INTERACTION_PERIODS';
+export const receiveInteractionPeriods = (entityId, entityType, interactionPeriods) => {
+  return (dispatch, getState) => {
+    let state = getState();
+    dispatch({
+      type: RECEIVE_INTERACTION_PERIODS,
+      interactionPeriods,
+      entityId,
+      entityType
+    });
+  }
+}
+
+
 
 export const fetchInteractionTotals = (entityId, entityType, date, endDate, interactionType) => {
   return (dispatch, getState) => {

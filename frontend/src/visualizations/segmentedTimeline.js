@@ -29,13 +29,11 @@ export default function segmentedTimeline() {
   let updateChart = (event) => {
 
     let data = event.detail
-    if (!data) return;
+    if (!data || !data.entities) return;
 
     var t = d3.transition()
     .duration(400)
     .ease(d3.easeLinear);
-
-
 
     let zoom = _.get(store.getState(), "insights.ui.zoom") || 1;
     let chartWidth = 1260 * zoom; // how wide the width of the visualization is
