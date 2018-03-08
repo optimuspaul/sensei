@@ -175,7 +175,7 @@ function calcIpq(prevIpq, loc1, loc2, currentPeriod = {}, currentTimestamp) {
   } else {
     let delta =  Math.hypot(loc2.x - loc1.x, loc2.y-loc1.y);
     delta = delta === 0 ? 0.001 : delta;
-    mod = 1 + 1/(1/(1-(delta*3)));
+    mod = 1 + (1-(delta*3));
     let latestTime = currentPeriod.endTime || currentPeriod.startTime;
     if (latestTime) {
       mod += (1-((currentTimestamp - latestTime)/10000));
