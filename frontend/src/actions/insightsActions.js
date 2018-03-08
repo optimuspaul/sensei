@@ -157,13 +157,13 @@ export const updateCurrentVisualization = () => {
 
 
 export const RECEIVE_LOCATIONS = 'RECEIVE_LOCATIONS';
-export const receiveLocations = (locations, classroomHeight, classroomWidth) => {
+export const receiveLocations = (locations, classroomLength, classroomWidth) => {
   return (dispatch, getState) => {
     let state = getState();
     dispatch({
       type: RECEIVE_LOCATIONS,
       locations,
-      classroomHeight,
+      classroomLength,
       classroomWidth
     });
   }

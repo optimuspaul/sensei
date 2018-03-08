@@ -1,0 +1,233 @@
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.5/lodash.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.9.0/firebase.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.9.1/firebase-firestore.js"></script>
+    <script>
+
+      var config = {
+        apiKey: "AIzaSyDzq21S_rOxnJsBS9j4qBY1HPmQvghcawY",
+        authDomain: "sensei-b9fb6.firebaseapp.com",
+        databaseURL: "https://sensei-b9fb6.firebaseio.com",
+        projectId: "sensei-b9fb6",
+        storageBucket: "sensei-b9fb6.appspot.com",
+        messagingSenderId: "8499900719"
+      };
+      firebase.initializeApp(config);
+      let db = firebase.firestore();
+
+      let startDate = new Date("02-28-2018");
+      let endDate = new Date("03-01-2018");
+
+      
+
+      let segmentsOverTime = []
+
+      const INFLECTION_POINT = 6;
+
+      let i = 1;
+
+      let classroomId = 735;
+
+
+
+
+      // db.collection(`/classrooms/${classroomId}/entity_locations`)
+      //   .where("timestamp", ">=", startDate)
+      //   .where("timestamp", "<", endDate)
+      //   .orderBy("timestamp", "asc")
+      //   .limit(10000)
+      //   .get()
+      //   .then((querySnapshot) => {
+      //     let locations = querySnapshot.docs;
+      //     _.each(locations, (doc) => {
+      //     })
+      //     let data = locations.pop().data();
+      //     generateSegments(data);
+      //   })
+
+      let currentLoc = {
+        timestamp: new Date("2018-02-28T22:50:00.000Z")
+      }
+
+      generateSegments(currentLoc).then(() => {
+        db.collection(`/classrooms/${classroomId}/interaction_periods`)
+              .where("startTime", ">=", startDate)
+              .where("startTime", "<", endDate)
+              .get()
+              .then((querySnapshot) => {
+                alert(`There are now ${_.size(querySnapshot.docs)} interaction periods`)
+              });
+      });
+
+      function generateSegments(currentLoc) {
+
+        return db.doc(`/classrooms/${classroomId}`).get()
+          .then((classroom) => {
+            let data = classroom.data();
+
+            if (!_.get(data, 'interactions.updatedAt')) {
+              return classroom.ref.set({
+                interactions: {
+                  updatedAt: currentLoc.timestamp
+                }
+              }, {
+                merge: true
+              });
+            }
+
+            if ((currentLoc.timestamp - data.interactions.updatedAt) < (1000*60) ) {
+              return Promise.resolve();
+            }
+
+            return db.collection(`/classrooms/${classroomId}/entity_locations`)
+              .where("timestamp", ">=", data.interactions.updatedAt)
+              .where("timestamp", "<", currentLoc.timestamp)
+              .orderBy("timestamp", "asc")
+              .get()
+              .then((querySnapshot) => {
+                let locationsByTimestamp = groupLocationsByTimestamp(querySnapshot.docs)
+                let entities = updateEntities(locationsByTimestamp, data.interactions.entities)
+                let batch = db.batch();
+                _.each(entities, (entity, entityUid) => {
+                  _.each(entity.interactionPeriods, (ip) => {
+                    let ipRef = db.doc(`/classrooms/${classroomId}/interaction_periods/${entityUid}-${ip.startTime.toISOString()}`);
+                    batch.set(ipRef, ip);
+                    _.set(entities, `${entityUid}.interactionPeriods`, []);
+                  });
+                });
+
+                return batch.commit()
+                  .then(() => {
+                    return classroom.ref.set({
+                      interactions: {
+                        updatedAt: new Date(_.last(_.keys(locationsByTimestamp))),
+                        entities
+                      }
+                    }, {merge: true});
+                  });
+              });
+
+          });
+      }
+
+
+
+      function render(segments) {
+        // setTimeout(() => { 
+          let segmentsEl = document.querySelector("#segments");
+          segmentsEl.innerHTML = '';
+          _.each(segments, (s, k) => {
+            let pre = document.createElement('pre');
+            pre.innerHTML = output({[k]: s});
+            segmentsEl.appendChild(pre);
+          })
+        // }, (100*(i)));
+        i++;
+      }
+
+      function output(obj) {
+
+
+        let json = JSON.stringify(obj, undefined, 2);
+        
+
+          if (typeof json != 'string') {
+               json = JSON.stringify(json, undefined, 2);
+          }
+          json = json.replace(/&/g, '&nbsp;').replace(/</g, '&lt;').replace(/>/g, '&nbsp;');
+          return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+              var cls = 'number';
+              if (/^"/.test(match)) {
+                  if (/:$/.test(match)) {
+                      cls = 'key';
+                  } else {
+                      cls = 'string';
+                  }
+              } else if (/true|false/.test(match)) {
+                  cls = 'boolean';
+              } else if (/null/.test(match)) {
+                  cls = 'null';
+              }
+              return '<span class="' + cls + '">' + match + '</span>';
+          });
+      }
+
+      function groupLocationsByTimestamp(locationDocs) {
+        return _.reduce(locationDocs, (current, doc) => {
+          let data = doc.data();
+          current[data.timestamp.toISOString()] = current[data.timestamp.toISOString()] || [];
+          data.entityUid = `${data.entityType}-${data.entityId}`;
+          current[data.timestamp.toISOString()].push(data);
+          return current;
+        }, {});
+      }
+
+      function updateEntities(locationsByTimestamp, entities = {}) {
+        return _.reduce(locationsByTimestamp, (current, locations, timestamp) => {
+          timestamp = new Date(timestamp);
+          _.each(locations, (location) => {
+            _.each(locations, (loc) => {
+              if (loc.entityUid === location.entityUid) return;
+              let currentPeriod = _.get(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`);
+              let prevIpq = _.get(current, `${location.entityUid}.${loc.entityUid}.ipq`, 0);
+              let ipq = calcIpq(prevIpq, location, loc, currentPeriod, timestamp);
+              _.set(current, `${location.entityUid}.${loc.entityUid}.ipq`, ipq);
+              
+              if (prevIpq >= INFLECTION_POINT && ipq < INFLECTION_POINT) {
+                let locationPeriods = _.get(current, `${location.entityUid}.interactionPeriods`, [])
+                currentPeriod.endTime = new Date(timestamp);
+                locationPeriods.push(currentPeriod);
+                _.set(current, `${location.entityUid}.interactionPeriods`, locationPeriods);
+                _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`, {});
+              } else if (ipq >= INFLECTION_POINT && prevIpq < INFLECTION_POINT) {
+                _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`, {
+                  startTime: location.timestamp, 
+                  targetEntityId: loc.entityId, 
+                  targetEntityType: loc.entityType
+                });
+              }
+              _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod.endTime`, new Date(timestamp));
+            });
+          });
+          render(_.merge({}, current));
+          return current;
+        }, entities)
+      }
+
+      function calcIpq(prevIpq, loc1, loc2, currentPeriod = {}, currentTimestamp) {
+        let mod = 0;
+        if (_.isNaN(loc2.x) || _.isNaN(loc1.x)) {
+          mod = -10;
+        } else {
+          let delta =  Math.hypot(loc2.x - loc1.x, loc2.y-loc1.y);
+          delta = delta === 0 ? 0.001 : delta;
+          mod = 1 + 1/(1/(1-(delta*3)));
+          let latestTime = currentPeriod.endTime || currentPeriod.startTime;
+          if (latestTime) {
+            mod += (1-((currentTimestamp - latestTime)/10000));
+          }
+        }
+        let ipq = prevIpq+mod;
+        ipq = ipq - (5*(1/Math.pow(ipq-10,2)));
+        ipq = ipq < 0 ? 0 : ipq;
+        return ipq;
+      }
+
+    </script>
+
+    <style>
+      body { width: 10000px; }
+      pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; font-size:8px; float: left; width: 300px; }
+      .string { color: green; }
+      .number { color: darkorange; }
+      .boolean { color: blue; }
+      .null { color: magenta; }
+      .key { color: red; }
+    </style>
+  </head>
+  <body>
+    <div id="segments"></div>
+  </body>
+
+  </html>

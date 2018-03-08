@@ -55,15 +55,16 @@ class AccelerometerObservation(object):
         self.y_acceleration = accelerations[1]
         self.z_acceleration = accelerations[2]
 
-class LocationObservation(object):
+class EntityLocation(object):
 
-    def __init__(self, classroom_id, sensor_id, observed_at, coords, strength):
+    def __init__(self, classroom_id, sensor_id, timestamp, coords, stdDevs):
         self.classroom_id = classroom_id
         self.sensor_id = sensor_id
-        self.observed_at = observed_at
-        self.x_coord = coords[0]
-        self.y_coord = coords[1]
-        self.strength = strength
+        self.timestamp = timestamp
+        self.x = coords[0]
+        self.xStdDev = stdDevs[0]
+        self.y = coords[1]
+        self.yStdDev = stdDevs[1]
 
 def trial(prob):
     return random.random() < prob
@@ -288,9 +289,9 @@ def upload_accel_obs(obs):
     elapsed_time = time.time() - start_time
     print "Upload took %s seconds" % elapsed_time
 
-def upload_location_obs(obs):
+def upload_entity_locs(obs):
     print "Uploading simulated location observations. %s" % json.dumps(obs)
-    req = api_req('location_observations')
+    req = api_req('entity_locations')
     start_time = time.time()
     response = urllib2.urlopen(req, json.dumps(obs))
     print response.read()
@@ -315,17 +316,17 @@ while sim_time < end_time:
     # Gather pings
     obs = []
     accel_obs = []
-    location_obs = []
+    entity_locs = []
     for sensor in sensors:
         accelerations = sensor.sim_acceleration()
         accel_event = AccelerometerObservation(CLASSROOM_ID, sensor.sensor_id, sim_time.isoformat(), accelerations)
         accel_obs.append(accel_event)
         for other in sensors:
             if sensor.sensor_id == other.sensor_id:
-                strength = np.random.uniform(0, 5)
+                stdDevs = [np.random.uniform(0, 5), np.random.uniform(0, 5)]
                 print "location: %s " % sensor.pos
-                loc_ob = LocationObservation(CLASSROOM_ID, sensor.sensor_id, sim_time.isoformat(), sensor.pos, strength)
-                location_obs.append(loc_ob)
+                loc_ob = EntityLocation(CLASSROOM_ID, sensor.sensor_id, sim_time.isoformat(), sensor.pos, stdDevs)
+                entity_locs.append(loc_ob)
                 continue
             rssi = sensor.sim_ping(other)
             if rssi is not None:
@@ -346,9 +347,9 @@ while sim_time < end_time:
         accel_obs = map(lambda x: x.__dict__, accel_obs)
         upload_accel_obs(accel_obs)
 
-    if len(location_obs) > 0:
-        location_obs = map(lambda x: x.__dict__, location_obs)
-        upload_location_obs(location_obs)
+    if len(entity_locs) > 0:
+        entity_locs = map(lambda x: x.__dict__, entity_locs)
+        upload_entity_locs(entity_locs)
 
     time.sleep(0.5)
     sim_time = sim_time + timedelta(seconds=10)

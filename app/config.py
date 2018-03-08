@@ -18,17 +18,17 @@ class Base(object):
     REDIS_URL = os.getenv('REDIS_URL')
 
     FIREBASE_SERVICE = FirebaseService(FIREBASE_URL, {
-      'private_key': os.getenv('FIREBASE_PRIVATE_KEY', False),
-      'client_email': os.getenv('FIREBASE_CLIENT_EMAIL', ''),
+      'private_key': os.getenv('SENSEI_FIREBASE_PRIVATE_KEY', False),
+      'client_email': os.getenv('SENSEI_FIREBASE_CLIENT_EMAIL', ''),
       'type': 'service_account',
       'token_uri': 'https://accounts.google.com/o/oauth2/token',
-      'project_id': os.getenv('FIREBASE_PROJECT_ID', 'sensei-b9fb6'),
-      'private_key_id': os.getenv('FIREBASE_PRIVATE_KEY_ID'),
-      'client_id': os.getenv('FIREBASE_CLIENT_ID'),
+      'project_id': os.getenv('SENSEI_FIREBASE_PROJECT_ID', 'sensei-b9fb6'),
+      'private_key_id': os.getenv('SENSEI_FIREBASE_PRIVATE_KEY_ID'),
+      'client_id': os.getenv('SENSEI_FIREBASE_CLIENT_ID'),
       'auth_uri': 'https://accounts.google.com/o/oauth2/auth',
       'token_uri': 'https://accounts.google.com/o/oauth2/token',
       'auth_provider_x509_cert_url': 'https://www.googleapis.com/oauth2/v1/certs',
-      'client_x509_cert_url': os.getenv('FIREBASE_CLIENT_X509_CERT_URL')
+      'client_x509_cert_url': os.getenv('SENSEI_FIREBASE_CLIENT_X509_CERT_URL')
     })
     SENSEI_AWS_PROFILE = os.getenv('SENSEI_AWS_PROFILE', '')
 

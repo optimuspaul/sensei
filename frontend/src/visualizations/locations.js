@@ -22,7 +22,7 @@ export default function locations() {
   let state = store.getState();
   let storeEntities = state.entities;
   let vizElement = document.querySelector("#visualization #locations");
-  let chartMaxSize = _.get(vizElement, 'parentElement.offsetWidth', 800) - 20;
+  let chartMaxWidth = _.get(vizElement, 'parentElement.offsetWidth', 800) - 20;
 
   let chart = d3.select("#visualization #locations svg")
   chart.append('g')
@@ -30,13 +30,13 @@ export default function locations() {
 
   
 
+    let classroomLength = 0, 
+    classroomWidth = 0;
 
 
     let updateChart = (event) => {
 
       let sensors = []
-      let classroomHeight = 0, 
-      classroomWidth = 0;
 
       let data = event.detail
 
@@ -47,26 +47,19 @@ export default function locations() {
         sensors = _.get(data, `obs.${currentIndex}.sensors`);
       } else {
         data = {
-          classroomHeight: 0,
+          classroomLength: 0,
           classroomWidth: 0
         }
       }
 
-      if (classroomHeight !== data.classroomHeight || classroomWidth !== data.classroomWidth) {
-        classroomHeight = data.classroomHeight;
-        classroomWidth = data.classroomWidth;
-        rotate = classroomWidth >= classroomHeight;
-        let upperDomain = rotate ? classroomWidth : classroomHeight;
-        let lowerDomain = rotate ? classroomHeight : classroomWidth;
-        
+      if (classroomLength !== data.classroomLength || classroomWidth !== data.classroomWidth) {
         classroomScale = d3.scaleLinear()
                         .domain([0, upperDomain])
-                        .range([0, chartMaxSize]);
-        chartHeight = classroomScale(lowerDomain);
-        chartWidth = classroomScale(upperDomain);
+                        .range([0, chartMaxWidth]);
+        chartHeight = classroomScale(data.classroomWidth);
+        chartWidth = classroomScale(data.classroomLength);
         chart.attr("width", chartWidth).attr("height", chartHeight)
       }
-
 
       let sensorWrapper = chart.select('g.sensors');
 
