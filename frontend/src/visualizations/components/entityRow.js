@@ -20,10 +20,12 @@ export default function entityRows(selection, opts = {}) {
    */
   selection.enter()
       .append("g")
+      .merge(selection)
       .attr("class", opts.className)
       .attr("transform", (entity, index) => {
         return "translate(0," + index * opts.rowHeight + ")";
       });
+      
 }
 
 

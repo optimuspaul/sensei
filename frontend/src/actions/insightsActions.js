@@ -119,6 +119,8 @@ export const fetchInteractionPeriods = (entityId, entityType, date) => {
         unsubscribeFromInteractionPeriods = doc.ref.collection(`interaction_periods`)
           .where('endTime', '>', date)
           .where('endTime', '<', endDate)
+          .where('sourceEntityId', '==', parseInt(entityId))
+          .where('sourceEntityType', '==', entityType)
           .orderBy('endTime', 'desc')
           .onSnapshot(function(snapshot) {
             let docs = _.filter(snapshot.docChanges, {type: "added"});

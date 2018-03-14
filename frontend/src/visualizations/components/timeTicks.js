@@ -22,7 +22,7 @@ export default function timeTicks(selection, ticks, opts = {}) {
   opts = _.merge({}, defaultOpts, opts);
 
   var t = d3.transition()
-    .duration(750)
+    .duration(300)
     .ease(d3.easeLinear);
 
   let text = selection.selectAll(`text.${opts.id}`).data(ticks);

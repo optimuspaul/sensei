@@ -25,17 +25,35 @@ export default function segmentedTimeline() {
   let topTicks = chart.select("g#top-ticks");
   let bottomTicks = chart.select("g#bottom-ticks");
   let color = d3.scaleOrdinal(d3.schemeCategory10).domain([0,5]);
+  let rawData;
+  let zoom;
 
-  let updateChart = (event) => {
+  let updateChart = (event, zoomKick) => {
 
-    let data = event.detail
-    if (!data || !data.entities) return;
+    if (!zoomKick) {
+      vizElement.style.display = 'none';
+      setTimeout(() => {
+        vizElement.style.display = 'inline';
+      },1000)
+    }
+
+    let newZoom = zoomKick || _.get(store.getState(), "insights.ui.zoom", 1);
+
+    if (!event.detail || (_.isEqual(event.detail, rawData) && parseInt(newZoom) === parseInt(zoom)) ) {
+      return;
+    } else {
+      rawData = event.detail;
+      zoom = newZoom;
+    }
+
+
+    let data = transformIps(rawData);
+
 
     var t = d3.transition()
     .duration(400)
     .ease(d3.easeLinear);
 
-    let zoom = _.get(store.getState(), "insights.ui.zoom") || 1;
     let chartWidth = 1260 * zoom; // how wide the width of the visualization is
     let segmentedData = segmentData(data);
     let {startTime} = startAndEndTimes(data.timestamps);
@@ -71,7 +89,7 @@ export default function segmentedTimeline() {
 
     rect.enter().append("rect")
       .merge(rect)
-      .transition(t)
+      
       .attr("x", (d) => {
         let timestamp = new Date(d[0]);
         timestamp.setDate(firstDate);
@@ -98,8 +116,43 @@ export default function segmentedTimeline() {
 
       topTicks.call(timeTicks, ticks, {offset, y: 10, zoom, chartHeight})
       bottomTicks.call(timeTicks, ticks, {offset, y: chartHeight+20, zoom, hideLines: true})
+      if (zoomKick) return;
+      setTimeout(() => {
+        updateChart(event, 5)
+        setTimeout(() => {
+          updateChart(event, newZoom);
+        },200)
+      },200)
 
   }
+
+  function transformIps(ips) {
+    return _.reduce(_.orderBy(ips, ['targetEntityType'], ['desc']), (current, ip) => {
+      let index = _.findIndex(current.entities, (entity) => {
+        return entity[0] === ip.targetEntityType && entity[1] === ip.targetEntityId;
+      })
+      if (index === -1) {
+        current.entities.push([ip.targetEntityType, ip.targetEntityId])
+        index = _.size(current.entities)-1;
+      }
+      current.obs[index] = current.obs[index] || [];
+      current.obs[index].push([ip.startTime.toISOString(), ip.endTime.toISOString()])
+      if(current.timestamps[0]) {
+        let earliestTimestamp = new Date(current.timestamps[0]);
+        current.timestamps[0] = earliestTimestamp > ip.startTime ? ip.startTime.toISOString() : current.timestamps[0];
+      } else {
+        current.timestamps[0] = ip.startTime.toISOString();
+      }
+      if(current.timestamps[1]) {
+        let latestTimestamp = new Date(current.timestamps[1]);
+        current.timestamps[1] = latestTimestamp > ip.endTime ? ip.endTime.toISOString() : current.timestamps[1];
+      } else {
+        current.timestamps[1] = ip.endTime.toISOString();
+      }
+      return current;
+    }, {entities: [], obs: [], timestamps: []})
+  }
+
 
   vizElement.addEventListener('dataChanged',
     updateChart
@@ -110,3 +163,4 @@ export default function segmentedTimeline() {
 
 
 }
+
