@@ -25,6 +25,21 @@ def camera_data_image(key):
 @api_auth.requires_auth
 def camera_data_index():
 
+  tc = current_app.config.get("TC_SERVICE")
+  classrooms = Classroom.get_for_user(tc, g.user)
+
+  permitted_buckets = [];
+
+  for c in classrooms:
+    firebase = current_app.config.get("FIREBASE_SERVICE")
+    path = 'classrooms/%s' % (c.id)
+    classroom_ref = firebase.db.document(path)
+    doc = classroom_ref.get()
+    camera_buckets = doc.to_dict().get("camera_buckets")
+    if camera_buckets:
+      permitted_buckets.extend(doc.to_dict().get("camera_buckets"))
+  
+
   s3 = get_s3_client()
 
   output = {}
@@ -37,6 +52,9 @@ def camera_data_index():
 
     for o in result.get('CommonPrefixes'):
       s3_folder_name = o.get('Prefix')[:-1]
+      print "s3_folder_name: %s" % s3_folder_name
+      if not s3_folder_name in camera_buckets:
+        continue
       if not output.get(s3_folder_name):
         output[s3_folder_name] = {}
       result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/', Prefix=o.get('Prefix'))
