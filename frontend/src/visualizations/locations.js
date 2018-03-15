@@ -19,7 +19,7 @@ export default function locations() {
                       .range([5, 20]);
   let pulseScale = d3.scaleLinear()
                       .domain([0, 1])
-                      .range([0, 10]); 
+                      .range([0, 15]); 
   let state = store.getState();
   let storeEntities = state.entities;
   let vizElement = document.querySelector("#visualization #locations");
@@ -96,11 +96,11 @@ export default function locations() {
           })
           .attr("r", (sensor) => {
             let r = 10 + (c === 'pulse' ? pulseScale(10*(sensor.xStdDev+sensor.yStdDev)/2) : 0);
-            r = sensor.entityType === 'child' || sensor.entityType === 'teacher' ? r : r/2;
+            // r = sensor.entityType === 'child' || sensor.entityType === 'teacher' ? r : r/2;
             return r;
           })
           .attr("style", (sensor) => {
-            return `stroke-width: ${pulseScale(10*(sensor.xStdDev+sensor.yStdDev)/2)}`
+            return `stroke-width: ${pulseScale((sensor.xStdDev+sensor.yStdDev)/2)}`
           })
           
       })
