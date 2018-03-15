@@ -47,10 +47,10 @@ export default function locations() {
           classroomWidth: 0
         }
       }
-      let areasWithCoords = _.filter(_.get(store.getState(), `entities.areas`), (area) => {
-        return _.isNumber(area.x) && _.isNumber(area.y);
+      let areasWithCoords = _.filter(_.get(store.getState(), `entities.areas`, {}), (area) => {
+        return _.isNumber(area.xPosition) && _.isNumber(area.yPosition);
       });
-      let areas = _.map(, (area) => {
+      let areas = _.map(areasWithCoords, (area) => {
         return {entityId: area.id, entityType: 'area', x: area.xPosition, y: area.yPosition, xStdDev: 0, yStdDev: 0}
       });
 
