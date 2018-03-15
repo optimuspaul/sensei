@@ -47,10 +47,16 @@ export default function locations() {
           classroomWidth: 0
         }
       }
+      let areasWithCoords = _.filter(_.get(store.getState(), `entities.areas`), (area) => {
+        return _.isNumber(area.x) && _.isNumber(area.y);
+      });
+      let areas = _.map(, (area) => {
+        return {entityId: area.id, entityType: 'area', x: area.xPosition, y: area.yPosition, xStdDev: 0, yStdDev: 0}
+      });
 
-     
+      sensors = _.concat(areas, sensors);
 
-      if (classroomLength !== data.classroomLength || classroomWidth !== data.classroomWidth) {
+      // if (classroomLength !== data.classroomLength || classroomWidth !== data.classroomWidth) {
         classroomLength = data.classroomLength;
         classroomWidth = data.classroomWidth;
         classroomScale = d3.scaleLinear()
@@ -58,7 +64,7 @@ export default function locations() {
                         .range([0, chartWidth]);
         chartHeight = classroomScale(classroomWidth);
         chart.attr("width", chartWidth).attr("height", chartHeight)
-      }
+      // }
 
       let sensorWrapper = chart.select('g.sensors');
 
@@ -66,44 +72,25 @@ export default function locations() {
         .duration(1000)
         .ease(d3.easeCubic);
 
-      _.each(['fill'], (c) => {
+      let circle = sensorWrapper
+        .selectAll(`circle.fill`)
+        .data(sensors)
 
-        let circle = sensorWrapper
-          .selectAll(`circle.${c}`)
-          .data(sensors)
+      circle.exit().remove();
 
-        circle.exit().remove();
+      circle.enter().append("circle")
+        .merge(circle)
+        .transition(t)
+        .attr('class', (sensor) => {
+          return  `${sensor.entityType} fill`
+        })
+        .attr("cx", sensor => classroomScale(sensor.x))
+        .attr("cy", sensor => classroomScale(sensor.y))
+        .attr("r", 10)
+        .attr("style", (sensor) => {
+          return `stroke-width: ${pulseScale((sensor.xStdDev+sensor.yStdDev)/2)}`
+        })
 
-        circle.enter().append("circle")
-          .merge(circle)
-          .transition(t)
-          .attr('class', (sensor) => {
-            return  `${sensor.entityType} ${c}`
-          })
-          .attr("cx", (sensor, index) => {
-            let x = sensor.x;
-            if (sensor.entityType === 'area') {
-              x = _.get(store.getState(), `entities.areas.${sensor.entityId}.xPosition`, sensor.x)
-            }
-            return classroomScale(x);
-          })
-          .attr("cy", (sensor) => {
-            let y = sensor.y;
-            if (sensor.entityType === 'area') {
-              y = _.get(store.getState(), `entities.areas.${sensor.entityId}.yPosition`, sensor.y)
-            }
-            return classroomScale(sensor.y);
-          })
-          .attr("r", (sensor) => {
-            let r = 10 + (c === 'pulse' ? pulseScale(10*(sensor.xStdDev+sensor.yStdDev)/2) : 0);
-            // r = sensor.entityType === 'child' || sensor.entityType === 'teacher' ? r : r/2;
-            return r;
-          })
-          .attr("style", (sensor) => {
-            return `stroke-width: ${pulseScale((sensor.xStdDev+sensor.yStdDev)/2)}`
-          })
-          
-      })
     }
 
     vizElement.addEventListener('dataChanged',
