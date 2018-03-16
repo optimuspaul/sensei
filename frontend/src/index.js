@@ -228,7 +228,9 @@ import key from 'keyboard-shortcut';
             vizElement.dispatchEvent(event);
             // some vizualizations don't want to render correctly the first time and need to be kicked
             if (visualization !== 'socialGraph') {
-              setTimeout(() => { vizElement.dispatchEvent(event); }, 1000);
+              setTimeout(() => { 
+                vizElement.dispatchEvent(event); 
+              }, 1000);
             }
           });
         }

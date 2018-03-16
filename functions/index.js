@@ -25,7 +25,7 @@ const functions = require('firebase-functions'),
 admin.initializeApp(functions.config().firebase);
 
 const db = admin.firestore();
-const INFLECTION_POINT = 6;
+
 
 
 exports.generateInteractionPeriods = functions.firestore.document('/classrooms/{classroomId}/entity_locations/{entityLocationId}').onCreate(event => {
@@ -138,6 +138,8 @@ function groupLocationsByTimestamp(locationDocs) {
 }
 
 function updateEntities(locationsByTimestamp, entities = {}) {
+  const INFLECTION_POINT = 8;
+
   return _.reduce(locationsByTimestamp, (current, locations, timestamp) => {
     timestamp = new Date(timestamp);
     _.each(locations, (location) => {
@@ -158,7 +160,9 @@ function updateEntities(locationsByTimestamp, entities = {}) {
           _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`, {
             startTime: location.timestamp, 
             targetEntityId: loc.entityId, 
-            targetEntityType: loc.entityType
+            targetEntityType: loc.entityType,
+            sourceEntityId: location.entityId,
+            sourceEntityType: location.entityType
           });
         }
         _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod.endTime`, new Date(timestamp));
@@ -182,7 +186,7 @@ function calcIpq(prevIpq, loc1, loc2, currentPeriod = {}, currentTimestamp) {
     }
   }
   let ipq = prevIpq+mod;
-  ipq = ipq - (5*(1/Math.pow(ipq-10,2)));
+  // ipq = ipq - (5*(1/Math.pow(ipq-10,2)));
   ipq = ipq < 0 ? 0 : ipq;
   return ipq;
 }

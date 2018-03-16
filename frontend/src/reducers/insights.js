@@ -44,6 +44,32 @@ export default function sensorMappings(state = initialState, action) {
         },
         status: 'fetched'
       }
+    case 'RECEIVE_INTERACTION_PERIODS':
+      date = state.ui.currentDate;
+      entityUid = `${action.entityType}-${action.entityId}`;
+      let ips = _.get(state, 'currentObservationsData.obs', []);
+      _.each(_.values(action.interactionPeriods), (interactionPeriod) => {
+        ips.push(interactionPeriod);
+      });
+
+      
+
+      return {
+        ...state,
+        observations: {
+          ...state.observations,
+          [entityUid]: {
+            ...state.observations[entityUid],
+            [date]: ips
+          }
+        },
+        currentObservationsData: ips,
+        ui: {
+          ...state.ui,
+          visualizationTitle: hasData ? `${entityName} <small>${dateString}</small>` : 'No data...'
+        },
+        status: 'fetched'
+      }
     case 'RECEIVE_LOCATIONS':
       let obs = _.get(state, 'currentObservationsData.obs', []);
       let isLive = _.get(state, 'ui.isLive', true);

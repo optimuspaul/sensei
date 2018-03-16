@@ -16,38 +16,26 @@
       firebase.initializeApp(config);
       let db = firebase.firestore();
 
-      let startDate = new Date("02-28-2018");
-      let endDate = new Date("03-01-2018");
+      let startDate = new Date("03-08-2018");
+      let endDate = new Date("03-09-2018");
 
       
 
       let segmentsOverTime = []
 
-      const INFLECTION_POINT = 6;
+      const INFLECTION_POINT = 7;
 
       let i = 1;
 
-      let classroomId = 735;
+      let classroomId = 2;
 
 
 
 
-      // db.collection(`/classrooms/${classroomId}/entity_locations`)
-      //   .where("timestamp", ">=", startDate)
-      //   .where("timestamp", "<", endDate)
-      //   .orderBy("timestamp", "asc")
-      //   .limit(10000)
-      //   .get()
-      //   .then((querySnapshot) => {
-      //     let locations = querySnapshot.docs;
-      //     _.each(locations, (doc) => {
-      //     })
-      //     let data = locations.pop().data();
-      //     generateSegments(data);
-      //   })
+
 
       let currentLoc = {
-        timestamp: new Date("2018-02-28T22:50:00.000Z")
+        timestamp: new Date("2018-03-08T22:00:00.000Z")
       }
 
       generateSegments(currentLoc).then(() => {
@@ -114,7 +102,7 @@
 
 
       function render(segments) {
-        // setTimeout(() => { 
+        setTimeout(() => { 
           let segmentsEl = document.querySelector("#segments");
           segmentsEl.innerHTML = '';
           _.each(segments, (s, k) => {
@@ -122,7 +110,7 @@
             pre.innerHTML = output({[k]: s});
             segmentsEl.appendChild(pre);
           })
-        // }, (100*(i)));
+        }, (100*(i)));
         i++;
       }
 
@@ -202,14 +190,14 @@
         } else {
           let delta =  Math.hypot(loc2.x - loc1.x, loc2.y-loc1.y);
           delta = delta === 0 ? 0.001 : delta;
-          mod = 1 + 1/(1/(1-(delta*3)));
+          mod = 1 + (1-(delta*3));
           let latestTime = currentPeriod.endTime || currentPeriod.startTime;
           if (latestTime) {
             mod += (1-((currentTimestamp - latestTime)/10000));
           }
         }
         let ipq = prevIpq+mod;
-        ipq = ipq - (5*(1/Math.pow(ipq-10,2)));
+        // ipq = ipq - (5*(1/Math.pow(ipq-10,2)));
         ipq = ipq < 0 ? 0 : ipq;
         return ipq;
       }
