@@ -7,6 +7,7 @@ from ..models import *
 import StringIO
 import urllib, urllib2, base64
 from ..data_publisher import data_publisher
+from datetime import datetime, timedelta
 
 # Radio Observations upload #
 @api.route('/api/v1/radio_observations', methods=['POST'])
@@ -103,47 +104,57 @@ def radio_observations_index():
     if not classroom_id:
         abort(400, "Missing classroom_id parameter")
 
+    filters = [RadioObservation.classroom_id==classroom_id]
+
+    start_time = get_iso8601_time_param('start_time')
+    if start_time:
+        filters.append(RadioObservation.observed_at >= start_time)
+
+    end_time = get_iso8601_time_param('end_time')
+    if end_time:
+        if not start_time:
+            abort(400, "start_time must be specified if using end_time")
+        filters.append(RadioObservation.observed_at <= end_time)
+
     entity_id = request.args.get('entity_id')
-    if not entity_id:
-        abort(400, "Missing entity_id parameter")
-    entity_id = int(entity_id)
-    entity_type = request.args.get('entity_type')
-    if not entity_id:
-        abort(400, "Missing entity_type parameter")
 
-    as_matrix = request.args.get('as_matrix', default='True') != 'False'
+    if not end_time:
+        end_time = datetime.utcnow()
 
-    print("Got as_matrix flag: %s" % as_matrix)
+    if not entity_id and end_time - start_time > timedelta(days=2):
+        abort(400, "Please specify less than two days worth of data for classroom wide queries.")
 
-    start_time = assert_iso8601_time_param('start_time')
-    end_time = assert_iso8601_time_param('end_time')
+    if entity_id:
+        entity_id = int(entity_id)
+        entity_type = request.args.get('entity_type')
+        if not entity_type:
+            abort(400, "Missing entity_type parameter")
 
-    relationships = EntityRelationship.query.filter(
-        EntityRelationship.classroom_id==classroom_id,
-        or_(
-            and_(
-                EntityRelationship.entity1_type==entity_type,
-                EntityRelationship.entity1_id==entity_id
-            ),
-            and_(
-                EntityRelationship.entity2_type==entity_type,
-                EntityRelationship.entity2_id==entity_id
+        as_matrix = request.args.get('as_matrix', default='True') != 'False'
+
+        relationships = EntityRelationship.query.filter(
+            EntityRelationship.classroom_id==classroom_id,
+            or_(
+                and_(
+                    EntityRelationship.entity1_type==entity_type,
+                    EntityRelationship.entity1_id==entity_id
+                ),
+                and_(
+                    EntityRelationship.entity2_type==entity_type,
+                    EntityRelationship.entity2_id==entity_id
+                )
             )
-        )
-    ).all()
-
-    relationship_ids = [r.id for r in relationships]
-
-    obs = RadioObservation.query.filter(
-        RadioObservation.classroom_id==classroom_id,
-        RadioObservation.observed_at >= start_time,
-        RadioObservation.observed_at <= end_time,
-        RadioObservation.relationship_id.in_(relationship_ids)
-    ).all()
-
-    if not as_matrix:
-        return jsonify([o.as_dict_for_web_resource() for o in obs])
+        ).all()
+        relationship_ids = [r.id for r in relationships]
+        filters.append(RadioObservation.relationship_id.in_(relationship_ids))
     else:
+        as_matrix = False
+
+    query = RadioObservation.query.filter(*filters)
+
+    obs = query.all()
+
+    if as_matrix:
         entities = set(
             [(rel.entity1_type.value, rel.entity1_id) for rel in relationships] +
             [(rel.entity2_type.value, rel.entity2_id) for rel in relationships]
@@ -183,3 +194,5 @@ def radio_observations_index():
             'entities': entities,
             'timestamps': timestamps
         })
+    else:
+        return jsonify([o.as_dict_for_web_resource() for o in obs])

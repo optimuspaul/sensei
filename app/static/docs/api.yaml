@@ -24,7 +24,7 @@ paths:
     post:
       summary: Upload radio observations.
       description: |
-        The Radio Observations endpoint provides a way to upload radio observations from sensors to the sensei platform.  All observations in a single post must share the same observed_at time and classroom_id.
+        The Radio Observations POST endpoint provides a way to upload radio observations from sensors to the sensei platform.  All observations in a single post must share the same observed_at time and classroom_id.
       consumes:
         - application/json
       parameters:
@@ -48,6 +48,8 @@ paths:
           description: Unauthorized
     get:
       summary: Returns radio observations.
+      description: |
+        The Radio Observations GET endpoint provides a way to fetch radio observations from the sensei platform. You can retrieve up to two days worth of radio observations in a single query.
       produces:
         - application/json
       parameters:
@@ -59,12 +61,12 @@ paths:
         - name: entity_id
           in: query
           description: The id of the entity to retrieve observations for.
-          required: true
+          required: false
           type: integer
         - name: entity_type
           in: query
           description: "The type of entity that entity_id references."
-          required: true
+          required: false
           type: string
           enum:
             - child
@@ -74,11 +76,11 @@ paths:
         - name: start_time
           in: query
           type: string
-          required: true
+          required: false
           description: Obs after this date will be retrieved. iso8601 format. Example '2002-12-25T12:15:05'.
         - name: end_time
           in: query
-          required: true
+          required: false
           type: string
           description: Obs before this date will be retrieved. iso8601 format. Example '2002-12-25T12:15:05'.
         - name: as_matrix
