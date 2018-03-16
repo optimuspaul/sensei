@@ -58,7 +58,7 @@ export const frontendBaseUrl = () => {
   }
 }
 
-export const vantagePoints = ['camera01', 'camera02', 'camera03'];
+export const vantagePoints = ['camera01', 'camera02', 'camera03', 'camera04'];
 
 export const fakeNames = [
   "Nan Lark",
