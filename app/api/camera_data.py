@@ -28,17 +28,25 @@ def camera_data_index():
   tc = current_app.config.get("TC_SERVICE")
   classrooms = Classroom.get_for_user(tc, g.user)
 
+  user = User.get_tc_info(tc, g.user)
+
+
+  print "user: %s" % user
+
   permitted_buckets = [];
 
-  for c in classrooms:
-    firebase = current_app.config.get("FIREBASE_SERVICE")
-    path = 'classrooms/%s' % (c.id)
-    classroom_ref = firebase.db.document(path)
-    doc = classroom_ref.get()
-    camera_buckets = doc.to_dict().get("camera_buckets")
-    if camera_buckets:
-      permitted_buckets.extend(doc.to_dict().get("camera_buckets"))
+  firebase = current_app.config.get("FIREBASE_SERVICE")
+  classroom_ref = firebase.db.collection('cameras')
+  docs = classroom_ref.get()
   
+  for c in user.get("accessible_classroom_ids"):
+    for doc in docs:
+      camera = doc.to_dict()
+      print "c: %s, classroomId: %s" % (c, camera.get("classroomId"))
+      if ('admin' in user.get("roles") or 'network_admin' in user.get("roles")) and camera.get("bucketName") not in permitted_buckets:
+        permitted_buckets.append(camera.get("bucketName"))
+  
+  print permitted_buckets
 
   s3 = get_s3_client()
 
@@ -53,7 +61,7 @@ def camera_data_index():
     for o in result.get('CommonPrefixes'):
       s3_folder_name = o.get('Prefix')[:-1]
       print "s3_folder_name: %s" % s3_folder_name
-      if not s3_folder_name in camera_buckets:
+      if not s3_folder_name in permitted_buckets:
         continue
       if not output.get(s3_folder_name):
         output[s3_folder_name] = {}
