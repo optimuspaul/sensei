@@ -37,19 +37,21 @@ def camera_data_index():
 
   firebase = current_app.config.get("FIREBASE_SERVICE")
   classroom_ref = firebase.db.collection('cameras')
-  docs = classroom_ref.get()
+  cameraDocs = classroom_ref.get()
 
   camera_mappings = {}
   
-  for c in user.get("accessible_classroom_ids"):
-    for doc in docs:
-      camera = doc.to_dict()
-      print "c: %s, classroomId: %s" % (c, camera.get("classroomId"))
-      if ('admin' in user.get("roles") or 'network_admin' in user.get("roles")) and camera.get("bucketName") not in permitted_buckets:
+
+  for doc in cameraDocs:
+    camera = doc.to_dict()
+    print "camera: %s, classroomId: %s" % (camera, camera.get("classroomId"))
+    if ('network_admin' in user.get("roles")) or camera.get("classroomId") in user.get("accessible_classroom_ids"):
+      if camera.get("bucketName") not in permitted_buckets:
         permitted_buckets.append(camera.get("bucketName"))
-        camera_mappings[camera.get("bucketName")] = camera.get("classroomId")
+    camera_mappings[camera.get("bucketName")] = camera.get("classroomId")
   
-  print permitted_buckets
+  print "permitted_buckets: %s" % permitted_buckets
+  print "camera_mappings: %s" % camera_mappings
 
   s3 = get_s3_client()
 
@@ -63,7 +65,7 @@ def camera_data_index():
 
     for o in result.get('CommonPrefixes'):
       s3_folder_name = o.get('Prefix')[:-1]
-      print "s3_folder_name: %s" % s3_folder_name
+      
       if not s3_folder_name in permitted_buckets:
         continue
       if not output.get(s3_folder_name):
@@ -92,7 +94,7 @@ def camera_data_index():
   for camera in cameras:
 
     prefix = s3_folder_name + '/' + camera + '/' + date + '/camera01'
-    print(prefix)
+    
 
     paginator = s3.get_paginator('list_objects')
     operation_parameters = {'Bucket':'wf-classroom-data',
@@ -100,9 +102,9 @@ def camera_data_index():
     pageresponse = paginator.paginate(**operation_parameters)
 
     for page in pageresponse:
-      print(page);
+      
       for file in page.get("Contents", []):
-        print(file["Key"])
+        
         parts = file["Key"].split("/")
         if not output[s3_folder_name].get(parts[1]):
           output[s3_folder_name][parts[1]] = {}

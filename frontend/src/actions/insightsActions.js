@@ -258,7 +258,12 @@ export const fetchLocations = (date, endDate, classroomId) => {
 
     let entityId = _.get(state, 'insights.ui.currentEntityId');
     let entityType = _.get(state, 'insights.ui.currentEntityType');
-
+    dispatch({
+      type: FETCH_LOCATIONS, 
+      classroomLength: 0, 
+      classroomWidth: 0, 
+      classroomId
+    });
 
     unsubscribe && unsubscribe();
     classroomId = classroomId || getClassroomId()

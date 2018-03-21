@@ -43,8 +43,8 @@ class CameraSegmentBuilder extends React.Component {
     return _.keys(_.get(this.props.cameraData.locations, `${this.state.currentLocation}.${this.state.currentCamera}`, []));
   }
 
-  getCurrentTime() {
-    let currentPhoto = this.getCurrentPhoto();
+  getCurrentTime(photoUrl) {
+    let currentPhoto = photoUrl || this.getCurrentPhoto();
     if (currentPhoto) {
       let key = currentPhoto.split('/')[4]
       let keyTime = key.match(/[0-9]{4}(.*(?=_)|.*(?=\.))/)[0];
@@ -79,12 +79,7 @@ class CameraSegmentBuilder extends React.Component {
     let newIndex = currentIndex + delta;
     let pageForward = delta > 0 && _.size(this.getAllPhotos()) > (newIndex+15) && carouselIndex > 35;
     let pageBack = delta < 0 && 0 < (newIndex-15) && carouselIndex <= 15;
-    if (_.isEmpty(this.props.sensorLocations)) {
-      this.props.fetchSensorLocations(this.getCurrentTime(), this.getClassroomId());
-    } else {
-      this.props.showLocationsAt(this.getCurrentTime());
-      this.updateLocations();
-    }
+    this.props.showLocationsAt(this.getCurrentTime());
     if (pageForward || pageBack) {
       let photos;
       let newIndexModified;
@@ -153,18 +148,27 @@ class CameraSegmentBuilder extends React.Component {
     setTimeout(locations, 1000);
   }
 
-  updateLocations() {
+  updateLocations(sensorLocations) {
     let vizElement = document.querySelector(`#visualization #locations`);
     if (vizElement) {
-      var event = new CustomEvent('dataChanged', { detail: _.get(this.props, 'sensorLocations') });
+      var event = new CustomEvent('dataChanged', { detail: sensorLocations || _.get(this.props, 'sensorLocations') });
       vizElement.dispatchEvent(event);
     }
   }
 
   componentWillReceiveProps(nextProps) {
-    // if (!_.isEmpty(this.props.cameraData.locations)) {
-      this.setState({ photos: this.getPhotos(), authenticating: nextProps.authenticating });
-    // }
+    this.setState({ photos:this.getPhotos(), authenticating: nextProps.authenticating });
+    let nextLocs = _.get(nextProps, 'sensorLocations.obs');
+    let prevLocs = _.get(this.props, 'sensorLocations.obs');
+    let nextSensorLocations = _.get(nextProps, 'sensorLocations');
+    if ((!_.isEqual(nextLocs, prevLocs) && !_.isEmpty(nextLocs)) || !_.isEqual(this.props.zoom, nextProps.zoom)) {
+      this.updateLocations(nextSensorLocations);
+    }
+    let nextAllPhotos = _.get(nextProps, `cameraData.locations.${this.state.currentLocation}.${this.state.currentCamera}.${this.state.currentDate}`, []);
+    let prevAllPhotos = _.get(this.props, `cameraData.locations.${this.state.currentLocation}.${this.state.currentCamera}.${this.state.currentDate}`, []);
+    if (!_.isEmpty(nextAllPhotos) && _.isEmpty(prevAllPhotos)) {
+      this.props.fetchSensorLocations(this.getCurrentTime(nextAllPhotos[0]), _.get(this.props.cameraData.locations, `${this.state.currentLocation}.classroom_id`, []));
+    }
   }
 
   switchCamera = (event) => {

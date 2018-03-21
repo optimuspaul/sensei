@@ -10,7 +10,8 @@ const CamerSegmentBuilderContainer = connect((state) => ({
   authenticating: _.get(state, 'cameraSegmentBuilder.authenticating'),
   authFailed: _.get(state, 'cameraSegmentBuilder.authenticated') === false && _.get(state, 'cameraSegmentBuilder.credentials') && !_.get(state, 'cameraSegmentBuilder.authenticating'),
   sensorLocations: _.get(state, 'insights.currentObservationsData'),
-  fetchLocsStatus: _.get(state, 'insights.status')
+  fetchLocsStatus: _.get(state, 'insights.status'),
+  zoom: _.get(state, 'insights.ui.zoom')
 }),
 (dispatch) => ({
   dispatch,
