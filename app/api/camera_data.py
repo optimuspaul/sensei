@@ -45,7 +45,7 @@ def camera_data_index():
   for doc in cameraDocs:
     camera = doc.to_dict()
     print "camera: %s, classroomId: %s" % (camera, camera.get("classroomId"))
-    if ('admin' in user.get("roles")) or camera.get("classroomId") in user.get("accessible_classroom_ids"):
+    if ('network_admin' in user.get("roles")) or camera.get("classroomId") in user.get("accessible_classroom_ids"):
       if camera.get("bucketName") not in permitted_buckets:
         permitted_buckets.append(camera.get("bucketName"))
     camera_mappings[camera.get("bucketName")] = camera.get("classroomId")
