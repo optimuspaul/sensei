@@ -156,8 +156,16 @@ class CameraSegmentBuilder extends React.Component {
     }
   }
 
+  componentWillUpdate(nextProps, nextState) {
+    let nextAllPhotos = _.get(nextProps, `cameraData.locations.${nextState.currentLocation}.${nextState.currentCamera}.${nextState.currentDate}`, []);
+    let currentTime = this.getCurrentTime(nextAllPhotos[0]);
+    let classroomId = _.get(nextProps.cameraData.locations, `${nextState.currentLocation}.classroom_id`);
+    if (nextState.currentDate && !_.isEqual(nextState.currentDate, this.state.currentDate) && currentTime && classroomId) {
+      this.props.fetchSensorLocations(currentTime, classroomId);
+    }
+  }
+
   componentWillReceiveProps(nextProps) {
-    this.setState({ photos:this.getPhotos(), authenticating: nextProps.authenticating });
     let nextLocs = _.get(nextProps, 'sensorLocations.obs');
     let prevLocs = _.get(this.props, 'sensorLocations.obs');
     let nextSensorLocations = _.get(nextProps, 'sensorLocations');
@@ -167,8 +175,10 @@ class CameraSegmentBuilder extends React.Component {
     let nextAllPhotos = _.get(nextProps, `cameraData.locations.${this.state.currentLocation}.${this.state.currentCamera}.${this.state.currentDate}`, []);
     let prevAllPhotos = _.get(this.props, `cameraData.locations.${this.state.currentLocation}.${this.state.currentCamera}.${this.state.currentDate}`, []);
     if (!_.isEmpty(nextAllPhotos) && _.isEmpty(prevAllPhotos)) {
-      this.props.fetchSensorLocations(this.getCurrentTime(nextAllPhotos[0]), _.get(this.props.cameraData.locations, `${this.state.currentLocation}.classroom_id`, []));
+      this.props.fetchSensorLocations(this.getCurrentTime(nextAllPhotos[0]), _.get(this.props.cameraData.locations, `${this.state.currentLocation}.classroom_id`));
     }
+
+    this.setState({ photos:this.getPhotos(), authenticating: nextProps.authenticating });
   }
 
   switchCamera = (event) => {
