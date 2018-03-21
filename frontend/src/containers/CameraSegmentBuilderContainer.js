@@ -11,7 +11,8 @@ const CamerSegmentBuilderContainer = connect((state) => ({
   authFailed: _.get(state, 'cameraSegmentBuilder.authenticated') === false && _.get(state, 'cameraSegmentBuilder.credentials') && !_.get(state, 'cameraSegmentBuilder.authenticating'),
   sensorLocations: _.get(state, 'insights.currentObservationsData'),
   fetchLocsStatus: _.get(state, 'insights.status'),
-  zoom: _.get(state, 'insights.ui.zoom')
+  zoom: _.get(state, 'insights.ui.zoom'),
+  fetchPhotosStatus: _.get(state, 'cameraSegmentBuilder.status')
 }),
 (dispatch) => ({
   dispatch,
@@ -36,8 +37,8 @@ const CamerSegmentBuilderContainer = connect((state) => ({
   },
   fetchSensorLocations: (date, classroomId) => {
     let endDate = new Date(date);
-    endDate.setHours(endDate.getHours()+(endDate.getTimezoneOffset()/60)+2);
-    date.setHours(date.getHours()-(date.getTimezoneOffset()/60)-2)
+    endDate.setHours(endDate.getHours()+2);
+    date.setHours(date.getHours()-2)
     dispatch(fetchLocations(date, endDate, classroomId));
   },
   showLocationsAt: (date) => {

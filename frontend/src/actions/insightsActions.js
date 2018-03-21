@@ -200,9 +200,9 @@ export const updateCurrentVisualization = () => {
     switch(visualization) {
       case 'locations':
         let date = new Date(currentDate);
-        date.setHours((date.getTimezoneOffset()/60));
+        date.setHours(0)
         let endDate = new Date(date);
-        endDate.setHours(endDate.getHours() + 20);
+        endDate.setHours(23);
         dispatch(fetchLocations(date, endDate));
         break;
       case 'activityTimeline':
@@ -312,14 +312,13 @@ export const showLocationsAt = (date) => {
       zoom = -1
     } else {
       date = new Date(date);
-      date.setHours(date.getHours()+(date.getTimezoneOffset()/60))
       let zoomIndex = _.findIndex(obs, (ob) => {
         return _.isEqual(ob.timestamp, date); 
       });
       if (zoomIndex < 0) {
         let endDate = new Date(date);
-        endDate.setHours(endDate.getHours()+(endDate.getTimezoneOffset()/60)+2);
-        date.setHours(date.getHours()-(date.getTimezoneOffset()/60)-2)
+        endDate.setHours(endDate.getHours()+2);
+        date.setHours(date.getHours()-2);
         return dispatch(fetchLocations(date, endDate, classroomId))
       }
       zoom = zoomIndex;

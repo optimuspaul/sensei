@@ -282,7 +282,7 @@ class CameraSegmentBuilder extends React.Component {
           <div className="row">
             <div className="col-xs-12 col-sm-6 col-lg-8">
               <div className="photo-viewer">
-                {this.props.authenticated && !_.isEmpty(this.props.cameraData.locations) ? <CameraSegmentBuilderCarousel page={this.state.page} photos={this.state.photos} camera={this.state.currentCamera} vantagePoint={this.state.currentVantagePoint} onCarouselChange={this.handleCarouselChange} /> : <Spinner className="spinner" useLayout="true" />}
+                {this.props.authenticated && !_.isEmpty(this.props.cameraData.locations) ? <CameraSegmentBuilderCarousel page={this.state.page} photos={this.state.photos} camera={this.state.currentCamera} vantagePoint={this.state.currentVantagePoint} onCarouselChange={this.handleCarouselChange} /> : this.props.fetchPhotosStatus === 'fetching' ? <Spinner className="spinner" useLayout="true" /> : 'No cameras found'}
               </div>
             </div>
             <div className="col-xs-12 col-sm-6 col-lg-4">
