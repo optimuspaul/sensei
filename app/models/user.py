@@ -1,3 +1,5 @@
+import json
+
 # User
 class User(object):
     def __init__(self, userinfo):
@@ -16,3 +18,9 @@ class User(object):
          email=self.email,
          api_token=self.api_token,
          school_id=self.school_id)
+
+    @staticmethod
+    def get_tc_info(tc_svc, user):
+        path = "users/%s" % user.id
+        body = tc_svc.request(path, user=user)
+        return json.loads(body)
