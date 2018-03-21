@@ -13,6 +13,7 @@
   opacity: 1;
 }
 
+
 .lgnd {
   margin-left: 20px;
 }
@@ -86,6 +87,11 @@
   animation-timing-function: ease-in;
   animation-iteration-count: infinite;
   /*animation-direction: alternate;*/
+}
+
+#foundation #visualization #locations svg .sensors text {
+  text-anchor: middle;
+  font-size: 11px;
 }
 
 @keyframes pulse {

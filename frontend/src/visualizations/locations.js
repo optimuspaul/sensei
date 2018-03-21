@@ -56,15 +56,13 @@ export default function locations() {
 
       sensors = _.concat(areas, sensors);
 
-      // if (classroomLength !== data.classroomLength || classroomWidth !== data.classroomWidth) {
-        classroomLength = data.classroomLength;
-        classroomWidth = data.classroomWidth;
-        classroomScale = d3.scaleLinear()
-                        .domain([0, classroomLength])
-                        .range([0, chartWidth]);
-        chartHeight = classroomScale(classroomWidth);
-        chart.attr("width", chartWidth).attr("height", chartHeight)
-      // }
+      classroomLength = data.classroomLength;
+      classroomWidth = data.classroomWidth;
+      classroomScale = d3.scaleLinear()
+                      .domain([0, classroomLength])
+                      .range([0, chartWidth]);
+      chartHeight = classroomScale(classroomWidth);
+      chart.attr("width", chartWidth).attr("height", chartHeight)
 
       let sensorWrapper = chart.select('g.sensors');
 
@@ -90,6 +88,30 @@ export default function locations() {
         .attr("style", (sensor) => {
           return `stroke-width: ${pulseScale((sensor.xStdDev+sensor.yStdDev)/2)}`
         })
+
+      let text = sensorWrapper
+        .selectAll(`text`)
+        .data(sensors)
+
+      text.exit().remove();
+
+      text.enter().append("text")
+        .merge(text)
+        .transition(t)
+        .attr('class', (sensor) => {
+          return  `${sensor.entityType} fill`
+        })
+        .attr("x", sensor => classroomScale(sensor.x)+5)
+        .attr("y", (sensor) => { 
+          let scaledY = classroomScale(sensor.y);
+          let delta = _.sample([20,-20]);
+          if (scaledY < 50) { delta = 20 }
+          if (scaledY > (classroomScale(classroomWidth)-50)) { delta = -20}
+          return scaledY + delta;
+        })
+        .text(sensor => _.get(state, `entities.${entityInflections[sensor.entityType]}.${sensor.entityId}.displayName`))
+
+
 
     }
 
