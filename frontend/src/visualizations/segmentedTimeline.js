@@ -110,7 +110,8 @@ export default function segmentedTimeline() {
         startTimestamp.setDate(firstDate);
         let endTimestamp = new Date(d[1]);
         endTimestamp.setDate(firstDate);
-        return xScalar(endTimestamp.getTime()) - xScalar(startTimestamp.getTime());
+        let width = xScalar(endTimestamp.getTime()) - xScalar(startTimestamp.getTime());
+        return width > 0 ? width : 0;
       })
       .attr('height', rowHeight*0.6)
       .attr("y", rowHeight*0.2)
