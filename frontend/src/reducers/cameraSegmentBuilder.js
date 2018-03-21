@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 const initialState = {
   locations: {},
-  loading: false,
+  status: 'unfetched',
   currentCamera: '1',
   cameraSegments: [
 
@@ -38,6 +38,11 @@ export default function cameraSegmentBuilder(state = initialState, action) {
         authenticated: false,
         authenticating: false
       }
+    case 'FETCHING_PHOTOS':
+      return {
+        ...state,
+        status: 'fetching'
+      }
     case 'RECEIVED_PHOTOS':
       if (_.isEmpty(state.locations) && !action.date) {
         return {
@@ -45,7 +50,8 @@ export default function cameraSegmentBuilder(state = initialState, action) {
           locations: {
             ...state.locations,
             ...action.cameraData
-          }
+          },
+          status: 'fetched'
         }
       }
       let cameras = _.keys(_.get(action.cameraData, `${action.location}`, {}));

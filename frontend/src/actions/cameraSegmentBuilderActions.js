@@ -37,7 +37,9 @@ export const deauthenticate = () => {
 
 export const fetchPhotos = (location, camera, date) => {
   return (dispatch, getState) => {
-
+    dispatch({
+      type: 'FETCHING_PHOTOS'
+    })
     return fetch(`${baseUrl()}/api/v1/camera_data?${location ? `s3_folder_name=${location}` : ''}${date ? `&date=${date}` : ''}`, {
       headers: getHeaders(getState())
     })
