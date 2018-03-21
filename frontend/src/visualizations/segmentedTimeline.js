@@ -30,14 +30,14 @@ export default function segmentedTimeline() {
 
   let updateChart = (event, zoomKick) => {
 
-    if (!zoomKick) {
+    if (_.isUndefined(zoomKick)) {
       vizElement.style.display = 'none';
       setTimeout(() => {
         vizElement.style.display = 'inline';
       },1000)
     }
 
-    let newZoom = zoomKick || _.get(store.getState(), "insights.ui.zoom", 1);
+    let newZoom = (!_.isUndefined(zoomKick) && !_.isNaN(zoomKick)) ? zoomKick  : _.get(store.getState(), "insights.ui.zoom", 1);
 
     if (!event.detail || (_.isEqual(event.detail, rawData) && parseInt(newZoom) === parseInt(zoom)) ) {
       return;
@@ -117,11 +117,11 @@ export default function segmentedTimeline() {
 
       topTicks.call(timeTicks, ticks, {offset, y: 10, zoom, chartHeight})
       bottomTicks.call(timeTicks, ticks, {offset, y: chartHeight+20, zoom, hideLines: true})
-      if (zoomKick) return;
+      if (!_.isUndefined(zoomKick)) return;
       setTimeout(() => {
-        updateChart(event, 5)
+        updateChart(event, zoom === 5 ? 4 : 5)
         setTimeout(() => {
-          updateChart(event, newZoom);
+          updateChart(event, zoom);
         },200)
       },200)
 
