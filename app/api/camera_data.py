@@ -38,6 +38,8 @@ def camera_data_index():
   firebase = current_app.config.get("FIREBASE_SERVICE")
   classroom_ref = firebase.db.collection('cameras')
   docs = classroom_ref.get()
+
+  camera_mappings = {}
   
   for c in user.get("accessible_classroom_ids"):
     for doc in docs:
@@ -45,6 +47,7 @@ def camera_data_index():
       print "c: %s, classroomId: %s" % (c, camera.get("classroomId"))
       if ('admin' in user.get("roles") or 'network_admin' in user.get("roles")) and camera.get("bucketName") not in permitted_buckets:
         permitted_buckets.append(camera.get("bucketName"))
+        camera_mappings[camera.get("bucketName")] = camera.get("classroomId")
   
   print permitted_buckets
 
@@ -69,6 +72,7 @@ def camera_data_index():
       for o in result.get('CommonPrefixes'):
         camera = o.get('Prefix').split('/')[1]
         if camera != '2D-pose':
+          output[s3_folder_name]['classroom_id'] = camera_mappings[s3_folder_name]
           if not output[s3_folder_name].get(camera):
             output[s3_folder_name][camera] = {}
           result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/', Prefix=o.get('Prefix'))
@@ -109,7 +113,24 @@ def camera_data_index():
   return jsonify(output)
 
 
-# Sensor Mapping - index #
+# @api.route('/api/v1/camera_data/segments', methods = ['GET'])
+# @api_auth.requires_auth
+# def camera_segments_index():
+#   s3_folder_name = request.args.get('s3_folder_name')
+#   if not s3_folder_name:
+#     abort(400, "Missing s3_folder_name parameter")
+
+#   start_time = assert_iso8601_time_param('start_time')
+#   end_time = assert_iso8601_time_param('end_time')
+
+#   segments = CameraSegment.query.filter(
+#         CameraSegment.s3_folder_name==s3_folder_name,
+#         CameraSegment.start_time >= start_time,
+#         CameraSegment.end_time <= end_time
+#     ).all()
+
+#   return jsonify([s.as_dict() for s in segments])
+
 @api.route('/api/v1/camera_data/segments', methods = ['GET'])
 @api_auth.requires_auth
 def camera_segments_index():
@@ -129,7 +150,7 @@ def camera_segments_index():
   return jsonify([s.as_dict() for s in segments])
 
 
-# Sensor Mapping - create/update #
+
 @api.route('/api/v1/camera_data/segments', methods=['POST'])
 @api_auth.requires_auth
 def create_camera_segment():

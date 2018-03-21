@@ -70,6 +70,17 @@ export default function sensorMappings(state = initialState, action) {
         },
         status: 'fetched'
       }
+    case 'FETCH_LOCATIONS':
+      return {
+        ...state,
+        currentObservationsData: {
+          classroomLength: action.classroomLength,
+          classroomWidth: action.classroomWidth,
+          classroomId: action.classroomId
+        },
+        status: 'fetching',
+        classroomId: action.classroomId
+      }
     case 'RECEIVE_LOCATIONS':
       let obs = _.get(state, 'currentObservationsData.obs', []);
       let isLive = _.get(state, 'ui.isLive', true);
@@ -83,8 +94,7 @@ export default function sensorMappings(state = initialState, action) {
       return {
         ...state,
         currentObservationsData: {
-          classroomLength: action.classroomLength,
-          classroomWidth: action.classroomWidth,
+          ...state.currentObservationsData,
           obs
         },
         ui: {

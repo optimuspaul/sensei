@@ -2,6 +2,7 @@ import React from 'react';
 import _ from 'lodash';
 import * as d3 from "d3";
 import './CameraSegmentBuilder.css';
+import Spinner from './Spinner';
 import { Carousel, FormGroup, FormControl, ControlLabel, HelpBlock, Button } from 'react-bootstrap';
 import {getSenseiToken,  baseUrl, vantagePoints} from './../constants';
 import CameraSegmentBuilderCarousel from './CameraSegmentBuilderCarousel';
@@ -31,7 +32,11 @@ class CameraSegmentBuilder extends React.Component {
   }
 
   getCameras() {
-    return _.keys(_.get(this.props.cameraData.locations, this.state.currentLocation, []));
+    return _.without(_.keys(_.get(this.props.cameraData.locations, this.state.currentLocation, [])), 'classroom_id');
+  }
+
+  getClassroomId() {
+    return _.get(this.props.cameraData.locations, `${this.state.currentLocation}.classroom_id`, []);
   }
 
   getDates() {
@@ -60,7 +65,7 @@ class CameraSegmentBuilder extends React.Component {
   }
 
   getCurrentPhoto() {
-    return _.get(this.state, `photos.${this.state.currentCamera}.${this.state.index}`);
+    return _.get(this.props.cameraData.locations, `${this.state.currentLocation}.${this.state.currentCamera}.${this.state.currentDate}.${this.state.index}`);
   }
 
   getAllPhotos() {
@@ -74,8 +79,12 @@ class CameraSegmentBuilder extends React.Component {
     let newIndex = currentIndex + delta;
     let pageForward = delta > 0 && _.size(this.getAllPhotos()) > (newIndex+15) && carouselIndex > 35;
     let pageBack = delta < 0 && 0 < (newIndex-15) && carouselIndex <= 15;
-    this.props.showLocationsAt(this.getCurrentTime());
-    this.updateLocations();
+    if (_.isEmpty(this.props.sensorLocations)) {
+      this.props.fetchSensorLocations(this.getCurrentTime(), this.getClassroomId());
+    } else {
+      this.props.showLocationsAt(this.getCurrentTime());
+      this.updateLocations();
+    }
     if (pageForward || pageBack) {
       let photos;
       let newIndexModified;
@@ -147,7 +156,7 @@ class CameraSegmentBuilder extends React.Component {
   updateLocations() {
     let vizElement = document.querySelector(`#visualization #locations`);
     if (vizElement) {
-      var event = new CustomEvent('dataChanged', { detail: this.props.currentObservationsData });
+      var event = new CustomEvent('dataChanged', { detail: _.get(this.props, 'sensorLocations') });
       vizElement.dispatchEvent(event);
     }
   }
@@ -238,6 +247,7 @@ class CameraSegmentBuilder extends React.Component {
       </form>
     )
 
+
     return (
       <div>
         <KeyHandler keyEventName={KEYDOWN} keyValue="ArrowUp" onKeyHandle={this.switchCamera} />
@@ -254,25 +264,33 @@ class CameraSegmentBuilder extends React.Component {
           </div>
         </nav>
         <div className="photo-container container-fluid">
+
           <div className="row">
             <div className="col-xs-12 col-sm-6 col-lg-8">
               <div className="photo-viewer">
-                <CameraSegmentBuilderCarousel page={this.state.page} photos={this.state.photos} camera={this.state.currentCamera} vantagePoint={this.state.currentVantagePoint} onCarouselChange={this.handleCarouselChange} />
+                {this.props.authenticated && !_.isEmpty(this.props.cameraData.locations) ? <CameraSegmentBuilderCarousel page={this.state.page} photos={this.state.photos} camera={this.state.currentCamera} vantagePoint={this.state.currentVantagePoint} onCarouselChange={this.handleCarouselChange} /> : <Spinner className="spinner" useLayout="true" />}
               </div>
             </div>
             <div className="col-xs-12 col-sm-6 col-lg-4">
               <div className="row">
                 <div className="col" id="foundation">
-                  <div id='visualization'><div id='locations'><svg></svg></div></div>
+                  {this.props.fetchLocsStatus === 'fetching' ? <Spinner /> : ''}
+                  <div id='visualization'>
+                    <div id='locations'>
+                      <svg></svg>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="row">
                 <div className="col">
-                  <ProximitySegmentsEditor segments={this.props.segments} getCurrentTime={this.getCurrentTime.bind(this)} currentLocation={this.state.currentLocation} onSave={this.props.saveCameraSegment} />
+                  {this.state.currentLocation ? <ProximitySegmentsEditor segments={this.props.segments} getCurrentTime={this.getCurrentTime.bind(this)} currentLocation={this.state.currentLocation} onSave={this.props.saveCameraSegment} /> : ''}
                 </div>
               </div>
             </div>
           </div>
+
+          
         </div>
         <div id="export-modal" className="modal fade" tabIndex="-1" role="dialog">
           <div className="modal-dialog" role="document">
