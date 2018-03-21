@@ -46,6 +46,7 @@ export default function segmentedTimeline() {
       zoom = newZoom;
     }
 
+    zoom = _.isNaN(zoom) ? 1 : zoom;
 
     let data = transformIps(rawData);
 
