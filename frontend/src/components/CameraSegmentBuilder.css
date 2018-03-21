@@ -31,6 +31,22 @@ body {
 .navbar-default .navbar-brand {
   color: #20a79f;
 }
+
+.spinner {
+  margin-top: 100px;
+}
+
+#foundation {
+  position: relative;
+}
+
+#foundation .spinner {
+  position: absolute;
+  left: 100px;
+  top: -50px;
+  z-index: 1000;
+}
+
 .login-container {
   height: 100%;
   margin-top: -20px;

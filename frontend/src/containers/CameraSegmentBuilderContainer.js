@@ -9,7 +9,9 @@ const CamerSegmentBuilderContainer = connect((state) => ({
   authenticated: _.get(state, 'cameraSegmentBuilder.credentials') && _.get(state, 'cameraSegmentBuilder.authenticated') === true,
   authenticating: _.get(state, 'cameraSegmentBuilder.authenticating'),
   authFailed: _.get(state, 'cameraSegmentBuilder.authenticated') === false && _.get(state, 'cameraSegmentBuilder.credentials') && !_.get(state, 'cameraSegmentBuilder.authenticating'),
-  currentObservationsData: _.get(state, `insights.currentObservationsData`)
+  sensorLocations: _.get(state, 'insights.currentObservationsData'),
+  fetchLocsStatus: _.get(state, 'insights.status'),
+  zoom: _.get(state, 'insights.ui.zoom')
 }),
 (dispatch) => ({
   dispatch,
@@ -28,10 +30,15 @@ const CamerSegmentBuilderContainer = connect((state) => ({
   saveCameraSegment: (...args) => {
     dispatch(saveCameraSegment(...args));
   },
-  handleDateChange: (currentLocation, currentCamera, newDate) => {
-    dispatch(fetchLocations(newDate));
+  handleDateChange: (currentLocation, currentCamera, newDate, currentTimestamp, classroomId) => {
     dispatch(fetchPhotos(currentLocation, currentCamera, newDate));
     dispatch(fetchCameraSegments(currentLocation, newDate));
+  },
+  fetchSensorLocations: (date, classroomId) => {
+    let endDate = new Date(date);
+    endDate.setHours(endDate.getHours()+(endDate.getTimezoneOffset()/60)+2);
+    date.setHours(date.getHours()-(date.getTimezoneOffset()/60)-2)
+    dispatch(fetchLocations(date, endDate, classroomId));
   },
   showLocationsAt: (date) => {
     dispatch(showLocationsAt(date));

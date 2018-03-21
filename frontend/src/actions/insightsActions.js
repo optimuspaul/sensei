@@ -199,7 +199,11 @@ export const updateCurrentVisualization = () => {
 
     switch(visualization) {
       case 'locations':
-        dispatch(fetchLocations(currentDate));
+        let date = new Date(currentDate);
+        date.setHours((date.getTimezoneOffset()/60));
+        let endDate = new Date(date);
+        endDate.setHours(endDate.getHours() + 20);
+        dispatch(fetchLocations(date, endDate));
         break;
       case 'activityTimeline':
         dispatch(fetchObservations(currentEntityId, currentEntityType, currentDate, interactionType));
@@ -239,12 +243,10 @@ export const receiveLocations = (locations, classroomLength, classroomWidth) => 
 
 let prevDate, unsubscribe;
 export const FETCH_LOCATIONS = 'FETCH_LOCATIONS'
-export const fetchLocations = (date) => {
+export const fetchLocations = (date, endDate, classroomId) => {
   return (dispatch, getState) => {
     let state = getState();
-    date = date || _.get(state, 'insights.ui.currentDate');
-    date = date ? new Date(date) : new Date();
-    date.setHours(date.getHours()+(date.getTimezoneOffset()/60));
+
 
     if (prevDate === date) {
       return;
@@ -252,26 +254,37 @@ export const fetchLocations = (date) => {
       prevDate = date;
     }
 
+    
+
     let entityId = _.get(state, 'insights.ui.currentEntityId');
     let entityType = _.get(state, 'insights.ui.currentEntityType');
-
-    let endDate = new Date(date);
-    endDate.setHours(23);
+    dispatch({
+      type: FETCH_LOCATIONS, 
+      classroomLength: 0, 
+      classroomWidth: 0, 
+      classroomId
+    });
 
     unsubscribe && unsubscribe();
-
+    classroomId = classroomId || getClassroomId()
     firebase.firestore()
-      .doc(`/classrooms/${getClassroomId()}`)
+      .doc(`/classrooms/${classroomId}`)
       .get()
       .then((doc) => {
         if (!doc.exists) {
           return Promise.reject()
         }
         let classroom = doc.data();
+        dispatch({
+          type: FETCH_LOCATIONS, 
+          classroomLength: classroom.length, 
+          classroomWidth: classroom.width, 
+          classroomId
+        });
         unsubscribe = doc.ref.collection(`entity_locations`)
           .where('timestamp', '>', date)
           .where('timestamp', '<', endDate)
-          .orderBy('timestamp', 'desc')
+          .orderBy('timestamp', 'asc')
           .onSnapshot(function(snapshot) {
             let locations = _.filter(snapshot.docChanges, {type: "added"});
             let segmentedLocations = _.reduce(locations, (current, location) => {
@@ -281,7 +294,7 @@ export const fetchLocations = (date) => {
               current[dateString].sensors.push(data);
               return current;
             }, {})
-              dispatch(receiveLocations(segmentedLocations, classroom.length, classroom.width));
+              dispatch(receiveLocations(segmentedLocations, classroom.length, classroom.width, classroomId));
           });
       })
   }
@@ -292,15 +305,24 @@ export const showLocationsAt = (date) => {
   return (dispatch, getState) => {
     let state = getState();
     let obs = _.get(state, `insights.currentObservationsData.obs`);
+    let classroomId = _.get(state, `insights.currentObservationsData.classroomId`);
     let zoom;
+    if (!date) return;
     if (date === 'now') {
       zoom = -1
     } else {
       date = new Date(date);
-      let zoom = _.findIndex(obs, (ob) => {
-        return ob.timestamp > date; 
+      date.setHours(date.getHours()+(date.getTimezoneOffset()/60))
+      let zoomIndex = _.findIndex(obs, (ob) => {
+        return _.isEqual(ob.timestamp, date); 
       });
-      zoom = zoom < 0 ? 0 : zoom+1;
+      if (zoomIndex < 0) {
+        let endDate = new Date(date);
+        endDate.setHours(endDate.getHours()+(endDate.getTimezoneOffset()/60)+2);
+        date.setHours(date.getHours()-(date.getTimezoneOffset()/60)-2)
+        return dispatch(fetchLocations(date, endDate, classroomId))
+      }
+      zoom = zoomIndex;
     }
 
     dispatch({
