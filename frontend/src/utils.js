@@ -18,3 +18,8 @@ export const changeCases = (data, toCase) => {
   });
 }
 
+export const parsePhotoSegmentTimestamp = (photoUrl) => {
+  let key = photoUrl.split('/')[4]
+  let keyTime = key.match(/[0-9]{4}(.*(?=_)|.*(?=\.))/)[0];
+  return new Date(`${keyTime.split('-').splice(0,3).join('-')} ${keyTime.split('-').splice(3,3).join(':')}`);
+}

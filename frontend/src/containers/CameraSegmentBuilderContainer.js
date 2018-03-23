@@ -36,10 +36,8 @@ const CamerSegmentBuilderContainer = connect((state) => ({
     dispatch(fetchCameraSegments(currentLocation, newDate));
   },
   fetchSensorLocations: (date, classroomId) => {
-    let endDate = new Date(date);
-    endDate.setHours(endDate.getHours()+2);
-    date.setHours(date.getHours()-2)
-    dispatch(fetchLocations(date, endDate, classroomId));
+    date = new Date(date);
+    dispatch(fetchLocations(date, 2, classroomId));
   },
   showLocationsAt: (date) => {
     dispatch(showLocationsAt(date));

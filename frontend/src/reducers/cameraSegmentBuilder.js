@@ -1,4 +1,6 @@
 import _ from 'lodash';
+import {parsePhotoSegmentTimestamp} from './../utils';
+import moment from 'moment';
 
 const initialState = {
   locations: {},
@@ -55,19 +57,26 @@ export default function cameraSegmentBuilder(state = initialState, action) {
         }
       }
       let cameras = _.keys(_.get(action.cameraData, `${action.location}`, {}));
-      let masters = _.get(action.cameraData, `${action.location}.${cameras[0]}.${action.date}`);
       let locations = _.merge({}, state.locations);
-      _.each(cameras, (camera) => {
-        let myUrl = _.get(action.cameraData, `${action.location}.${camera}.${action.date}.0`);
-        let myDatetime = myUrl.split('/').slice(-1)[0].match(/[0-9]{4}(.*(?=_)|.*(?=\.))/)[0];
-        let images = _.map(masters, (url) => {
-          let commonDatetime = url.split('/').slice(-1)[0].match(/[0-9]{4}(.*(?=_)|.*(?=\.))/)[0];
-          return myUrl.replace(myDatetime,commonDatetime);
+      let masters = _.get(action.cameraData, `${action.location}.${cameras[0]}.${action.date}`);
+      if (masters) {
+        _.each(cameras, (camera) => {
+          _.set(locations, `${action.location}.${camera}.${action.date}`, []);
         });
-        if (images) {
-          _.set(locations, `${action.location}.${camera}.${action.date}`, images);
+        let firstPhoto = masters[0];
+        let startDate = parsePhotoSegmentTimestamp(firstPhoto);
+        let lastPhoto = masters[masters.length-1];
+        let endDate = parsePhotoSegmentTimestamp(lastPhoto);
+        while (startDate < endDate) {
+          _.each(cameras, (camera) => {
+            let url = `${action.location}/${camera}/${action.date}/camera01/still_${moment(startDate).format("YYYY-MM-DD-HH-mm-ss")}.${camera === 'camera' ? 'jpg' : 'png'}`
+            let photos = _.get(locations, `${action.location}.${camera}.${action.date}`);
+            photos.push(url)
+            _.set(locations, `${action.location}.${camera}.${action.date}`, photos);
+          });
+          startDate.setSeconds(startDate.getSeconds()+10);
         }
-      })
+      }
       return {
         ...state,
         loading: false,
