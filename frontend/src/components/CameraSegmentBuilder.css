@@ -80,7 +80,14 @@ body {
 }
 
 .carousel-inner .item {
-  min-height: 700px;
+  min-height: 500px;
+}
+
+.carousel-inner .item img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: black;
 }
 
 

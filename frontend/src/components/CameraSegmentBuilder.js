@@ -79,7 +79,6 @@ class CameraSegmentBuilder extends React.Component {
     let newIndex = currentIndex + delta;
     let pageForward = delta > 0 && _.size(this.getAllPhotos()) > (newIndex+15) && carouselIndex > 35;
     let pageBack = delta < 0 && 0 < (newIndex-15) && carouselIndex <= 15;
-    this.props.showLocationsAt(this.getCurrentTime());
     if (pageForward || pageBack) {
       let photos;
       let newIndexModified;
@@ -122,7 +121,7 @@ class CameraSegmentBuilder extends React.Component {
 
   handleDateChange = (event) => {
     this.props.handleDateChange(this.state.currentLocation, this.state.currentCamera, event.target.value)
-    this.setState({currentDate: event.target.value});
+    this.setState({currentDate: event.target.value, index: 0, page: 0});
   }
 
   handleEmailChange = (event) => {
@@ -163,6 +162,10 @@ class CameraSegmentBuilder extends React.Component {
     if (nextState.currentDate && !_.isEqual(nextState.currentDate, this.state.currentDate) && currentTime && classroomId) {
       this.props.fetchSensorLocations(currentTime, classroomId);
     }
+    if (!_.isEqual(nextState.index, this.state.index)) {
+      let nextPhoto = _.get(nextProps.cameraData.locations, `${nextState.currentLocation}.${nextState.currentCamera}.${nextState.currentDate}.${nextState.index}`);
+      this.props.showLocationsAt(this.getCurrentTime(nextPhoto));
+    }
   }
 
   componentWillReceiveProps(nextProps) {
@@ -178,7 +181,7 @@ class CameraSegmentBuilder extends React.Component {
       this.props.fetchSensorLocations(this.getCurrentTime(nextAllPhotos[0]), _.get(this.props.cameraData.locations, `${this.state.currentLocation}.classroom_id`));
     }
 
-    this.setState({ photos:this.getPhotos(), authenticating: nextProps.authenticating });
+    this.setState({ photos:this.getPhotos(), max: _.size(this.getAllPhotos()), authenticating: nextProps.authenticating });
   }
 
   switchCamera = (event) => {
@@ -199,6 +202,17 @@ class CameraSegmentBuilder extends React.Component {
     if (event.key === 'ArrowUp' && !event.shiftKey && currentVantagePointIndex < (_.size(vantagePoints)-1)) {
       this.setState({currentVantagePoint: vantagePoints[currentVantagePointIndex+1] });
     }
+  }
+
+  handleSliderChange = (event) => {
+    let newIndex = parseInt(event.target.value);
+    let newPage = 0;
+    let newSubIndex = newIndex;
+    if (newIndex > 50) {
+      newPage = parseInt(this.state.max/50)
+      newSubIndex = newIndex - ((newPage+1) * 50)
+    }
+    this.setState({index: newIndex, page: newPage, photos: this.getPhotos(newSubIndex)});
   }
 
   render() {
@@ -262,6 +276,33 @@ class CameraSegmentBuilder extends React.Component {
     )
 
 
+    let imageBrowser = (
+      <div>
+        <div className="row">
+          <div className="col-md-12">
+            <input
+              id="zoom-slider"
+              type="range"
+              defaultValue='1'
+              value={this.state.index}
+              min="0"
+              max={this.state.max}
+              step="1"
+              onChange={_.throttle(this.handleSliderChange).bind(this)}
+            />
+          </div>
+        </div>
+        <div className="row">
+          <div className="col-md-12">
+            <div className="photo-viewer">
+              <CameraSegmentBuilderCarousel page={this.state.page} photos={this.state.photos} camera={this.state.currentCamera} vantagePoint={this.state.currentVantagePoint} onCarouselChange={this.handleCarouselChange} />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+
+
     return (
       <div>
         <KeyHandler keyEventName={KEYDOWN} keyValue="ArrowUp" onKeyHandle={this.switchCamera} />
@@ -278,12 +319,9 @@ class CameraSegmentBuilder extends React.Component {
           </div>
         </nav>
         <div className="photo-container container-fluid">
-
           <div className="row">
             <div className="col-xs-12 col-sm-6 col-lg-8">
-              <div className="photo-viewer">
-                {this.props.authenticated && !_.isEmpty(this.props.cameraData.locations) ? <CameraSegmentBuilderCarousel page={this.state.page} photos={this.state.photos} camera={this.state.currentCamera} vantagePoint={this.state.currentVantagePoint} onCarouselChange={this.handleCarouselChange} /> : this.props.fetchPhotosStatus === 'fetching' ? <Spinner className="spinner" useLayout="true" /> : 'No cameras found'}
-              </div>
+              {this.props.authenticated && !_.isEmpty(this.props.cameraData.locations) ? imageBrowser : this.props.fetchPhotosStatus === 'fetching' ? <Spinner className="spinner" useLayout="true" /> : 'No cameras found'}
             </div>
             <div className="col-xs-12 col-sm-6 col-lg-4">
               <div className="row">

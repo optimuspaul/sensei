@@ -200,10 +200,7 @@ export const updateCurrentVisualization = () => {
     switch(visualization) {
       case 'locations':
         let date = new Date(currentDate);
-        date.setHours(0)
-        let endDate = new Date(date);
-        endDate.setHours(23);
-        dispatch(fetchLocations(date, endDate));
+        dispatch(fetchLocations(date));
         break;
       case 'activityTimeline':
         dispatch(fetchObservations(currentEntityId, currentEntityType, currentDate, interactionType));
@@ -241,20 +238,20 @@ export const receiveLocations = (locations, classroomLength, classroomWidth) => 
 
 
 
-let prevDate, unsubscribe;
+let prevStartDate, prevEndDate, unsubscribe;
 export const FETCH_LOCATIONS = 'FETCH_LOCATIONS'
-export const fetchLocations = (date, endDate, classroomId) => {
+export const fetchLocations = (date, range = 12, classroomId) => {
   return (dispatch, getState) => {
     let state = getState();
 
-
-    if (prevDate === date) {
-      return;
-    } else {
-      prevDate = date;
-    }
-
-    
+    date = new Date(date);
+    if (prevStartDate && prevEndDate && (date > prevStartDate && date < prevEndDate)) return;
+    let startDate = new Date(date);
+    startDate.setHours(startDate.getHours()-range)
+    prevStartDate = new Date(startDate)
+    let endDate = new Date(date);
+    endDate.setHours(endDate.getHours()+range)
+    prevEndDate = new Date(endDate)
 
     let entityId = _.get(state, 'insights.ui.currentEntityId');
     let entityType = _.get(state, 'insights.ui.currentEntityType');
@@ -282,7 +279,7 @@ export const fetchLocations = (date, endDate, classroomId) => {
           classroomId
         });
         unsubscribe = doc.ref.collection(`entity_locations`)
-          .where('timestamp', '>', date)
+          .where('timestamp', '>', startDate)
           .where('timestamp', '<', endDate)
           .orderBy('timestamp', 'asc')
           .onSnapshot(function(snapshot) {
@@ -300,6 +297,7 @@ export const fetchLocations = (date, endDate, classroomId) => {
   }
 }
 
+
 export const SHOW_LOCATIONS_AT = 'SHOW_LOCATIONS_AT'
 export const showLocationsAt = (date) => {
   return (dispatch, getState) => {
@@ -316,10 +314,7 @@ export const showLocationsAt = (date) => {
         return _.isEqual(ob.timestamp, date); 
       });
       if (zoomIndex < 0) {
-        let endDate = new Date(date);
-        endDate.setHours(endDate.getHours()+2);
-        date.setHours(date.getHours()-2);
-        return dispatch(fetchLocations(date, endDate, classroomId))
+        return dispatch(fetchLocations(date, 2, classroomId))
       }
       zoom = zoomIndex;
     }

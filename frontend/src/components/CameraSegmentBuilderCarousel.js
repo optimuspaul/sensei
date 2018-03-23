@@ -3,6 +3,8 @@ import _ from 'lodash';
 import { Carousel } from 'react-bootstrap';
 import {getSenseiToken,  baseUrl, vantagePoints} from './../constants';
 import { Preload } from 'react-preload';
+import { parsePhotoSegmentTimestamp } from './../utils';
+import moment from 'moment';
 import KeyHandler, {KEYDOWN} from 'react-key-handler';
 
 class CameraSegmentBuilderCarousel extends React.Component {
@@ -83,8 +85,7 @@ class CameraSegmentBuilderCarousel extends React.Component {
             current.captions.push(<Carousel.Caption key={`camera-${camera}-${vantagePoint}-caption`}
                                     className={`sub-item camera-${camera} vantage-point-${vantagePoint}`}
                                     style={{display: (camera === this.props.camera && vantagePoint === this.props.vantagePoint) ? 'inline' : 'none'}}>
-                                    <h3>camera {camera}</h3>
-                                    <p>{url}</p>
+                                    <h3>{moment.utc(parsePhotoSegmentTimestamp(url)).format("h:mm:ss A")}</h3>
                                   </Carousel.Caption>)
           }
         })
