@@ -69,7 +69,7 @@ export default function cameraSegmentBuilder(state = initialState, action) {
         let endDate = parsePhotoSegmentTimestamp(lastPhoto);
         while (startDate < endDate) {
           _.each(cameras, (camera) => {
-            let url = `${action.location}/${camera}/${action.date}/camera01/still_${moment(startDate).format("YYYY-MM-DD-HH-mm-ss")}.${camera === 'camera' ? 'jpg' : 'png'}`
+            let url = `${action.location}/${camera}/${action.date}/camera01/still_${moment.utc(startDate).format("YYYY-MM-DD-HH-mm-ss")}.${camera === 'camera' ? 'jpg' : 'png'}`
             let photos = _.get(locations, `${action.location}.${camera}.${action.date}`);
             photos.push(url)
             _.set(locations, `${action.location}.${camera}.${action.date}`, photos);
