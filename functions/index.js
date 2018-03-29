@@ -45,31 +45,30 @@ exports.generateInteractionPeriods = functions.firestore.document('/classrooms/{
   startDate.setHours(0);
   startDate.setMinutes(0);
 
-  return db.doc(`/classrooms/${classroomId}`)
+  return db.doc(`/classrooms/${classroomId}/ip_buffers/${dateKey}`)
     .get()
-    .then((doc) => {
-      if (doc.exists) {
-        let data = doc.data();
-        if (!data.interactions || !data.interactions.updatedAt || (currentLoc.timestamp - data.interactions.updatedAt) > (1000*60) ) {
+    .then((ipBufferDoc) => {
+      if (ipBufferDoc.exists) {
+        let ipBuffer = ipBufferDoc.data();
+        if (!ipBuffer || !ipBuffer.updatedAt || (currentLoc.timestamp - ipBuffer.updatedAt) > (1000*60) ) {
           console.log("updating", "\n\ncurrentEntityUid: ", currentEntityUid, "\n\nentityLocationId", entityLocationId, "\n\ndate: ", date, "\n\ndateKey: ", dateKey, "\n\nclassroomId: ", classroomId, "\n\ncurrentLoc: ", currentLoc)
-          return Promise.resolve(doc)
+          return Promise.resolve(ipBufferDoc)
         }
       }
     })
-    .then((classroom) => {
-      let data = classroom.data();
-      console.log("setting updatedAt for classroom interactions object", data)
-      return classroom.ref.set({
-        interactions: {
-          updatedAt: currentLoc.timestamp
-        }
+    .then((ipBufferDoc) => {
+      let ipBuffer = ipBufferDoc.data();
+      console.log("setting updatedAt for classroom interactions object", ipBuffer)
+      return ipBufferDoc.ref.set({
+        updatedAt: currentLoc.timestamp
       }, {
         merge: true
       })
-      .then(() => {
+      .then((ipBufferDoc) => {
+        ipBuffer = ipBufferDoc.data();
         console.log("getting latest entity_locations to process")
         return db.collection(`/classrooms/${classroomId}/entity_locations`)
-        .where("timestamp", ">=", data.interactions.updatedAt)
+        .where("timestamp", ">=", ipBuffer.updatedAt)
         .where("timestamp", "<", currentLoc.timestamp)
         .orderBy("timestamp", "asc")
         .get()
@@ -80,8 +79,8 @@ exports.generateInteractionPeriods = functions.firestore.document('/classrooms/{
         let locationsByTimestamp = groupLocationsByTimestamp(querySnapshot.docs)
         console.log("locationsByTimestamp:", locationsByTimestamp)
         try {
-          console.log("Updating entities", data.interactions.entities);
-          entities = updateEntities(locationsByTimestamp, data.interactions.entities)
+          console.log("Updating entities", ipBuffer.entities);
+          entities = updateEntities(locationsByTimestamp, ipBuffer.entities)
           console.log("entites:", entities);
         } catch (e) {
           console.log("error updating entities:", e);
@@ -104,12 +103,10 @@ exports.generateInteractionPeriods = functions.firestore.document('/classrooms/{
         try {
           return batch.commit()
             .then(() => {
-              console.log("updating classroom interactions object", classroom.id, classroom.data(), entities, new Date(_.last(_.keys(locationsByTimestamp))))
-              return classroom.ref.set({
-                interactions: {
-                  updatedAt: new Date(_.last(_.keys(locationsByTimestamp))),
-                  entities
-                }
+              console.log("updating interaction period buffer object", ipBufferDoc.id, ipBufferDoc.data(), entities, new Date(_.last(_.keys(locationsByTimestamp))))
+              return ipBufferDoc.ref.set({
+                updatedAt: new Date(_.last(_.keys(locationsByTimestamp))),
+                entities
               }, {merge: true});
             })
             .catch((error) => {
@@ -193,6 +190,7 @@ function calcIpq(prevIpq, loc1, loc2, currentPeriod = {}, currentTimestamp) {
 
 
 
+
 // To keep on top of errors, we should raise a verbose error report with Stackdriver rather
 // than simply relying on console.error. This will calculate users affected + send you email
 // alerts, if you've opted into receiving them.
@@ -237,6 +235,98 @@ function userFacingMessage(error) {
   return error.type ? error.message : 'An error occurred, developers have been alerted';
 }
 
+exports.clearEntityLocations = functions.https.onRequest((request, res) => {
+  
+  validateFirebaseIdToken(request, res).then(() => {
+    if (request.method !== 'DELETE') return res.status(404);
+    let from = new Date(request.query.from);
+    let to = new Date(request.query.to);
+    let classroomId = request.query.classroom_id;
+    if (!_.isDate(from) || !_.isDate(to) || from > to || !classroomId) {
+      return res.status(500).send(`must include a valid 'from' date, a valid 'to' date that occurs later, and a 'classroom_id'. from: ${from},  to: ${to}, classroom_id: ${classroomId}`);
+    }
+    let batchSize = 200;
+    let query = db.collection(`/classrooms/${classroomId}/entity_locations`)
+      .where("timestamp", ">=", from)
+      .where("timestamp", "<", to)
+      .orderBy("timestamp", "asc")
+      .limit(batchSize)
+
+    let deletePromise =  new Promise((resolve, reject) => {
+        deleteQueryBatch(query, batchSize, resolve, reject);
+    });
+
+    deletePromise.then((docRef) => {
+      res.status(200).send(`Interaction periods from ${from} to ${to} successfully deleted`);
+    });
+  }).catch((error) => {
+    reportError(error, {request});
+  });
+});
+
+exports.clearInteractionPeriods = functions.https.onRequest((request, res) => {
+
+  validateFirebaseIdToken(request, res).then(() => {
+    let from = new Date(request.body.from);
+    let to = new Date(request.body.to);
+    let classroomId = request.body.classroom_id;
+    if (!_.isDate(from) || !_.isDate(to) || from > to || !classroomId) {
+      return res.status(500).send(`must include a valid 'from' date, a valid 'to' date that occurs later, and a 'classroom_id'. from: ${from},  to: ${to}, classroom_id: ${classroomId}`);
+    }
+    let batchSize = 200;
+    let query = db.collection(`/classrooms/${classroomId}/interaction_periods`)
+      .where("startTime", ">=", from)
+      .where("startTime", "<", to)
+      .orderBy("startTime", "asc")
+      .limit(batchSize)
+
+    let deletePromise =  new Promise((resolve, reject) => {
+        deleteQueryBatch(query, batchSize, resolve, reject);
+    });
+
+    deletePromise.then((docRef) => {
+      res.status(200).send(`Interaction periods from ${from} to ${to} successfully deleted`);
+    });
+  }).catch((error) => {
+    reportError(error, {request});
+  });
+});
+
+function deleteQueryBatch(query, batchSize, resolve, reject) {
+  return query.get().then((snapshot) => {
+    // When there are no documents left, we are done
+    console.log("snapshot.size: ", snapshot.size);
+    if (snapshot.size == 0) {
+      return 0;
+    }
+
+    // Delete documents in a batch
+    var batch = db.batch();
+    snapshot.docs.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+
+    return batch.commit().then(() => {
+      return snapshot.size;
+    });
+  }).then((numDeleted) => {
+    console.log("numDeleted: ", numDeleted);
+    if (numDeleted === 0) {
+      resolve();
+      return;
+    }
+
+    // Recurse on the next process tick, to avoid
+    // exploding the stack.
+    process.nextTick(() => {
+      deleteQueryBatch(query, batchSize, resolve, reject);
+    });
+  })
+  .catch((error) => {
+    reportError(error, {query});
+  });
+};
+
 
 exports.locations = functions.https.onRequest((request, res) => {
   db.collection(`classrooms`)
@@ -280,3 +370,50 @@ exports.radioObservations = functions.https.onRequest((request, res) => {
     });
 
 });
+
+function validateFirebaseIdToken(req, res) {
+  console.log('Check if request is authorized with Firebase ID token');
+
+  if (!req.headers.authorization) {
+    console.error('No Firebase ID token was passed as a Bearer token in the Authorization header.',
+        'Make sure you authorize your request by providing the following HTTP header:',
+        'Authorization: Bearer <Firebase ID Token>.');
+    res.status(403).send('Unauthorized');
+    return Promise.reject();
+  } else {
+    
+    return new Promise((resolve, reject) => {
+      let options = {
+        host: 'sensei-server.herokuapp.com',
+        path: '/api/v1/fb_token',
+        method: 'GET',
+        headers: {
+          Authorization: req.headers.authorization
+        }
+      };
+      let content = '';
+      let reqGet = https.request(options, (response) => {
+        response.on('data', function (data) {
+            content += data;
+        });
+        response.on('end', function () {
+          console.log('content ', content)
+          if (content === 'Unauthorized' || response.statusCode === 401) {
+            console.error('Error while verifying Firebase ID token');
+            res.status(403).send('Unauthorized');
+            reject({stack: `Unathorized`});
+          } else {
+            resolve();
+          }
+        });
+      });
+      reqGet.end();
+      reqGet.on('error', (err) => {
+        console.error('Error while verifying Firebase ID token');
+        res.status(403).send('Unauthorized');
+        reject(err)
+      });
+        
+    });
+  }
+};
