@@ -80,16 +80,52 @@ body {
 }
 
 .carousel-inner .item {
-  min-height: 500px;
+  min-height: 700px;
+  background-color: black;
+  padding-top: 40px;
 }
 
 .carousel-inner .item img {
   position: absolute;
   width: 100%;
-  height: 100%;
   background: black;
 }
 
+.carousel-inner .item .sub-item {
+  display: none;
+}
+
+.carousel-inner .item.camera-camera.vantage-point-camera01 .sub-item.camera-camera.vantage-point-camera01 {
+  display: inline;
+}
+
+.carousel-inner .item.camera-camera.vantage-point-camera02 .sub-item.camera-camera.vantage-point-camera02 {
+  display: inline;
+}
+
+.carousel-inner .item.camera-camera.vantage-point-camera03 .sub-item.camera-camera.vantage-point-camera03 {
+  display: inline;
+}
+
+.carousel-inner .item.camera-camera.vantage-point-camera04 .sub-item.camera-camera.vantage-point-camera04 {
+  display: inline;
+}
+
+.carousel-inner .item.camera-overlays.vantage-point-camera01 .sub-item.camera-overlays.vantage-point-camera01 {
+  display: inline;
+}
+
+.carousel-inner .item.camera-overlays.vantage-point-camera02 .sub-item.camera-overlays.vantage-point-camera02 {
+  display: inline;
+}
+
+.carousel-inner .item.camera-overlays.vantage-point-camera03 .sub-item.camera-overlays.vantage-point-camera03 {
+  display: inline;
+}
+
+.carousel-inner .item.camera-overlays.vantage-point-camera04 .sub-item.camera-overlays.vantage-point-camera04 {
+  display: inline;
+}
 
 .form-group {
   margin-right: 5px;

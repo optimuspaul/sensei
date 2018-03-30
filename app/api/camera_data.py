@@ -45,7 +45,7 @@ def camera_data_index():
   for doc in cameraDocs:
     camera = doc.to_dict()
     print "camera: %s, classroomId: %s" % (camera, camera.get("classroomId"))
-    if ('network_admin' in user.get("roles")) or camera.get("classroomId") in user.get("accessible_classroom_ids"):
+    if ('admin' in user.get("roles")) or camera.get("classroomId") in user.get("accessible_classroom_ids"):
       if camera.get("bucketName") not in permitted_buckets:
         permitted_buckets.append(camera.get("bucketName"))
     camera_mappings[camera.get("bucketName")] = camera.get("classroomId")
@@ -57,30 +57,38 @@ def camera_data_index():
 
   output = {}
 
-  cameras = ['camera','overlays']
+  
+
+  
+  
+  result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/')
+
+  for o in result.get('CommonPrefixes'):
+    location = o.get('Prefix')[:-1]
+    
+    if not location in permitted_buckets:
+      continue
+    if not output.get(location):
+      output[location] = {}
+    result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/', Prefix=o.get('Prefix'))
+    for o in result.get('CommonPrefixes'):
+      camera = o.get('Prefix').split('/')[1]
+      if camera != '2D-pose':
+        output[location]['classroom_id'] = camera_mappings[location]
+        if not output[location].get(camera):
+          output[location][camera] = {}
+        result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/', Prefix=o.get('Prefix'))
+        for o in result.get('CommonPrefixes'):
+          date = o.get('Prefix').split('/')[2]
+          if not output[location][camera].get(date):
+            output[location][camera][date] = {}
+          result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/', Prefix=o.get('Prefix'))
+          for o in result.get('CommonPrefixes'):
+            vantage_point = o.get('Prefix').split('/')[3]
+            output[location][camera][date][vantage_point] = []
 
   s3_folder_name = request.args.get('s3_folder_name')
   if not s3_folder_name:
-    result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/')
-
-    for o in result.get('CommonPrefixes'):
-      s3_folder_name = o.get('Prefix')[:-1]
-      
-      if not s3_folder_name in permitted_buckets:
-        continue
-      if not output.get(s3_folder_name):
-        output[s3_folder_name] = {}
-      result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/', Prefix=o.get('Prefix'))
-      for o in result.get('CommonPrefixes'):
-        camera = o.get('Prefix').split('/')[1]
-        if camera != '2D-pose':
-          output[s3_folder_name]['classroom_id'] = camera_mappings[s3_folder_name]
-          if not output[s3_folder_name].get(camera):
-            output[s3_folder_name][camera] = {}
-          result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/', Prefix=o.get('Prefix'))
-          for o in result.get('CommonPrefixes'):
-            date = o.get('Prefix').split('/')[2]
-            output[s3_folder_name][camera][date] = {}
     return jsonify(output)
 
   date = request.args.get('date')
@@ -90,27 +98,35 @@ def camera_data_index():
 # https://s3.amazonaws.com/wf-classroom-data/camera-wildflower/camera/2017-11-21/camera01/still_2017-11-21-09-06-20.jpg
 
 
-  output[s3_folder_name] = {}
-  for camera in cameras:
+  print "output: %s" % output
+  print "s3_folder_name: %s" % s3_folder_name
+  print "output[s3_folder_name]: %s" % output[s3_folder_name]
+  print "output[s3_folder_name].keys(): %s" % output[s3_folder_name].keys()
 
-    prefix = s3_folder_name + '/' + camera + '/' + date + '/camera01'
+  
+
+
+  prefix = s3_folder_name + '/camera/' + date + '/camera01'
+  
+
+  paginator = s3.get_paginator('list_objects')
+  operation_parameters = {'Bucket':'wf-classroom-data',
+                          'Prefix': prefix}
+  pageresponse = paginator.paginate(**operation_parameters)
+
+  for page in pageresponse:
     
-
-    paginator = s3.get_paginator('list_objects')
-    operation_parameters = {'Bucket':'wf-classroom-data',
-                            'Prefix': prefix}
-    pageresponse = paginator.paginate(**operation_parameters)
-
-    for page in pageresponse:
+    for file in page.get("Contents", []):
       
-      for file in page.get("Contents", []):
-        
-        parts = file["Key"].split("/")
-        if not output[s3_folder_name].get(parts[1]):
-          output[s3_folder_name][parts[1]] = {}
-        if not output[s3_folder_name].get(parts[1]).get(parts[2]):
-          output[s3_folder_name][parts[1]][parts[2]] = []
-        output[s3_folder_name][parts[1]][parts[2]].append(file["Key"])
+      parts = file["Key"].split("/")
+      if not output[s3_folder_name].get(parts[1]):
+        output[s3_folder_name][parts[1]] = {}
+      if not output[s3_folder_name].get(parts[1]).get(parts[2]):
+        output[s3_folder_name][parts[1]][parts[2]] = {}
+      if not output[s3_folder_name].get(parts[1]).get(parts[2]):
+        output[s3_folder_name][parts[1]][parts[2]][parts[3]] = []
+      output[s3_folder_name][parts[1]][parts[2]][parts[3]].append(file["Key"])
+
 
   return jsonify(output)
 

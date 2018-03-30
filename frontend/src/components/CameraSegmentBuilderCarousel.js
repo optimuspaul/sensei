@@ -26,14 +26,8 @@ class CameraSegmentBuilderCarousel extends React.Component {
   }
 
   toggleSubItems(camera, vantagePoint) {
-    let elements = document.querySelectorAll(`.item .sub-item`);
-    if (!_.isEmpty(elements)) {
-      elements.forEach((el) => { el.style.display = 'none'; });
-    }
-    elements = document.querySelectorAll(`.item.active .camera-${camera}.vantage-point-${vantagePoint}`)
-    if (!_.isEmpty(elements)) {
-      elements.forEach((el) => { el.style.display = 'inline'; });
-    }
+    let element = document.querySelector(`.item.active`)
+    element.className = `item active camera-${camera} vantage-point-${vantagePoint}`;
   }
 
   handleKeyPress = (...args) => {
@@ -46,6 +40,10 @@ class CameraSegmentBuilderCarousel extends React.Component {
       this.toggleSubItems(nextProps.camera, nextProps.vantagePoint);
       return false
     }
+    if (!_.isEmpty(nextProps.photos) && _.isEmpty(this.props.photos) && !_.isUndefined(nextProps.initialIndex)) {
+      this.setState({index: nextProps.initialIndex, initialIndex: nextProps.initialIndex})
+    }
+
     if (!_.isEqual(nextProps.page, this.props.page)) {
       this.setState({index: (nextProps.page > this.props.page ? 15 : 34)})
     }
@@ -75,25 +73,25 @@ class CameraSegmentBuilderCarousel extends React.Component {
     if (_.isEmpty(this.props.photos) || !this.props.camera)  return null
     let carouselItems = _.map(this.props.photos[this.props.camera], (key, index) => {
       let content = _.reduce(_.keys(this.props.photos), (current, camera) => {
-        _.each(vantagePoints, (vantagePoint) => {
+        _.each(this.props.vantagePoints, (vantagePoint) => {
           if (this.props.photos[camera][index]) {
             let url = this.props.photos[camera][index].replace('camera01', vantagePoint);
-            current.images.push(<img key={`camera-${camera}-${vantagePoint}-image`}
-                                 className={`sub-item camera-${camera} vantage-point-${vantagePoint}`}
-                                 style={{display: (camera === this.props.camera && vantagePoint === this.props.vantagePoint) ? 'inline' : 'none'}}
-                                 src={((this.state.index > (index-3)) || this.state.index === (index-10)) ? `${baseUrl()}/api/v1/camera_data/signed_url/${url}` : ''}/>)
-            current.captions.push(<Carousel.Caption key={`camera-${camera}-${vantagePoint}-caption`}
-                                    className={`sub-item camera-${camera} vantage-point-${vantagePoint}`}
-                                    style={{display: (camera === this.props.camera && vantagePoint === this.props.vantagePoint) ? 'inline' : 'none'}}>
-                                    <h3>{moment.utc(parsePhotoSegmentTimestamp(url)).format("h:mm:ss A")}</h3>
-                                  </Carousel.Caption>)
+              current.images.push(<img key={`camera-${camera}-${vantagePoint}-image`}
+                                   className={`sub-item camera-${camera} vantage-point-${vantagePoint}`}
+                                   src={Math.abs(this.state.index - index) < 2 ? `${baseUrl()}/api/v1/camera_data/signed_url/${url}` : ''}/>)
+              current.captions.push(<Carousel.Caption key={`camera-${camera}-${vantagePoint}-caption`}
+                                      className={`sub-item camera-${camera} vantage-point-${vantagePoint}`}
+                                    >
+                                      <h3>{moment.utc(parsePhotoSegmentTimestamp(url)).format("h:mm:ss A")}</h3>
+                                    </Carousel.Caption>)
+
           }
         })
         return current;
       }, {images: [], captions: []});
 
       return (
-        <Carousel.Item key={index}>
+        <Carousel.Item key={index} className={`camera-${this.props.camera} vantage-point-${this.props.vantagePoint}`}>
           { content.images }
           { content.captions }
         </Carousel.Item>

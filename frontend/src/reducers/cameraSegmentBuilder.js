@@ -56,9 +56,10 @@ export default function cameraSegmentBuilder(state = initialState, action) {
           status: 'fetched'
         }
       }
-      let cameras = _.keys(_.get(action.cameraData, `${action.location}`, {}));
-      let locations = _.merge({}, state.locations);
-      let masters = _.get(action.cameraData, `${action.location}.${cameras[0]}.${action.date}`);
+      let cameras = _.keys(_.omit(_.get(action.cameraData, `${action.location}`, {}), ['classroom_id']));
+      let locations = _.merge({[action.location]: { classroom_id: _.get(action.cameraData, `${action.location}.classroom_id`) } }, state.locations);
+      let masters = _.get(action.cameraData, `${action.location}.${cameras[0]}.${action.date}.camera01`);
+      let vantagePoints = _.keys(_.get(action.cameraData, `${action.location}.${cameras[0]}.${action.date}`));
       if (masters) {
         _.each(cameras, (camera) => {
           _.set(locations, `${action.location}.${camera}.${action.date}`, []);
@@ -69,7 +70,7 @@ export default function cameraSegmentBuilder(state = initialState, action) {
         let endDate = parsePhotoSegmentTimestamp(lastPhoto);
         while (startDate < endDate) {
           _.each(cameras, (camera) => {
-            let url = `${action.location}/${camera}/${action.date}/camera01/still_${moment.utc(startDate).format("YYYY-MM-DD-HH-mm-ss")}.${camera === 'camera' ? 'jpg' : 'png'}`
+            let url = `${action.location}/${camera}/${action.date}/camera01/still_${moment.utc(startDate).format("YYYY-MM-DD-HH-mm-ss")}${camera === 'camera' ? '.jpg' : '_rendered.png'}`
             let photos = _.get(locations, `${action.location}.${camera}.${action.date}`);
             photos.push(url)
             _.set(locations, `${action.location}.${camera}.${action.date}`, photos);
@@ -83,6 +84,7 @@ export default function cameraSegmentBuilder(state = initialState, action) {
         currentLocation: action.location,
         currentCamera: action.camera,
         currentDate: action.date,
+        vantagePoints,
         locations
       }
     case 'HANDLE_SAVE_CAMERA_SEGMENT_SUCCESS':

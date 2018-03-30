@@ -9,6 +9,8 @@ import CameraSegmentBuilderCarousel from './CameraSegmentBuilderCarousel';
 import KeyHandler, {KEYDOWN} from 'react-key-handler';
 import ProximitySegmentsEditor from './ProximitySegmentsEditor';
 import {locations} from './../visualizations';
+import QueryParams from 'query-params';
+import { history } from '../utils';
 
 class CameraSegmentBuilder extends React.Component {
 
@@ -25,6 +27,13 @@ class CameraSegmentBuilder extends React.Component {
 
       }
     }
+  }
+
+  updateQueryParam(paramObj = {}) {
+    let params = QueryParams.decode(location.search.slice(1)) || {};
+    history.push({
+      search: QueryParams.encode(_.merge(params, paramObj))
+    });
   }
 
   getLocations() {
@@ -96,11 +105,13 @@ class CameraSegmentBuilder extends React.Component {
         index: newIndex,
         page
       })
+      this.updateQueryParam({index: newIndex, page});
       return pageForward ? 'forward' : 'back';
     } else {
       this.setState({
         index: newIndex
       });
+      this.updateQueryParam({index: newIndex, page});
       return false;
     }
     
@@ -109,19 +120,23 @@ class CameraSegmentBuilder extends React.Component {
   handleLocationChange = (event) => {
     this.props.fetchPhotos(event.target.value, this.state.currentCamera, this.state.currentDate);
     this.setState({currentLocation: event.target.value});
+    this.updateQueryParam({currentLocation: event.target.value})
   }
 
   handleCameraChange = (event) => {
     this.setState({currentCamera: event.target.value});
+    this.updateQueryParam({currentCamera: event.target.value})
   }
 
   handleVantagePointChange = (event) => {
     this.setState({currentVantagePoint: event.target.value});
+    this.updateQueryParam({currentVantagePoint: event.target.value})
   }
 
   handleDateChange = (event) => {
     this.props.handleDateChange(this.state.currentLocation, this.state.currentCamera, event.target.value)
     this.setState({currentDate: event.target.value, index: 0, page: 0});
+    this.updateQueryParam({currentDate: event.target.value});
   }
 
   handleEmailChange = (event) => {
@@ -143,7 +158,17 @@ class CameraSegmentBuilder extends React.Component {
   }
 
   componentDidMount() {
-    this.props.fetchPhotos();
+    let params = QueryParams.decode(location.search.slice(1));
+
+    if (params.currentLocation && params.currentCamera && params.currentVantagePoint && params.currentDate){
+      this.props.handleDateChange(params.currentLocation, params.currentCamera, params.currentDate);
+      this.setState(_.omit(params, ['index', 'page']));
+    } else {
+      history.push({
+        search: QueryParams.encode({})
+      });
+      this.props.fetchPhotos();
+    }
     setTimeout(locations, 1000);
   }
 
@@ -177,11 +202,19 @@ class CameraSegmentBuilder extends React.Component {
     }
     let nextAllPhotos = _.get(nextProps, `cameraData.locations.${this.state.currentLocation}.${this.state.currentCamera}.${this.state.currentDate}`, []);
     let prevAllPhotos = _.get(this.props, `cameraData.locations.${this.state.currentLocation}.${this.state.currentCamera}.${this.state.currentDate}`, []);
+    let paramsIndex, paramsPage, newInitialCarouselIndex;
     if (!_.isEmpty(nextAllPhotos) && _.isEmpty(prevAllPhotos)) {
-      this.props.fetchSensorLocations(this.getCurrentTime(nextAllPhotos[0]), _.get(this.props.cameraData.locations, `${this.state.currentLocation}.classroom_id`));
+      this.props.fetchSensorLocations(this.getCurrentTime(nextAllPhotos[0]), _.get(nextProps.cameraData.locations, `${this.state.currentLocation}.classroom_id`));
+
+      let params = QueryParams.decode(location.search.slice(1));
+      paramsIndex = params.index ? parseInt(params.index) : 0;
+      paramsPage = params.page ? parseInt(params.page) : 0;
+      newInitialCarouselIndex = paramsIndex - (paramsPage*50);
     }
 
-    this.setState({ photos:this.getPhotos(), max: _.size(this.getAllPhotos()), authenticating: nextProps.authenticating });
+    let initialCarouselIndex = _.isUndefined(newInitialCarouselIndex) ? this.state.initialCarouselIndex : newInitialCarouselIndex; 
+
+    this.setState({ photos:this.getPhotos(), max: _.size(this.getAllPhotos()), authenticating: nextProps.authenticating, index: paramsIndex || this.state.index, page: paramsPage || this.state.page, initialCarouselIndex });
   }
 
   switchCamera = (event) => {
@@ -197,10 +230,10 @@ class CameraSegmentBuilder extends React.Component {
       this.setState({currentCamera: cameras[currentCameraIndex+1] });
     }
     if (event.key === 'ArrowDown' && !event.shiftKey && currentVantagePointIndex > 0) {
-      this.setState({currentVantagePoint: vantagePoints[currentVantagePointIndex-1] });
+      this.setState({currentVantagePoint: this.props.cameraData.vantagePoints[currentVantagePointIndex-1] });
     }
     if (event.key === 'ArrowUp' && !event.shiftKey && currentVantagePointIndex < (_.size(vantagePoints)-1)) {
-      this.setState({currentVantagePoint: vantagePoints[currentVantagePointIndex+1] });
+      this.setState({currentVantagePoint: this.props.cameraData.vantagePoints[currentVantagePointIndex+1] });
     }
   }
 
@@ -234,7 +267,7 @@ class CameraSegmentBuilder extends React.Component {
         <FormGroup controlId="formControlsSelect">
           <FormControl onChange={this.handleVantagePointChange} value={this.state.currentVantagePoint} componentClass="select">
             <option value="select">select a camera</option>
-            {_.map(vantagePoints, (vantagePoint) => { return <option key={vantagePoint} value={vantagePoint}>{vantagePoint.replace("0", " ")}</option> } ) }
+            {_.map(this.props.cameraData.vantagePoints, (vantagePoint) => { return <option key={vantagePoint} value={vantagePoint}>{vantagePoint.replace("0", " ")}</option> } ) }
           </FormControl>
         </FormGroup>
         <FormGroup controlId="formControlsSelect">
@@ -283,7 +316,6 @@ class CameraSegmentBuilder extends React.Component {
             <input
               id="zoom-slider"
               type="range"
-              defaultValue='1'
               value={this.state.index}
               min="0"
               max={this.state.max}
@@ -295,7 +327,7 @@ class CameraSegmentBuilder extends React.Component {
         <div className="row">
           <div className="col-md-12">
             <div className="photo-viewer">
-              <CameraSegmentBuilderCarousel page={this.state.page} photos={this.state.photos} camera={this.state.currentCamera} vantagePoint={this.state.currentVantagePoint} onCarouselChange={this.handleCarouselChange} />
+              <CameraSegmentBuilderCarousel vantagePoints={this.props.cameraData.vantagePoints} initialIndex={this.state.initialCarouselIndex} page={this.state.page} photos={this.state.photos} camera={this.state.currentCamera} vantagePoint={this.state.currentVantagePoint} onCarouselChange={this.handleCarouselChange} />
             </div>
           </div>
         </div>
