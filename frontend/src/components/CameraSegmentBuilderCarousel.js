@@ -5,14 +5,17 @@ import {getSenseiToken,  baseUrl, vantagePoints} from './../constants';
 import { Preload } from 'react-preload';
 import { parsePhotoSegmentTimestamp } from './../utils';
 import moment from 'moment';
+import momentTimezoneSetup from 'moment-timezone';
 import KeyHandler, {KEYDOWN} from 'react-key-handler';
+
+momentTimezoneSetup(moment);
 
 class CameraSegmentBuilderCarousel extends React.Component {
 
   constructor(props) {
     super(props);
     this.state = {
-      index: 0,
+      index: props.page > 0 ? 15 : props.index,
       direction: null
     }
   }
@@ -40,13 +43,15 @@ class CameraSegmentBuilderCarousel extends React.Component {
       this.toggleSubItems(nextProps.camera, nextProps.vantagePoint);
       return false
     }
-    if (!_.isEmpty(nextProps.photos) && _.isEmpty(this.props.photos) && !_.isUndefined(nextProps.initialIndex)) {
-      this.setState({index: nextProps.initialIndex, initialIndex: nextProps.initialIndex})
-    }
+
+    
 
     if (!_.isEqual(nextProps.page, this.props.page)) {
       this.setState({index: (nextProps.page > this.props.page ? 15 : 34)})
-    }
+    } else if (!_.isEqual(nextProps.index, this.props.index)) {
+      this.setState({index: nextProps.index })
+    }    
+
     return true;
   }
 
@@ -59,7 +64,7 @@ class CameraSegmentBuilderCarousel extends React.Component {
     if (index < (_.size(this.props.photos[this.props.camera])-1) && index >= 0 ) {
       let result = this.props.onCarouselChange(delta, index, this.props.photos[this.props.camera][index]);
       if (result) {
-        result === 'forward' ? index = 16 : index = 34;
+        result === 'forward' ? index = 15 : index = 34;
       }
       this.setState({index})
     }
@@ -72,26 +77,33 @@ class CameraSegmentBuilderCarousel extends React.Component {
 
     if (_.isEmpty(this.props.photos) || !this.props.camera)  return null
     let carouselItems = _.map(this.props.photos[this.props.camera], (key, index) => {
+      let delta = this.state.index - index;
       let content = _.reduce(_.keys(this.props.photos), (current, camera) => {
         _.each(this.props.vantagePoints, (vantagePoint) => {
-          if (this.props.photos[camera][index]) {
-            let url = this.props.photos[camera][index].replace('camera01', vantagePoint);
-              current.images.push(<img key={`camera-${camera}-${vantagePoint}-image`}
-                                   className={`sub-item camera-${camera} vantage-point-${vantagePoint}`}
-                                   src={Math.abs(this.state.index - index) < 2 ? `${baseUrl()}/api/v1/camera_data/signed_url/${url}` : ''}/>)
-              current.captions.push(<Carousel.Caption key={`camera-${camera}-${vantagePoint}-caption`}
-                                      className={`sub-item camera-${camera} vantage-point-${vantagePoint}`}
-                                    >
-                                      <h3>{moment.utc(parsePhotoSegmentTimestamp(url)).format("h:mm:ss A")}</h3>
-                                    </Carousel.Caption>)
+          let url = this.props.photos[camera][index];
+          if (url && (delta === 0 || (Math.abs(delta) < 5 && this.props.vantagePoint === vantagePoint && this.props.camera === camera))) {
+            url = url.replace('camera01', vantagePoint);
+            current.images.push(<img key={`camera-${camera}-${vantagePoint}-image`}
+                                 className={`sub-item camera-${camera} vantage-point-${vantagePoint}`}
+                                 src={`${baseUrl()}/api/v1/camera_data/signed_url/${url}`}/>)
+            current.captions.push(<Carousel.Caption key={`camera-${camera}-${vantagePoint}-caption`}
+                                    className={`sub-item camera-${camera} vantage-point-${vantagePoint}`}
+                                  >
+                                    <h3>{moment(parsePhotoSegmentTimestamp(url)).tz(this.props.timezone).format("h:mm:ss A z")}</h3>
+                                  </Carousel.Caption>)
 
+          } else {
+            return '';
           }
         })
         return current;
       }, {images: [], captions: []});
 
+      let order = delta < 0 ? 'future' : 'past';
+      let siblingClass = delta !== 0 && Math.abs(delta) < 5 ? `${order} ${order}-${Math.abs(delta)}` : '';
+
       return (
-        <Carousel.Item key={index} className={`camera-${this.props.camera} vantage-point-${this.props.vantagePoint}`}>
+        <Carousel.Item key={index} className={`camera-${this.props.camera} vantage-point-${this.props.vantagePoint} ${ siblingClass }`}>
           { content.images }
           { content.captions }
         </Carousel.Item>

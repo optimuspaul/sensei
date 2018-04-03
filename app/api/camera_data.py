@@ -36,8 +36,8 @@ def camera_data_index():
   permitted_buckets = [];
 
   firebase = current_app.config.get("FIREBASE_SERVICE")
-  classroom_ref = firebase.db.collection('cameras')
-  cameraDocs = classroom_ref.get()
+  cameras_ref = firebase.db.collection('cameras')
+  cameraDocs = cameras_ref.get()
 
   camera_mappings = {}
   
@@ -48,8 +48,11 @@ def camera_data_index():
     if ('admin' in user.get("roles")) or camera.get("classroomId") in user.get("accessible_classroom_ids"):
       if camera.get("bucketName") not in permitted_buckets:
         permitted_buckets.append(camera.get("bucketName"))
-    camera_mappings[camera.get("bucketName")] = camera.get("classroomId")
-  
+        classroom_ref = firebase.db.document('classrooms/%s' % camera.get("classroomId"))
+        classroomInfo = classroom_ref.get().to_dict()
+        classroomInfo['classroom_id'] = camera.get("classroomId")
+        camera_mappings[camera.get("bucketName")] = classroomInfo
+    
   print "permitted_buckets: %s" % permitted_buckets
   print "camera_mappings: %s" % camera_mappings
 
@@ -74,7 +77,7 @@ def camera_data_index():
     for o in result.get('CommonPrefixes'):
       camera = o.get('Prefix').split('/')[1]
       if camera != '2D-pose':
-        output[location]['classroom_id'] = camera_mappings[location]
+        output[location]['classroom_info'] = camera_mappings[location]
         if not output[location].get(camera):
           output[location][camera] = {}
         result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/', Prefix=o.get('Prefix'))

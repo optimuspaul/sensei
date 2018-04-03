@@ -56,8 +56,8 @@ export default function cameraSegmentBuilder(state = initialState, action) {
           status: 'fetched'
         }
       }
-      let cameras = _.keys(_.omit(_.get(action.cameraData, `${action.location}`, {}), ['classroom_id']));
-      let locations = _.merge({[action.location]: { classroom_id: _.get(action.cameraData, `${action.location}.classroom_id`) } }, state.locations);
+      let cameras = _.keys(_.omit(_.get(action.cameraData, `${action.location}`, {}), ['classroom_info']));
+      let locations = _.merge({[action.location]: { classroom_info: _.get(action.cameraData, `${action.location}.classroom_info`) } }, state.locations);
       let masters = _.get(action.cameraData, `${action.location}.${cameras[0]}.${action.date}.camera01`);
       let vantagePoints = _.keys(_.get(action.cameraData, `${action.location}.${cameras[0]}.${action.date}`));
       if (masters) {
