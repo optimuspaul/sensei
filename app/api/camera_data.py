@@ -30,9 +30,6 @@ def camera_data_index():
 
   user = User.get_tc_info(tc, g.user)
 
-
-  print "user: %s" % user
-
   permitted_buckets = [];
 
   firebase = current_app.config.get("FIREBASE_SERVICE")
@@ -44,7 +41,6 @@ def camera_data_index():
 
   for doc in cameraDocs:
     camera = doc.to_dict()
-    print "camera: %s, classroomId: %s" % (camera, camera.get("classroomId"))
     if ('admin' in user.get("roles")) or camera.get("classroomId") in user.get("accessible_classroom_ids"):
       if camera.get("bucketName") not in permitted_buckets:
         permitted_buckets.append(camera.get("bucketName"))
@@ -54,8 +50,6 @@ def camera_data_index():
         classroomInfo['classroom_id'] = camera.get("classroomId")
         camera_mappings[camera.get("bucketName")] = classroomInfo
     
-  print "permitted_buckets: %s" % permitted_buckets
-  print "camera_mappings: %s" % camera_mappings
 
   s3 = get_s3_client()
 
@@ -93,14 +87,6 @@ def camera_data_index():
   if not s3_folder_name or not date:
     return jsonify(output)
 
-# https://s3.amazonaws.com/wf-classroom-data/camera-wildflower/camera/2017-11-21/camera01/still_2017-11-21-09-06-20.jpg
-
-
-  print "output: %s" % output
-  print "s3_folder_name: %s" % s3_folder_name
-  print "output[s3_folder_name]: %s" % output[s3_folder_name]
-  print "output[s3_folder_name].keys(): %s" % output[s3_folder_name].keys()
-
   
   for vantage_point in output[s3_folder_name]['camera'][date].keys():
 
@@ -127,24 +113,6 @@ def camera_data_index():
 
   return jsonify(output)
 
-
-# @api.route('/api/v1/camera_data/segments', methods = ['GET'])
-# @api_auth.requires_auth
-# def camera_segments_index():
-#   s3_folder_name = request.args.get('s3_folder_name')
-#   if not s3_folder_name:
-#     abort(400, "Missing s3_folder_name parameter")
-
-#   start_time = assert_iso8601_time_param('start_time')
-#   end_time = assert_iso8601_time_param('end_time')
-
-#   segments = CameraSegment.query.filter(
-#         CameraSegment.s3_folder_name==s3_folder_name,
-#         CameraSegment.start_time >= start_time,
-#         CameraSegment.end_time <= end_time
-#     ).all()
-
-#   return jsonify([s.as_dict() for s in segments])
 
 @api.route('/api/v1/camera_data/segments', methods = ['GET'])
 @api_auth.requires_auth
