@@ -50,6 +50,7 @@ def camera_data_index():
         permitted_buckets.append(camera.get("bucketName"))
         classroom_ref = firebase.db.document('classrooms/%s' % camera.get("classroomId"))
         classroomInfo = classroom_ref.get().to_dict()
+        classroomInfo.pop('interactions', None)
         classroomInfo['classroom_id'] = camera.get("classroomId")
         camera_mappings[camera.get("bucketName")] = classroomInfo
     
@@ -58,11 +59,7 @@ def camera_data_index():
 
   s3 = get_s3_client()
 
-  output = {}
-
-  
-
-  
+  output = {}  
   
   result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/')
 

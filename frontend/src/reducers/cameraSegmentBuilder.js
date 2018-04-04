@@ -53,8 +53,6 @@ export default function cameraSegmentBuilder(state = initialState, action) {
     case 'RECEIVED_PHOTOS':
       let locations = {...state.locations, ...action.cameraData};
       let cameras = _.keys(_.omit(_.get(action.cameraData, `${action.location}`, {}), ['classroom_info']));
-      locations = _.merge({[action.location]: { classroom_info: _.get(action.cameraData, `${action.location}.classroom_info`) } }, locations);
-      
       
       let vantagePoints = _.keys(_.get(action.cameraData, `${action.location}.camera.${action.date}`, {}));
       let dates = _.keys(_.get(action.cameraData, `${action.location}.camera`, {}));
@@ -67,10 +65,11 @@ export default function cameraSegmentBuilder(state = initialState, action) {
       if (!hasOverlays) {
         cameras = ['camera'];
       }
-      _.each(cameras, (camera) => {
-        _.set(locations, `${action.location}.${camera}.${action.date}`, []);
-      });
-      if (masters) {
+      
+      if (masters && action.location && action.date) {
+        _.each(cameras, (camera) => {
+          _.set(locations, `${action.location}.${camera}.${action.date}`, []);
+        });
         let firstPhoto = masters[0];
         let startDate = parsePhotoSegmentTimestamp(firstPhoto);
         let lastPhoto = masters[masters.length-1];

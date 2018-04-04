@@ -2,7 +2,7 @@ import React from 'react';
 import _ from 'lodash';
 import './CameraSegmentBuilder.css';
 import Spinner from './Spinner';
-import { Carousel, FormGroup, FormControl, ControlLabel, HelpBlock, Button } from 'react-bootstrap';
+import { Carousel, FormGroup, FormControl, ControlLabel, HelpBlock, Button, OverlayTrigger, Tooltip, Badge } from 'react-bootstrap';
 import {getSenseiToken,  baseUrl, vantagePoints} from './../constants';
 import CameraSegmentBuilderCarousel from './CameraSegmentBuilderCarousel';
 import KeyHandler, {KEYDOWN} from 'react-key-handler';
@@ -271,6 +271,20 @@ class CameraSegmentBuilder extends React.Component {
       </FormGroup>
     )
 
+    let keyboardShortcuts = (
+      <Tooltip placement="bottom">
+        <table style={{textAlign: 'left'}}>
+          <tr><td>l</td><td>&nbsp; toggle locations viz</td></tr>
+          <tr><td>o</td><td>&nbsp; toggle overlays</td></tr>
+          <tr><td>↑ & ↓</td><td>&nbsp; switch between camera</td></tr>
+          <tr><td>→</td><td>&nbsp; advance 1 frame</td></tr>
+          <tr><td>←</td><td>&nbsp; back 1 frame</td></tr>
+          <tr><td>&#8679; →</td><td>&nbsp; advance 10 frames</td></tr>
+          <tr><td>&#8679; ←</td><td>&nbsp; back 10 frames</td></tr>
+        </table>
+      </Tooltip>
+    )
+
     let selectors = (
       <form className="navbar-form navbar-left" role="search">
         <FormGroup controlId="formControlsSelect">
@@ -292,6 +306,9 @@ class CameraSegmentBuilder extends React.Component {
           </FormControl>
         </FormGroup>
         {_.includes(this.props.cameraData.cameras, 'overlays') ? overlaysToggle : ''}
+        <OverlayTrigger placement="bottom" overlay={keyboardShortcuts}>
+          <Badge>⌘ shortcuts</Badge>
+        </OverlayTrigger>
       </form>
     )
 
@@ -321,6 +338,7 @@ class CameraSegmentBuilder extends React.Component {
         <Button onClick={this.handleAuthSubmit} type="submit" disabled={this.props.authenticating}>{this.props.authenticating ? 'submitting...' : 'Submit'}</Button>
         </FormGroup>
         { this.props.authFailed ? <FormGroup validationState={this.props.authFailed ? 'error' : null}><HelpBlock>wrong credentials</HelpBlock></FormGroup> : ''}
+        
       </form>
     )
 
