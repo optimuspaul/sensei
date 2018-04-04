@@ -91,12 +91,10 @@ def camera_data_index():
             output[location][camera][date][vantage_point] = []
 
   s3_folder_name = request.args.get('s3_folder_name')
-  if not s3_folder_name:
-    return jsonify(output)
-
   date = request.args.get('date')
-  if not date:
-    date = '2017-08-10'
+  
+  if not s3_folder_name or not date:
+    return jsonify(output)
 
 # https://s3.amazonaws.com/wf-classroom-data/camera-wildflower/camera/2017-11-21/camera01/still_2017-11-21-09-06-20.jpg
 
@@ -107,28 +105,27 @@ def camera_data_index():
   print "output[s3_folder_name].keys(): %s" % output[s3_folder_name].keys()
 
   
+  for vantage_point in output[s3_folder_name]['camera'][date].keys():
 
-
-  prefix = s3_folder_name + '/camera/' + date + '/camera01'
-  
-
-  paginator = s3.get_paginator('list_objects')
-  operation_parameters = {'Bucket':'wf-classroom-data',
-                          'Prefix': prefix}
-  pageresponse = paginator.paginate(**operation_parameters)
-
-  for page in pageresponse:
+    prefix = s3_folder_name + '/camera/' + date + '/' + vantage_point
     
-    for file in page.get("Contents", []):
+    paginator = s3.get_paginator('list_objects')
+    operation_parameters = {'Bucket':'wf-classroom-data',
+                            'Prefix': prefix}
+    pageresponse = paginator.paginate(**operation_parameters)
+
+    for page in pageresponse:
       
-      parts = file["Key"].split("/")
-      if not output[s3_folder_name].get(parts[1]):
-        output[s3_folder_name][parts[1]] = {}
-      if not output[s3_folder_name].get(parts[1]).get(parts[2]):
-        output[s3_folder_name][parts[1]][parts[2]] = {}
-      if not output[s3_folder_name].get(parts[1]).get(parts[2]):
-        output[s3_folder_name][parts[1]][parts[2]][parts[3]] = []
-      output[s3_folder_name][parts[1]][parts[2]][parts[3]].append(file["Key"])
+      for file in page.get("Contents", []):
+        
+        parts = file["Key"].split("/")
+        if not output[s3_folder_name].get(parts[1]):
+          output[s3_folder_name][parts[1]] = {}
+        if not output[s3_folder_name].get(parts[1]).get(parts[2]):
+          output[s3_folder_name][parts[1]][parts[2]] = {}
+        if not output[s3_folder_name].get(parts[1]).get(parts[2]):
+          output[s3_folder_name][parts[1]][parts[2]][parts[3]] = []
+        output[s3_folder_name][parts[1]][parts[2]][parts[3]].append(file["Key"])
 
 
   return jsonify(output)

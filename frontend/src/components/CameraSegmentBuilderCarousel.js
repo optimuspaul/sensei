@@ -15,7 +15,7 @@ class CameraSegmentBuilderCarousel extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      index: props.page > 0 ? 15 : props.index,
+      index: props.page > 0 ? 15 : (props.index || 0),
       direction: null
     }
   }
@@ -28,23 +28,7 @@ class CameraSegmentBuilderCarousel extends React.Component {
     });
   }
 
-  toggleSubItems(camera, vantagePoint) {
-    let element = document.querySelector(`.item.active`)
-    element.className = `item active camera-${camera} vantage-point-${vantagePoint}`;
-  }
-
-  handleKeyPress = (...args) => {
-    console.log(...args);
-  }
-
-
   shouldComponentUpdate(nextProps, nextState) {
-    if ((this.props.vantagePoint !== nextProps.vantagePoint || this.props.camera !== nextProps.camera) && _.isEqual(nextProps.photos, this.props.photos)) {
-      this.toggleSubItems(nextProps.camera, nextProps.vantagePoint);
-      return false
-    }
-
-    
 
     if (!_.isEqual(nextProps.page, this.props.page)) {
       this.setState({index: (nextProps.page > this.props.page ? 15 : 34)})
@@ -59,7 +43,6 @@ class CameraSegmentBuilderCarousel extends React.Component {
     event.preventDefault();
     let index = this.state.index;
     let delta = (event.key === 'ArrowLeft' ? -1 : 1) * (event.shiftKey ? 10 : 1);
-    console.log('moveCarousel::delta::' + delta + '::index::' + index + '::index+delta::' + (index+delta) + '::page::' + this.props.page);
     index += delta;
     if (index < (_.size(this.props.photos[this.props.camera])-1) && index >= 0 ) {
       let result = this.props.onCarouselChange(delta, index, this.props.photos[this.props.camera][index]);
@@ -79,16 +62,15 @@ class CameraSegmentBuilderCarousel extends React.Component {
     let carouselItems = _.map(this.props.photos[this.props.camera], (key, index) => {
       let delta = this.state.index - index;
       let content = _.reduce(_.keys(this.props.photos), (current, camera) => {
-        _.each(this.props.vantagePoints, (vantagePoint) => {
+        _.each(this.props.vantagePoints, (vantagePoint, i) => {
           let url = this.props.photos[camera][index];
           if (url && (delta === 0 || (Math.abs(delta) < 5 && this.props.vantagePoint === vantagePoint && this.props.camera === camera))) {
-            url = url.replace('camera01', vantagePoint);
-            current.images.push(<img key={`camera-${camera}-${vantagePoint}-image`}
-                                 className={`sub-item camera-${camera} vantage-point-${vantagePoint}`}
+            url = url.replace('camera01', vantagePoint).replace('/camera/', `/${camera}/`).replace('.jpg', camera === 'overlays' ? '_rendered.png' : '.jpg');
+            let subItemClass = `sub-item camera-${camera} vantage-point-${vantagePoint}`;
+            current.images.push(<img key={`image-${camera}-${vantagePoint}`}
+                                 className={subItemClass}
                                  src={`${baseUrl()}/api/v1/camera_data/signed_url/${url}`}/>)
-            current.captions.push(<Carousel.Caption key={`camera-${camera}-${vantagePoint}-caption`}
-                                    className={`sub-item camera-${camera} vantage-point-${vantagePoint}`}
-                                  >
+            current.captions.push(<Carousel.Caption key={`image-${camera}-${vantagePoint}`} className={subItemClass}>
                                     <h3>{moment(parsePhotoSegmentTimestamp(url)).tz(this.props.timezone).format("h:mm:ss A z")}</h3>
                                   </Carousel.Caption>)
 
