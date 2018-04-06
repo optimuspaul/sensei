@@ -30,25 +30,27 @@ def camera_data_index():
 
   user = User.get_tc_info(tc, g.user)
 
-  permitted_buckets = [];
+  permitted_iam_names = [];
 
   firebase = current_app.config.get("FIREBASE_SERVICE")
-  cameras_ref = firebase.db.collection('cameras')
-  cameraDocs = cameras_ref.get()
+  classroom_iam_names_ref = firebase.db.collection('classroom_iam_names')
+  classroom_iam_names = classroom_iam_names_ref.get()
 
   camera_mappings = {}
   
 
-  for doc in cameraDocs:
-    camera = doc.to_dict()
-    if ('admin' in user.get("roles")) or camera.get("classroomId") in user.get("accessible_classroom_ids"):
-      if camera.get("bucketName") not in permitted_buckets:
-        permitted_buckets.append(camera.get("bucketName"))
-        classroom_ref = firebase.db.document('classrooms/%s' % camera.get("classroomId"))
-        classroomInfo = classroom_ref.get().to_dict()
-        classroomInfo.pop('interactions', None)
-        classroomInfo['classroom_id'] = camera.get("classroomId")
-        camera_mappings[camera.get("bucketName")] = classroomInfo
+  for doc in classroom_iam_names:
+    classroom_iam_name = doc.to_dict()
+    if ('admin' in user.get("roles")) or classroom_iam_name.get("classroom_id") in user.get("accessible_classroom_ids"):
+      if classroom_iam_name.get("iam_name") not in permitted_iam_names:
+        iam_name = classroom_iam_name.get("iam_name")
+        classroom_id = classroom_iam_name.get("classroom_id")
+        permitted_iam_names.append(iam_name)
+        classroom_ref = firebase.db.document('classrooms/%s' % classroom_id)
+        classroom_info = classroom_ref.get().to_dict()
+        classroom_info.pop('interactions', None)
+        classroom_info['classroom_id'] = classroom_id
+        camera_mappings[iam_name] = classroom_info
     
 
   s3 = get_s3_client()
@@ -58,28 +60,28 @@ def camera_data_index():
   result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/')
 
   for o in result.get('CommonPrefixes'):
-    location = o.get('Prefix')[:-1]
+    iam_name = o.get('Prefix')[:-1]
     
-    if not location in permitted_buckets:
+    if not iam_name in permitted_iam_names:
       continue
-    if not output.get(location):
-      output[location] = {}
+    if not output.get(iam_name):
+      output[iam_name] = {}
     result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/', Prefix=o.get('Prefix'))
     for o in result.get('CommonPrefixes'):
       camera = o.get('Prefix').split('/')[1]
       if camera != '2D-pose':
-        output[location]['classroom_info'] = camera_mappings[location]
-        if not output[location].get(camera):
-          output[location][camera] = {}
+        output[iam_name]['classroom_info'] = camera_mappings[iam_name]
+        if not output[iam_name].get(camera):
+          output[iam_name][camera] = {}
         result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/', Prefix=o.get('Prefix'))
         for o in result.get('CommonPrefixes'):
           date = o.get('Prefix').split('/')[2]
-          if not output[location][camera].get(date):
-            output[location][camera][date] = {}
+          if not output[iam_name][camera].get(date):
+            output[iam_name][camera][date] = {}
           result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/', Prefix=o.get('Prefix'))
           for o in result.get('CommonPrefixes'):
             vantage_point = o.get('Prefix').split('/')[3]
-            output[location][camera][date][vantage_point] = []
+            output[iam_name][camera][date][vantage_point] = []
 
   s3_folder_name = request.args.get('s3_folder_name')
   date = request.args.get('date')
