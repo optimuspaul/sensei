@@ -30,72 +30,70 @@ def camera_data_index():
 
   user = User.get_tc_info(tc, g.user)
 
-
-  print "user: %s" % user
-
-  permitted_buckets = [];
+  permitted_iam_names = [];
 
   firebase = current_app.config.get("FIREBASE_SERVICE")
-  classroom_ref = firebase.db.collection('cameras')
-  cameraDocs = classroom_ref.get()
+  classroom_iam_names_ref = firebase.db.collection('classroom_iam_names')
+  classroom_iam_names = classroom_iam_names_ref.get()
 
   camera_mappings = {}
   
 
-  for doc in cameraDocs:
-    camera = doc.to_dict()
-    print "camera: %s, classroomId: %s" % (camera, camera.get("classroomId"))
-    if ('network_admin' in user.get("roles")) or camera.get("classroomId") in user.get("accessible_classroom_ids"):
-      if camera.get("bucketName") not in permitted_buckets:
-        permitted_buckets.append(camera.get("bucketName"))
-    camera_mappings[camera.get("bucketName")] = camera.get("classroomId")
-  
-  print "permitted_buckets: %s" % permitted_buckets
-  print "camera_mappings: %s" % camera_mappings
+  for doc in classroom_iam_names:
+    classroom_iam_name = doc.to_dict()
+    if ('admin' in user.get("roles")) or classroom_iam_name.get("classroom_id") in user.get("accessible_classroom_ids"):
+      if classroom_iam_name.get("iam_name") not in permitted_iam_names:
+        iam_name = classroom_iam_name.get("iam_name")
+        classroom_id = classroom_iam_name.get("classroom_id")
+        permitted_iam_names.append(iam_name)
+        classroom_ref = firebase.db.document('classrooms/%s' % classroom_id)
+        classroom_info = classroom_ref.get().to_dict()
+        classroom_info.pop('interactions', None)
+        classroom_info['classroom_id'] = classroom_id
+        camera_mappings[iam_name] = classroom_info
+    
 
   s3 = get_s3_client()
 
-  output = {}
+  output = {}  
+  
+  result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/')
 
-  cameras = ['camera','overlays']
-
-  s3_folder_name = request.args.get('s3_folder_name')
-  if not s3_folder_name:
-    result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/')
-
+  for o in result.get('CommonPrefixes'):
+    iam_name = o.get('Prefix')[:-1]
+    
+    if not iam_name in permitted_iam_names:
+      continue
+    if not output.get(iam_name):
+      output[iam_name] = {}
+    result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/', Prefix=o.get('Prefix'))
     for o in result.get('CommonPrefixes'):
-      s3_folder_name = o.get('Prefix')[:-1]
-      
-      if not s3_folder_name in permitted_buckets:
-        continue
-      if not output.get(s3_folder_name):
-        output[s3_folder_name] = {}
-      result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/', Prefix=o.get('Prefix'))
-      for o in result.get('CommonPrefixes'):
-        camera = o.get('Prefix').split('/')[1]
-        if camera != '2D-pose':
-          output[s3_folder_name]['classroom_id'] = camera_mappings[s3_folder_name]
-          if not output[s3_folder_name].get(camera):
-            output[s3_folder_name][camera] = {}
+      camera = o.get('Prefix').split('/')[1]
+      if camera != '2D-pose':
+        output[iam_name]['classroom_info'] = camera_mappings[iam_name]
+        if not output[iam_name].get(camera):
+          output[iam_name][camera] = {}
+        result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/', Prefix=o.get('Prefix'))
+        for o in result.get('CommonPrefixes'):
+          date = o.get('Prefix').split('/')[2]
+          if not output[iam_name][camera].get(date):
+            output[iam_name][camera][date] = {}
           result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/', Prefix=o.get('Prefix'))
           for o in result.get('CommonPrefixes'):
-            date = o.get('Prefix').split('/')[2]
-            output[s3_folder_name][camera][date] = {}
+            vantage_point = o.get('Prefix').split('/')[3]
+            output[iam_name][camera][date][vantage_point] = []
+
+  s3_folder_name = request.args.get('s3_folder_name')
+  date = request.args.get('date')
+  
+  if not s3_folder_name or not date:
     return jsonify(output)
 
-  date = request.args.get('date')
-  if not date:
-    date = '2017-08-10'
+  
+  for vantage_point in output[s3_folder_name]['camera'][date].keys():
 
-# https://s3.amazonaws.com/wf-classroom-data/camera-wildflower/camera/2017-11-21/camera01/still_2017-11-21-09-06-20.jpg
-
-
-  output[s3_folder_name] = {}
-  for camera in cameras:
-
-    prefix = s3_folder_name + '/' + camera + '/' + date + '/camera01'
+    prefix = s3_folder_name + '/camera/' + date + '/' + vantage_point
     
-
     paginator = s3.get_paginator('list_objects')
     operation_parameters = {'Bucket':'wf-classroom-data',
                             'Prefix': prefix}
@@ -109,29 +107,14 @@ def camera_data_index():
         if not output[s3_folder_name].get(parts[1]):
           output[s3_folder_name][parts[1]] = {}
         if not output[s3_folder_name].get(parts[1]).get(parts[2]):
-          output[s3_folder_name][parts[1]][parts[2]] = []
-        output[s3_folder_name][parts[1]][parts[2]].append(file["Key"])
+          output[s3_folder_name][parts[1]][parts[2]] = {}
+        if not output[s3_folder_name].get(parts[1]).get(parts[2]):
+          output[s3_folder_name][parts[1]][parts[2]][parts[3]] = []
+        output[s3_folder_name][parts[1]][parts[2]][parts[3]].append(file["Key"])
+
 
   return jsonify(output)
 
-
-# @api.route('/api/v1/camera_data/segments', methods = ['GET'])
-# @api_auth.requires_auth
-# def camera_segments_index():
-#   s3_folder_name = request.args.get('s3_folder_name')
-#   if not s3_folder_name:
-#     abort(400, "Missing s3_folder_name parameter")
-
-#   start_time = assert_iso8601_time_param('start_time')
-#   end_time = assert_iso8601_time_param('end_time')
-
-#   segments = CameraSegment.query.filter(
-#         CameraSegment.s3_folder_name==s3_folder_name,
-#         CameraSegment.start_time >= start_time,
-#         CameraSegment.end_time <= end_time
-#     ).all()
-
-#   return jsonify([s.as_dict() for s in segments])
 
 @api.route('/api/v1/camera_data/segments', methods = ['GET'])
 @api_auth.requires_auth

@@ -4,6 +4,9 @@ import moment from 'moment';
 
 const initialState = {
   locations: {},
+  currentPhotos: [],
+  dates: [],
+  cameras: [],
   status: 'unfetched',
   currentCamera: '1',
   cameraSegments: [
@@ -43,23 +46,27 @@ export default function cameraSegmentBuilder(state = initialState, action) {
     case 'FETCHING_PHOTOS':
       return {
         ...state,
+        currentPhotos: [],
+        currentDate: '',
         status: 'fetching'
       }
     case 'RECEIVED_PHOTOS':
-      if (_.isEmpty(state.locations) && !action.date) {
-        return {
-          ...state,
-          locations: {
-            ...state.locations,
-            ...action.cameraData
-          },
-          status: 'fetched'
-        }
+      let locations = {...state.locations, ...action.cameraData};
+      let cameras = _.keys(_.omit(_.get(action.cameraData, `${action.location}`, {}), ['classroom_info']));
+      
+      let vantagePoints = _.keys(_.get(action.cameraData, `${action.location}.camera.${action.date}`, {}));
+      let dates = _.keys(_.get(action.cameraData, `${action.location}.camera`, {}));
+      let currentLocation = action.location || state.currentLocation;
+      let currentCamera = action.camera || state.currentCamera;
+      let currentDate = action.date || state.currentDate;
+
+      let masters = _.find(_.get(locations, `${action.location}.camera.${action.date}`, {}), photos => !_.isEmpty(photos));
+      let hasOverlays = _.includes(_.keys(_.get(locations, `${action.location}.overlays`, {})), action.date);
+      if (!hasOverlays) {
+        cameras = ['camera'];
       }
-      let cameras = _.keys(_.get(action.cameraData, `${action.location}`, {}));
-      let locations = _.merge({}, state.locations);
-      let masters = _.get(action.cameraData, `${action.location}.${cameras[0]}.${action.date}`);
-      if (masters) {
+      
+      if (masters && action.location && action.date) {
         _.each(cameras, (camera) => {
           _.set(locations, `${action.location}.${camera}.${action.date}`, []);
         });
@@ -69,7 +76,7 @@ export default function cameraSegmentBuilder(state = initialState, action) {
         let endDate = parsePhotoSegmentTimestamp(lastPhoto);
         while (startDate < endDate) {
           _.each(cameras, (camera) => {
-            let url = `${action.location}/${camera}/${action.date}/camera01/still_${moment.utc(startDate).format("YYYY-MM-DD-HH-mm-ss")}.${camera === 'camera' ? 'jpg' : 'png'}`
+            let url = `${action.location}/${camera}/${action.date}/camera01/still_${moment.utc(startDate).format("YYYY-MM-DD-HH-mm-ss")}${camera === 'camera' ? '.jpg' : '_rendered.png'}`
             let photos = _.get(locations, `${action.location}.${camera}.${action.date}`);
             photos.push(url)
             _.set(locations, `${action.location}.${camera}.${action.date}`, photos);
@@ -77,13 +84,20 @@ export default function cameraSegmentBuilder(state = initialState, action) {
           startDate.setSeconds(startDate.getSeconds()+10);
         }
       }
+      let currentPhotos = _.get(locations, `${action.location}.camera.${action.date}`, []);
+      
       return {
         ...state,
         loading: false,
-        currentLocation: action.location,
-        currentCamera: action.camera,
-        currentDate: action.date,
-        locations
+        currentLocation,
+        currentCamera,
+        currentDate,
+        currentPhotos,
+        vantagePoints,
+        locations,
+        cameras,
+        dates,
+        status: 'fetched'
       }
     case 'HANDLE_SAVE_CAMERA_SEGMENT_SUCCESS':
       return {

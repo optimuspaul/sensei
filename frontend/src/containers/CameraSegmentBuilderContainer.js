@@ -6,6 +6,9 @@ import { showLocationsAt, fetchLocations } from './../actions/insightsActions';
 
 const CamerSegmentBuilderContainer = connect((state) => ({
   cameraData: state.cameraSegmentBuilder,
+  currentPhotos: state.cameraSegmentBuilder.currentPhotos,
+  vantagePoints: state.cameraSegmentBuilder.vantagePoints,
+  dates: state.cameraSegmentBuilder.dates,
   authenticated: _.get(state, 'cameraSegmentBuilder.credentials') && _.get(state, 'cameraSegmentBuilder.authenticated') === true,
   authenticating: _.get(state, 'cameraSegmentBuilder.authenticating'),
   authFailed: _.get(state, 'cameraSegmentBuilder.authenticated') === false && _.get(state, 'cameraSegmentBuilder.credentials') && !_.get(state, 'cameraSegmentBuilder.authenticating'),
