@@ -44,50 +44,48 @@ exports.generateInteractionPeriods = functions.firestore.document('/classrooms/{
   let startDate = new Date(date);
   startDate.setHours(0);
   startDate.setMinutes(0);
+  let ipBufferRef = db.doc(`/classrooms/${classroomId}/ip_buffers/${dateKey}`);
+  
+  console.log("updating", "\n\ncurrentEntityUid: ", currentEntityUid, "\n\nentityLocationId", entityLocationId, "\n\ndate: ", date, "\n\ndateKey: ", dateKey, "\n\nclassroomId: ", classroomId, "\n\ncurrentLoc: ", currentLoc)
 
-  return db.doc(`/classrooms/${classroomId}/ip_buffers/${dateKey}`)
-    .get()
+  return ipBufferRef.get()
     .then((ipBufferDoc) => {
-      if (ipBufferDoc.exists) {
-        let ipBuffer = ipBufferDoc.data();
-        if (!ipBuffer || !ipBuffer.updatedAt || (currentLoc.timestamp - ipBuffer.updatedAt) > (1000*60) ) {
-          console.log("updating", "\n\ncurrentEntityUid: ", currentEntityUid, "\n\nentityLocationId", entityLocationId, "\n\ndate: ", date, "\n\ndateKey: ", dateKey, "\n\nclassroomId: ", classroomId, "\n\ncurrentLoc: ", currentLoc)
-          return Promise.resolve(ipBufferDoc)
-        }
+      let updatedAt = ipBufferDoc.exists && ipBufferDoc.data().updatedAt;
+      let merge;
+      console.log("updatedAt", updatedAt);
+      if (!updatedAt || updatedAt > date) {
+        console.log("step 1")
+        merge = false
+      } else if ((date - updatedAt) > (1000*60*15) ) {
+        console.log("step 2", `${date - updatedAt} > ${1000*60}`, 'date', date, 'updatedAt', updatedAt);
+        merge = true;
+      } else {
+        console.log("step 3")
+        return false // do nothing
       }
+      console.log("step 4")
+      return ipBufferRef.set({ updatedAt: date }, { merge });
+    })
+    .then(() => {
+      return ipBufferRef.get();
     })
     .then((ipBufferDoc) => {
+      console.log("step 5")
+      if (!ipBufferDoc.exists) {
+        console.log("ipBufferDoc doesn't exist??")
+        return Promise.reject();
+      }
       let ipBuffer = ipBufferDoc.data();
-      console.log("setting updatedAt for classroom interactions object", ipBuffer)
-      return ipBufferDoc.ref.set({
-        updatedAt: currentLoc.timestamp
-      }, {
-        merge: true
-      })
-      .then((ipBufferDoc) => {
-        ipBuffer = ipBufferDoc.data();
-        console.log("getting latest entity_locations to process")
-        return db.collection(`/classrooms/${classroomId}/entity_locations`)
+      return db.collection(`/classrooms/${classroomId}/entity_locations`)
         .where("timestamp", ">=", ipBuffer.updatedAt)
-        .where("timestamp", "<", currentLoc.timestamp)
+        .where("timestamp", "<", date)
         .orderBy("timestamp", "asc")
         .get()
-      })
-      .then((querySnapshot) => {
-        let entities;
-        console.log("grouping locations by timestamp")
-        let locationsByTimestamp = groupLocationsByTimestamp(querySnapshot.docs)
-        console.log("locationsByTimestamp:", locationsByTimestamp)
-        try {
-          console.log("Updating entities", ipBuffer.entities);
-          entities = updateEntities(locationsByTimestamp, ipBuffer.entities)
-          console.log("entites:", entities);
-        } catch (e) {
-          console.log("error updating entities:", e);
-        }
-        let batch;
-        try {
-          console.log("batching writes")
+        .then((querySnapshot) => {
+          console.log("step 6")
+          let locationsByTimestamp = groupLocationsByTimestamp(querySnapshot.docs)
+          let entities = updateEntities(locationsByTimestamp, ipBuffer.entities)
+          let batch;
           batch = db.batch();
           _.each(entities, (entity, entityUid) => {
             _.each(entity.interactionPeriods, (ip) => {
@@ -96,26 +94,15 @@ exports.generateInteractionPeriods = functions.firestore.document('/classrooms/{
               _.set(entities, `${entityUid}.interactionPeriods`, []);
             });
           });
-        } catch(e) {
-          console.log("error batching writes!", e);
-        }
-        console.log("committing batch writes");
-        try {
           return batch.commit()
             .then(() => {
-              console.log("updating interaction period buffer object", ipBufferDoc.id, ipBufferDoc.data(), entities, new Date(_.last(_.keys(locationsByTimestamp))))
-              return ipBufferDoc.ref.set({
-                updatedAt: new Date(_.last(_.keys(locationsByTimestamp))),
+              console.log("step 7")
+              return ipBufferRef.set({
+                updatedAt: date,
                 entities
               }, {merge: true});
-            })
-            .catch((error) => {
-              console.log("error committing batch writes and updating classroom", error);
-            })
-        } catch(e) {
-          console.log("error committing batch writes", e);
-        }
-      });
+            });
+        });
     })
     .catch(error => {
       console.log("ERROR", error);
@@ -267,9 +254,10 @@ exports.clearEntityLocations = functions.https.onRequest((request, res) => {
 exports.clearInteractionPeriods = functions.https.onRequest((request, res) => {
 
   validateFirebaseIdToken(request, res).then(() => {
-    let from = new Date(request.body.from);
-    let to = new Date(request.body.to);
-    let classroomId = request.body.classroom_id;
+    if (request.method !== 'DELETE') return res.status(404);
+    let from = new Date(request.query.from);
+    let to = new Date(request.query.to);
+    let classroomId = request.query.classroom_id;
     if (!_.isDate(from) || !_.isDate(to) || from > to || !classroomId) {
       return res.status(500).send(`must include a valid 'from' date, a valid 'to' date that occurs later, and a 'classroom_id'. from: ${from},  to: ${to}, classroom_id: ${classroomId}`);
     }
