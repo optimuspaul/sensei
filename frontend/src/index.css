@@ -1,5 +1,40 @@
+
+
+#foundation #visualization {
+  width: 100%;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 5px;
+  padding: 0px;
+  position: relative;
+  box-shadow: inset 0px 0px 4px 0px rgba(0,0,0,0.1);
+}
+
 #foundation #visualization #locations svg {
   border: 3px solid black;
+}
+
+
+#foundation #visualization #segmentedTimeline #chart {
+  width: 100%;
+  overflow: scroll;
+  height: 100%;
+  background: none;
+  padding: 15px;
+}
+
+#foundation #visualization #segmentedTimeline #labels {
+  background-color: white;
+  border-right: 1px solid #ddd;
+  padding-left: 10px;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  height: 100%;
+  padding: 15px;
+}
+
+#foundation #visualization #segmentedTimeline.viz {
+  display: inline;
 }
 
 #foundation #visualization #locations svg .sensors circle {
@@ -108,14 +143,7 @@
 }
 
 
-#foundation #visualization {
-  overflow: scroll;
-  width: 100%;
-  border: 1px solid rgba(0,0,0,0.1);
-  border-radius: 5px;
-  padding: 10px;
-  box-shadow: inset 0px 0px 4px 0px rgba(0,0,0,0.1);
-}
+
 
 #foundation #visualization .segments text {
   text-anchor: start;

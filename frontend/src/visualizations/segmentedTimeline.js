@@ -6,7 +6,7 @@ import {entityRow, entityRowLabel, entityTypeSection, timeTicks} from './compone
 import _ from 'lodash';
 
 const rowHeight = 30; // how tall each row of data in timeline is
-const offset = 205; // how far to the right the interaction segments should start being drawn from
+const offset = 150; // how far to the right the interaction segments should start being drawn from
 
 const TZO = (new Date()).getTimezoneOffset()*60*1000;
 
@@ -18,10 +18,11 @@ const TZO = (new Date()).getTimezoneOffset()*60*1000;
  */
 export default function segmentedTimeline() {
 
-  document.querySelector("div#segmentedTimeline svg").innerHTML = "<g id='top-ticks' class='ticks'></g><g id='bottom-ticks' class='ticks'></g>";
+  document.querySelector("div#segmentedTimeline").innerHTML = "<svg id='labels'></svg><div id='chart'><svg class='chart'><g id='top-ticks' class='ticks'></g><g id='bottom-ticks' class='ticks'></g></svg></div>";
   let vizElement = document.querySelector("#visualization #segmentedTimeline");
   let chartElement = document.querySelector("#visualization");
-  let chart = d3.select("#visualization div#segmentedTimeline svg");
+  let chart = d3.select("#visualization div#segmentedTimeline svg.chart");
+  let labels = d3.select("#visualization div#segmentedTimeline svg#labels");
   let topTicks = chart.select("g#top-ticks");
   let bottomTicks = chart.select("g#bottom-ticks");
   let color = d3.scaleOrdinal(d3.schemeCategory10).domain([0,5]);
@@ -30,23 +31,12 @@ export default function segmentedTimeline() {
 
   let updateChart = (event, zoomKick) => {
 
-    if (_.isUndefined(zoomKick)) {
-      vizElement.style.display = 'none';
-      setTimeout(() => {
-        vizElement.style.display = 'inline';
-      },1000)
-    }
-
-    let newZoom = (!_.isUndefined(zoomKick) && !_.isNaN(zoomKick)) ? zoomKick  : _.get(store.getState(), "insights.ui.zoom", 1);
-
-    if (!event.detail || (_.isEqual(event.detail, rawData) && parseInt(newZoom) === parseInt(zoom)) ) {
+    if (!event.detail) {
       return;
-    } else {
-      rawData = event.detail;
-      zoom = newZoom;
     }
-
-    zoom = _.isNaN(zoom) ? 1 : zoom;
+    
+    rawData = event.detail;
+    zoom = _.get(store.getState(), "insights.ui.zoom", 1);
 
     let data = transformIps(rawData);
 
@@ -61,16 +51,32 @@ export default function segmentedTimeline() {
     let endTime = new Date(startTime.getTime());
     startTime.setHours(7);
     endTime.setHours(17);
-    let xScalar = generateXScalar(startTime, endTime, chartWidth-offset);
+    let xScalar = generateXScalar(startTime, endTime, chartWidth);
     let chartHeight = calcChartHeight(segmentedData);
     let ticks = timelineTicks(startTime, endTime, xScalar, zoom);
     let firstDate = startTime.getDate();
 
-    chart.attr("width", chartWidth)
+    labels.attr("width", offset)
       .attr("height", chartHeight + 20)
       .selectAll("g.segments")
       .data(segmentedData)
       .call(entityTypeSection, {className: 'segments'})
+
+    let labelRow = labels.selectAll("g.segments")
+      .selectAll("g.row")
+      .data((d) => {
+        return d[1].entities || [];
+      })
+
+    labelRow.call(entityRow, 'row')
+    labelRow.call(entityRowLabel)
+
+    chart.attr("width", chartWidth)
+      .attr("height", chartHeight + 20)
+      .attr("style", `margin-left:${offset}px`)
+      .selectAll("g.segments")
+      .data(segmentedData)
+      .call(entityTypeSection, {className: 'segments', labels: false})
 
     let row = chart.selectAll("g.segments")
       .selectAll("g.row")
@@ -79,7 +85,6 @@ export default function segmentedTimeline() {
       })
 
     row.call(entityRow, 'row')
-    row.call(entityRowLabel)
 
     let rect = row.selectAll("rect")
       .data((d) => {
@@ -94,7 +99,7 @@ export default function segmentedTimeline() {
       .attr("x", (d) => {
         let timestamp = new Date(d[0]);
         timestamp.setDate(firstDate);
-        return xScalar(timestamp.getTime()) + offset
+        return xScalar(timestamp.getTime())
       })
       .attr("style", function(d, i) {
         let startTimestamp = new Date(d[0]);
@@ -116,15 +121,15 @@ export default function segmentedTimeline() {
       .attr('height', rowHeight*0.6)
       .attr("y", rowHeight*0.2)
 
-      topTicks.call(timeTicks, ticks, {offset, y: 10, zoom, chartHeight})
-      bottomTicks.call(timeTicks, ticks, {offset, y: chartHeight+20, zoom, hideLines: true})
-      if (!_.isUndefined(zoomKick)) return;
-      setTimeout(() => {
-        updateChart(event, zoom === 5 ? 4 : 5)
-        setTimeout(() => {
-          updateChart(event, zoom);
-        },200)
-      },200)
+      topTicks.call(timeTicks, ticks, {y: 10, zoom, chartHeight, offset})
+      bottomTicks.call(timeTicks, ticks, {y: chartHeight+20, zoom, hideLines: true, offset})
+      // if (!_.isUndefined(zoomKick)) return;
+      // setTimeout(() => {
+      //   updateChart(event, zoom === 5 ? 4 : 5)
+      //   setTimeout(() => {
+      //     updateChart(event, zoom);
+      //   },200)
+      // },200)
 
   }
 

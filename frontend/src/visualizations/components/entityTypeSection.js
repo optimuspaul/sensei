@@ -3,7 +3,8 @@ import _ from 'lodash';
 
 const defaultOpts = {
   rowHeight: 30,
-  className: 'sections'
+  className: 'sections',
+  labels: true
 }
 
 export default function entityTypeSection(selection, opts = {}) {
@@ -26,6 +27,8 @@ export default function entityTypeSection(selection, opts = {}) {
     .append("g")
     .attr("class", opts.className)
     .merge(selection)
+
+  if (!opts.labels) return;
 
   let text = selection.selectAll('text')
     .data((d, x, y) => {

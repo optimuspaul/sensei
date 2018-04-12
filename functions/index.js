@@ -28,61 +28,61 @@ const db = admin.firestore();
 
 
 
-exports.generateInteractionPeriods = functions.firestore.document('/classrooms/{classroomId}/entity_locations/{entityLocationId}').onCreate(event => {
+exports.flagForInteractionPeriodGeneration = functions.firestore.document('/classrooms/{classroomId}/entity_locations/{entityLocationId}').onCreate(event => {
 
-  // This onWrite will trigger whenever anything is written to the path, so
-  // noop if the charge was deleted, errored out, or the Stripe API returned a result (id exists)
+  if (!event.data.exists) return null;
+
+  const currentLoc = event.data.data();
+  const date = currentLoc.timestamp;
+  const classroomId = event.params.classroomId;
+  const dateKey = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`;
+
+  return db.doc('constants/generateInteractionPeriods').get()
+    .then((constantsDoc) => {
+      let freq = 15;
+      if (constantsDoc.exists) {
+        freq = constantsDoc.data().ipCalcFreq;
+      }
+      if (date.getMinutes() % freq === 0 && date.getSeconds() < 10) {
+        console.log("frequency requirement met, creating flag", currentLoc)
+        return db.doc(`/classrooms/${classroomId}/ip_buffers/${dateKey}/flags/${date.getHours()}-${date.getMinutes()}`).set(currentLoc);
+      }
+    });
+});
+
+exports.generateInteractionPeriods = functions.firestore.document('/classrooms/{classroomId}/ip_buffers/{dateKey}/flags/{timeKey}').onCreate(event => {
+
   if (!event.data.exists) return null;
 
   const currentLoc = event.data.data();
   const classroomId = event.params.classroomId;
-  const entityLocationId = event.params.entityLocationId;
-  const currentEntityUid = `${currentLoc.entityType}-${currentLoc.entityId}`;
   const date = currentLoc.timestamp;
-  const dateKey = `${date.getMonth()}-${date.getDate()}-${date.getYear()}`;
+  const ipBufferRef = db.doc(`/classrooms/${classroomId}/ip_buffers/${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`);
 
-  let startDate = new Date(date);
-  startDate.setHours(0);
-  startDate.setMinutes(0);
-  let ipBufferRef = db.doc(`/classrooms/${classroomId}/ip_buffers/${dateKey}`);
+  let CONSTANTS = {
+    ipInflectionPoint: 8,
+    ipCalcFreq: 30,
+    ipTimeDiffDenominator: 10000,
+    ipDistanceDiffMultiplier: 3,
+    ipMinRequiredInteractionTime: 1
+  }
   
-  console.log("updating", "\n\ncurrentEntityUid: ", currentEntityUid, "\n\nentityLocationId", entityLocationId, "\n\ndate: ", date, "\n\ndateKey: ", dateKey, "\n\nclassroomId: ", classroomId, "\n\ncurrentLoc: ", currentLoc)
-
-  return ipBufferRef.get()
-    .then((ipBufferDoc) => {
-      let updatedAt = ipBufferDoc.exists && ipBufferDoc.data().updatedAt;
-      let merge;
-      console.log("updatedAt", updatedAt);
-      if (!updatedAt || updatedAt > date) {
-        console.log("step 1")
-        merge = false
-      } else if ((date - updatedAt) > (1000*60*15) ) {
-        console.log("step 2", `${date - updatedAt} > ${1000*60}`, 'date', date, 'updatedAt', updatedAt);
-        merge = true;
-      } else {
-        console.log("step 3")
-        return false // do nothing
+  console.log("generating interaction periods", currentLoc);
+  return db.doc('constants/generateInteractionPeriods').get()
+    .then((constantsDoc) => {
+      if (constantsDoc.exists) {
+        CONSTANTS = _.merge(CONSTANTS, constantsDoc.data());
       }
-      console.log("step 4")
-      return ipBufferRef.set({ updatedAt: date }, { merge });
-    })
-    .then(() => {
-      return ipBufferRef.get();
+      return ipBufferRef.get()
     })
     .then((ipBufferDoc) => {
-      console.log("step 5")
-      if (!ipBufferDoc.exists) {
-        console.log("ipBufferDoc doesn't exist??")
-        return Promise.reject();
-      }
-      let ipBuffer = ipBufferDoc.data();
+      let ipBuffer = ipBufferDoc.exists ? ipBufferDoc.data() : {updatedAt: date};
       return db.collection(`/classrooms/${classroomId}/entity_locations`)
         .where("timestamp", ">=", ipBuffer.updatedAt)
         .where("timestamp", "<", date)
         .orderBy("timestamp", "asc")
         .get()
         .then((querySnapshot) => {
-          console.log("step 6")
           let locationsByTimestamp = groupLocationsByTimestamp(querySnapshot.docs)
           let entities = updateEntities(locationsByTimestamp, ipBuffer.entities)
           let batch;
@@ -96,84 +96,89 @@ exports.generateInteractionPeriods = functions.firestore.document('/classrooms/{
           });
           return batch.commit()
             .then(() => {
-              console.log("step 7")
               return ipBufferRef.set({
                 updatedAt: date,
                 entities
               }, {merge: true});
-            });
+            })
         });
     })
     .catch(error => {
       console.log("ERROR", error);
       reportError(error, {params: event.params});
     });
+
+  function groupLocationsByTimestamp(locationDocs) {
+    return _.reduce(locationDocs, (current, doc) => {
+      let data = doc.data();
+      current[data.timestamp.toISOString()] = current[data.timestamp.toISOString()] || [];
+      data.entityUid = `${data.entityType}-${data.entityId}`;
+      current[data.timestamp.toISOString()].push(data);
+      return current;
+    }, {});
+  }
+
+  function updateEntities(locationsByTimestamp, entities = {}) {
+    
+
+    return _.reduce(locationsByTimestamp, (current, locations, timestamp) => {
+      timestamp = new Date(timestamp);
+      _.each(locations, (location) => {
+        _.each(locations, (loc) => {
+          if (loc.entityUid === location.entityUid) return;
+          let currentPeriod = _.get(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`);
+          let prevIpq = _.get(current, `${location.entityUid}.${loc.entityUid}.ipq`, 0);
+          let ipq = calcIpq(prevIpq, location, loc, currentPeriod, timestamp);
+          _.set(current, `${location.entityUid}.${loc.entityUid}.ipq`, ipq);
+          
+          if (prevIpq >= CONSTANTS.ipInflectionPoint && ipq < CONSTANTS.ipInflectionPoint) {
+            let locationPeriods = _.get(current, `${location.entityUid}.interactionPeriods`, [])
+            currentPeriod.endTime = new Date(timestamp);
+            if ((currentPeriod.endTime - currentPeriod.startTime) > (1000*60*CONSTANTS.ipMinRequiredInteractionTime)) {
+              locationPeriods.push(currentPeriod);
+            }
+            _.set(current, `${location.entityUid}.interactionPeriods`, locationPeriods);
+            _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`, {});
+          } else if (ipq >= CONSTANTS.ipInflectionPoint && prevIpq < CONSTANTS.ipInflectionPoint) {
+            _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`, {
+              startTime: location.timestamp, 
+              targetEntityId: loc.entityId, 
+              targetEntityType: loc.entityType,
+              sourceEntityId: location.entityId,
+              sourceEntityType: location.entityType
+            });
+          }
+          _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod.endTime`, new Date(timestamp));
+        });
+      });
+      return current;
+    }, entities)
+  }
+
+  function calcIpq(prevIpq, loc1, loc2, currentPeriod = {}, currentTimestamp) {
+    let mod = 0;
+    if (_.isNaN(loc2.x) || _.isNaN(loc1.x)) {
+      mod = -10;
+    } else {
+      let delta =  Math.hypot(loc2.x - loc1.x, loc2.y-loc1.y);
+      delta = delta === 0 ? 0.001 : delta;
+      mod = 1 + (1-(delta*CONSTANTS.ipDistanceDiffMultiplier));
+      let latestTime = currentPeriod.endTime || currentPeriod.startTime;
+      if (latestTime) {
+        mod += (1-((currentTimestamp - latestTime)/CONSTANTS.ipTimeDiffDenominator));
+      }
+    }
+    let ipq = prevIpq+mod;
+    // ipq = ipq - (5*(1/Math.pow(ipq-10,2)));
+    ipq = ipq < 0 ? 0 : ipq;
+    return ipq;
+  }
+
+
 });
 
 
-function groupLocationsByTimestamp(locationDocs) {
-  return _.reduce(locationDocs, (current, doc) => {
-    let data = doc.data();
-    current[data.timestamp.toISOString()] = current[data.timestamp.toISOString()] || [];
-    data.entityUid = `${data.entityType}-${data.entityId}`;
-    current[data.timestamp.toISOString()].push(data);
-    return current;
-  }, {});
-}
 
-function updateEntities(locationsByTimestamp, entities = {}) {
-  const INFLECTION_POINT = 8;
-
-  return _.reduce(locationsByTimestamp, (current, locations, timestamp) => {
-    timestamp = new Date(timestamp);
-    _.each(locations, (location) => {
-      _.each(locations, (loc) => {
-        if (loc.entityUid === location.entityUid) return;
-        let currentPeriod = _.get(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`);
-        let prevIpq = _.get(current, `${location.entityUid}.${loc.entityUid}.ipq`, 0);
-        let ipq = calcIpq(prevIpq, location, loc, currentPeriod, timestamp);
-        _.set(current, `${location.entityUid}.${loc.entityUid}.ipq`, ipq);
-        
-        if (prevIpq >= INFLECTION_POINT && ipq < INFLECTION_POINT) {
-          let locationPeriods = _.get(current, `${location.entityUid}.interactionPeriods`, [])
-          currentPeriod.endTime = new Date(timestamp);
-          locationPeriods.push(currentPeriod);
-          _.set(current, `${location.entityUid}.interactionPeriods`, locationPeriods);
-          _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`, {});
-        } else if (ipq >= INFLECTION_POINT && prevIpq < INFLECTION_POINT) {
-          _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`, {
-            startTime: location.timestamp, 
-            targetEntityId: loc.entityId, 
-            targetEntityType: loc.entityType,
-            sourceEntityId: location.entityId,
-            sourceEntityType: location.entityType
-          });
-        }
-        _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod.endTime`, new Date(timestamp));
-      });
-    });
-    return current;
-  }, entities)
-}
-
-function calcIpq(prevIpq, loc1, loc2, currentPeriod = {}, currentTimestamp) {
-  let mod = 0;
-  if (_.isNaN(loc2.x) || _.isNaN(loc1.x)) {
-    mod = -10;
-  } else {
-    let delta =  Math.hypot(loc2.x - loc1.x, loc2.y-loc1.y);
-    delta = delta === 0 ? 0.001 : delta;
-    mod = 1 + (1-(delta*3));
-    let latestTime = currentPeriod.endTime || currentPeriod.startTime;
-    if (latestTime) {
-      mod += (1-((currentTimestamp - latestTime)/10000));
-    }
-  }
-  let ipq = prevIpq+mod;
-  // ipq = ipq - (5*(1/Math.pow(ipq-10,2)));
-  ipq = ipq < 0 ? 0 : ipq;
-  return ipq;
-}
 
 
 
@@ -223,65 +228,82 @@ function userFacingMessage(error) {
 }
 
 exports.clearEntityLocations = functions.https.onRequest((request, res) => {
-  
-  validateFirebaseIdToken(request, res).then(() => {
-    if (request.method !== 'DELETE') return res.status(404);
-    let from = new Date(request.query.from);
-    let to = new Date(request.query.to);
-    let classroomId = request.query.classroom_id;
-    if (!_.isDate(from) || !_.isDate(to) || from > to || !classroomId) {
-      return res.status(500).send(`must include a valid 'from' date, a valid 'to' date that occurs later, and a 'classroom_id'. from: ${from},  to: ${to}, classroom_id: ${classroomId}`);
-    }
-    let batchSize = 200;
-    let query = db.collection(`/classrooms/${classroomId}/entity_locations`)
-      .where("timestamp", ">=", from)
-      .where("timestamp", "<", to)
-      .orderBy("timestamp", "asc")
-      .limit(batchSize)
-
-    let deletePromise =  new Promise((resolve, reject) => {
-        deleteQueryBatch(query, batchSize, resolve, reject);
+  return clear(request, res, 'entity_locations', 'timestamp')
+    .then((message) => {
+      res.status(200).send(message);
+    })
+    .catch((error) => {
+      res.status(500).send(error);
     });
+});
 
-    deletePromise.then((docRef) => {
-      res.status(200).send(`Interaction periods from ${from} to ${to} successfully deleted`);
-    });
-  }).catch((error) => {
-    reportError(error, {request});
-  });
+exports.clearIpBuffers = functions.https.onRequest((request, res) => {
+  let date = new Date(request.query.from);
+  return clear(request, res, `ip_buffers/${date.getMonth()}-${date.getDate()}-${date.getFullYear()}/flags`, 'timestamp')
+    .then((msg) => {
+      let message = msg;
+      return db.doc(`/classrooms/${request.query.classroom_id}/ip_buffers/${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`)
+        .delete()
+        .then(() => {
+          res.status(200).send(message);
+        })
+        .catch((error) => {
+          res.status(500).send('could not delete ip_buffer', error);
+        })
+    }).catch((error) => {
+      res.status(500).send(error);
+    })
 });
 
 exports.clearInteractionPeriods = functions.https.onRequest((request, res) => {
+  return clear(request, res, 'interaction_periods', 'startTime')
+    .then((message) => {
+      res.status(200).send(message);
+    })
+    .catch((error) => {
+      res.status(500).send(error);
+    });
+});
 
-  validateFirebaseIdToken(request, res).then(() => {
-    if (request.method !== 'DELETE') return res.status(404);
-    let from = new Date(request.query.from);
-    let to = new Date(request.query.to);
-    let classroomId = request.query.classroom_id;
-    if (!_.isDate(from) || !_.isDate(to) || from > to || !classroomId) {
-      return res.status(500).send(`must include a valid 'from' date, a valid 'to' date that occurs later, and a 'classroom_id'. from: ${from},  to: ${to}, classroom_id: ${classroomId}`);
-    }
+function clear(request, res, collectionName, dateField) {
+  if (request.method !== 'DELETE') return res.status(404);
+  let from = new Date(request.query.from);
+  let to = new Date(request.query.to);
+  let classroomId = request.query.classroom_id;
+  console.log('step 1')
+  if (!_.isDate(from) || !_.isDate(to) || from > to || !classroomId) {
+    return Promise.reject(`must include a valid 'from' date, a valid 'to' date that occurs later, and a 'classroom_id'. from: ${from},  to: ${to}, classroom_id: ${classroomId}`);
+  }
+  return validateFirebaseIdToken(request, res).then(() => {
+    console.log('step 2')
     let batchSize = 200;
-    let query = db.collection(`/classrooms/${classroomId}/interaction_periods`)
-      .where("startTime", ">=", from)
-      .where("startTime", "<", to)
-      .orderBy("startTime", "asc")
+    let query = db.collection(`/classrooms/${classroomId}/${collectionName}`)
+      .where(dateField, ">=", from)
+      .where(dateField, "<", to)
+      .orderBy(dateField, "asc")
       .limit(batchSize)
-
+    
     let deletePromise =  new Promise((resolve, reject) => {
         deleteQueryBatch(query, batchSize, resolve, reject);
     });
 
-    deletePromise.then((docRef) => {
-      res.status(200).send(`Interaction periods from ${from} to ${to} successfully deleted`);
-    });
+    return deletePromise.then((docRef) => {
+      console.log('step 3')
+      Promise.resolve(`${collectionName} from ${from} to ${to} successfully deleted`);
+    })
+    .catch((error) => {
+      console.log(`something went wrong`, error)
+      Promise.reject(`something went wrong`, error);
+    })
   }).catch((error) => {
-    reportError(error, {request});
+    console.log(`something went wrong`, error)
+    Promise.reject(`something went wrong`, error);
   });
-});
+}
 
 function deleteQueryBatch(query, batchSize, resolve, reject) {
   return query.get().then((snapshot) => {
+    console.log('step 5')
     // When there are no documents left, we are done
     console.log("snapshot.size: ", snapshot.size);
     if (snapshot.size == 0) {
