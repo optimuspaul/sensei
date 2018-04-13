@@ -23,6 +23,7 @@ export default function segmentedTimeline() {
   let chartElement = document.querySelector("#visualization");
   let chart = d3.select("#visualization div#segmentedTimeline svg.chart");
   let labels = d3.select("#visualization div#segmentedTimeline svg#labels");
+  let chartContainer = document.querySelector("#chart");
   let topTicks = chart.select("g#top-ticks");
   let bottomTicks = chart.select("g#bottom-ticks");
   let color = d3.scaleOrdinal(d3.schemeCategory10).domain([0,5]);
@@ -34,12 +35,14 @@ export default function segmentedTimeline() {
     if (!event.detail) {
       return;
     }
-    
+
     rawData = event.detail;
     zoom = _.get(store.getState(), "insights.ui.zoom", 1);
 
     let data = transformIps(rawData);
 
+    chartContainer.style.marginLeft = `${offset}px`;
+    chartContainer.style.width = `calc(100% - ${offset}px)`
 
     var t = d3.transition()
     .duration(400)
@@ -73,7 +76,6 @@ export default function segmentedTimeline() {
 
     chart.attr("width", chartWidth)
       .attr("height", chartHeight + 20)
-      .attr("style", `margin-left:${offset}px`)
       .selectAll("g.segments")
       .data(segmentedData)
       .call(entityTypeSection, {className: 'segments', labels: false})
@@ -121,8 +123,8 @@ export default function segmentedTimeline() {
       .attr('height', rowHeight*0.6)
       .attr("y", rowHeight*0.2)
 
-      topTicks.call(timeTicks, ticks, {y: 10, zoom, chartHeight, offset})
-      bottomTicks.call(timeTicks, ticks, {y: chartHeight+20, zoom, hideLines: true, offset})
+      topTicks.call(timeTicks, ticks, {y: 10, zoom, chartHeight, offset: 0})
+      bottomTicks.call(timeTicks, ticks, {y: chartHeight+20, zoom, hideLines: true, offset: 0})
       // if (!_.isUndefined(zoomKick)) return;
       // setTimeout(() => {
       //   updateChart(event, zoom === 5 ? 4 : 5)

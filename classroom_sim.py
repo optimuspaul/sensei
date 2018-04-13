@@ -321,12 +321,12 @@ while sim_time < end_time:
         accelerations = sensor.sim_acceleration()
         accel_event = AccelerometerObservation(CLASSROOM_ID, sensor.sensor_id, sim_time.isoformat(), accelerations)
         accel_obs.append(accel_event)
+        stdDevs = [np.random.uniform(0, 1), np.random.uniform(0, 1)]
+        loc_ob = EntityLocation(CLASSROOM_ID, sensor.sensor_id, sim_time.isoformat(), sensor.pos, stdDevs)
+        entity_locs.append(loc_ob)
         for other in sensors:
             if sensor.sensor_id == other.sensor_id:
-                stdDevs = [np.random.uniform(0, 1), np.random.uniform(0, 1)]
                 print "location: %s " % sensor.pos
-                loc_ob = EntityLocation(CLASSROOM_ID, sensor.sensor_id, sim_time.isoformat(), sensor.pos, stdDevs)
-                entity_locs.append(loc_ob)
                 continue
             rssi = sensor.sim_ping(other)
             if rssi is not None:

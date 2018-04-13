@@ -16,102 +16,28 @@
       firebase.initializeApp(config);
       let db = firebase.firestore();
 
-      let startDate = new Date("03-08-2018");
-      let endDate = new Date("03-09-2018");
-
-      
-
-      let segmentsOverTime = []
-
-      const INFLECTION_POINT = 7;
-
-      let i = 1;
+      let datekey = '4-10-2018'
 
       let classroomId = 2;
 
 
-
-
-
-
-      let currentLoc = {
-        timestamp: new Date("2018-03-08T22:00:00.000Z")
-      }
-
-      generateSegments(currentLoc).then(() => {
-        db.collection(`/classrooms/${classroomId}/interaction_periods`)
-              .where("startTime", ">=", startDate)
-              .where("startTime", "<", endDate)
-              .get()
-              .then((querySnapshot) => {
-                alert(`There are now ${_.size(querySnapshot.docs)} interaction periods`)
-              });
-      });
-
-      function generateSegments(currentLoc) {
-
-        return db.doc(`/classrooms/${classroomId}`).get()
-          .then((classroom) => {
-            let data = classroom.data();
-
-            if (!_.get(data, 'interactions.updatedAt')) {
-              return classroom.ref.set({
-                interactions: {
-                  updatedAt: currentLoc.timestamp
-                }
-              }, {
-                merge: true
-              });
-            }
-
-            if ((currentLoc.timestamp - data.interactions.updatedAt) < (1000*60) ) {
-              return Promise.resolve();
-            }
-
-            return db.collection(`/classrooms/${classroomId}/entity_locations`)
-              .where("timestamp", ">=", data.interactions.updatedAt)
-              .where("timestamp", "<", currentLoc.timestamp)
-              .orderBy("timestamp", "asc")
-              .get()
-              .then((querySnapshot) => {
-                let locationsByTimestamp = groupLocationsByTimestamp(querySnapshot.docs)
-                let entities = updateEntities(locationsByTimestamp, data.interactions.entities)
-                let batch = db.batch();
-                _.each(entities, (entity, entityUid) => {
-                  _.each(entity.interactionPeriods, (ip) => {
-                    let ipRef = db.doc(`/classrooms/${classroomId}/interaction_periods/${entityUid}-${ip.startTime.toISOString()}`);
-                    batch.set(ipRef, ip);
-                    _.set(entities, `${entityUid}.interactionPeriods`, []);
-                  });
-                });
-
-                return batch.commit()
-                  .then(() => {
-                    return classroom.ref.set({
-                      interactions: {
-                        updatedAt: new Date(_.last(_.keys(locationsByTimestamp))),
-                        entities
-                      }
-                    }, {merge: true});
-                  });
-              });
-
-          });
-      }
+      db.doc(`/classrooms/${classroomId}/ip_buffers/${datekey}`)
+        .onSnapshot((ipBufferDoc) => {
+          if (ipBufferDoc.exists) {
+            render(ipBufferDoc.data().entities)
+          }
+        });
 
 
 
       function render(segments) {
-        setTimeout(() => { 
-          let segmentsEl = document.querySelector("#segments");
-          segmentsEl.innerHTML = '';
-          _.each(segments, (s, k) => {
-            let pre = document.createElement('pre');
-            pre.innerHTML = output({[k]: s});
-            segmentsEl.appendChild(pre);
-          })
-        }, (100*(i)));
-        i++;
+        let segmentsEl = document.querySelector("#segments");
+        segmentsEl.innerHTML = '';
+        _.each(segments, (s, k) => {
+          let pre = document.createElement('pre');
+          pre.innerHTML = output({[k]: s});
+          segmentsEl.appendChild(pre);
+        })
       }
 
       function output(obj) {
@@ -141,66 +67,6 @@
           });
       }
 
-      function groupLocationsByTimestamp(locationDocs) {
-        return _.reduce(locationDocs, (current, doc) => {
-          let data = doc.data();
-          current[data.timestamp.toISOString()] = current[data.timestamp.toISOString()] || [];
-          data.entityUid = `${data.entityType}-${data.entityId}`;
-          current[data.timestamp.toISOString()].push(data);
-          return current;
-        }, {});
-      }
-
-      function updateEntities(locationsByTimestamp, entities = {}) {
-        return _.reduce(locationsByTimestamp, (current, locations, timestamp) => {
-          timestamp = new Date(timestamp);
-          _.each(locations, (location) => {
-            _.each(locations, (loc) => {
-              if (loc.entityUid === location.entityUid) return;
-              let currentPeriod = _.get(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`);
-              let prevIpq = _.get(current, `${location.entityUid}.${loc.entityUid}.ipq`, 0);
-              let ipq = calcIpq(prevIpq, location, loc, currentPeriod, timestamp);
-              _.set(current, `${location.entityUid}.${loc.entityUid}.ipq`, ipq);
-              
-              if (prevIpq >= INFLECTION_POINT && ipq < INFLECTION_POINT) {
-                let locationPeriods = _.get(current, `${location.entityUid}.interactionPeriods`, [])
-                currentPeriod.endTime = new Date(timestamp);
-                locationPeriods.push(currentPeriod);
-                _.set(current, `${location.entityUid}.interactionPeriods`, locationPeriods);
-                _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`, {});
-              } else if (ipq >= INFLECTION_POINT && prevIpq < INFLECTION_POINT) {
-                _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`, {
-                  startTime: location.timestamp, 
-                  targetEntityId: loc.entityId, 
-                  targetEntityType: loc.entityType
-                });
-              }
-              _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod.endTime`, new Date(timestamp));
-            });
-          });
-          render(_.merge({}, current));
-          return current;
-        }, entities)
-      }
-
-      function calcIpq(prevIpq, loc1, loc2, currentPeriod = {}, currentTimestamp) {
-        let mod = 0;
-        if (_.isNaN(loc2.x) || _.isNaN(loc1.x)) {
-          mod = -10;
-        } else {
-          let delta =  Math.hypot(loc2.x - loc1.x, loc2.y-loc1.y);
-          delta = delta === 0 ? 0.001 : delta;
-          mod = 1 + (1-(delta*3));
-          let latestTime = currentPeriod.endTime || currentPeriod.startTime;
-          if (latestTime) {
-            mod += (1-((currentTimestamp - latestTime)/10000));
-          }
-        }
-        let ipq = prevIpq+mod;
-        // ipq = ipq - (5*(1/Math.pow(ipq-10,2)));
-        ipq = ipq < 0 ? 0 : ipq;
-        return ipq;
-      }
 
     </script>
 

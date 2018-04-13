@@ -180,6 +180,9 @@ export const SELECT_ENTITY = 'SELECT_ENTITY'
 export const selectEntity = (entityId, entityType) => {
   return (dispatch, getState) => {
     let state = getState();
+    if (_.get(state, 'insights.ui.visualization') === 'segmentedTimeline') {
+      location.reload();
+    }
     let entity = _.get(state, `entities.${entityInflections[entityType]}.${entityId}`);
     dispatch({
       type: SELECT_ENTITY,

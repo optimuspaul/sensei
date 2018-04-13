@@ -35,7 +35,7 @@ exports.flagForInteractionPeriodGeneration = functions.firestore.document('/clas
   const currentLoc = event.data.data();
   const date = currentLoc.timestamp;
   const classroomId = event.params.classroomId;
-  const dateKey = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`;
+  const dateKey = `${date.getMonth()+1}-${date.getDate()}-${date.getFullYear()}`;
 
   return db.doc('constants/generateInteractionPeriods').get()
     .then((constantsDoc) => {
@@ -57,7 +57,7 @@ exports.generateInteractionPeriods = functions.firestore.document('/classrooms/{
   const currentLoc = event.data.data();
   const classroomId = event.params.classroomId;
   const date = currentLoc.timestamp;
-  const ipBufferRef = db.doc(`/classrooms/${classroomId}/ip_buffers/${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`);
+  const ipBufferRef = db.doc(`/classrooms/${classroomId}/ip_buffers/${date.getMonth()+1}-${date.getDate()}-${date.getFullYear()}`);
 
   let CONSTANTS = {
     ipInflectionPoint: 8,
@@ -88,10 +88,11 @@ exports.generateInteractionPeriods = functions.firestore.document('/classrooms/{
           let batch;
           batch = db.batch();
           _.each(entities, (entity, entityUid) => {
-            _.each(entity.interactionPeriods, (ip) => {
-              let ipRef = db.doc(`/classrooms/${classroomId}/interaction_periods/${entityUid}-${ip.startTime.toISOString()}`);
-              batch.set(ipRef, ip);
-              _.set(entities, `${entityUid}.interactionPeriods`, []);
+            _.each(entity, (ip, otherEntityUid) => {
+              if (ip.currentPeriod.startTime && ip.currentPeriod.endTime) {
+                let ipRef = db.doc(`/classrooms/${classroomId}/interaction_periods/${entityUid}-${otherEntityUid}-${ip.currentPeriod.startTime.toISOString()}`);
+                batch.set(ipRef, ip.currentPeriod);
+              }
             });
           });
           return batch.commit()
@@ -126,29 +127,29 @@ exports.generateInteractionPeriods = functions.firestore.document('/classrooms/{
       _.each(locations, (location) => {
         _.each(locations, (loc) => {
           if (loc.entityUid === location.entityUid) return;
-          let currentPeriod = _.get(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`);
-          let prevIpq = _.get(current, `${location.entityUid}.${loc.entityUid}.ipq`, 0);
-          let ipq = calcIpq(prevIpq, location, loc, currentPeriod, timestamp);
-          _.set(current, `${location.entityUid}.${loc.entityUid}.ipq`, ipq);
-          
-          if (prevIpq >= CONSTANTS.ipInflectionPoint && ipq < CONSTANTS.ipInflectionPoint) {
-            let locationPeriods = _.get(current, `${location.entityUid}.interactionPeriods`, [])
-            currentPeriod.endTime = new Date(timestamp);
-            if ((currentPeriod.endTime - currentPeriod.startTime) > (1000*60*CONSTANTS.ipMinRequiredInteractionTime)) {
-              locationPeriods.push(currentPeriod);
-            }
-            _.set(current, `${location.entityUid}.interactionPeriods`, locationPeriods);
-            _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`, {});
-          } else if (ipq >= CONSTANTS.ipInflectionPoint && prevIpq < CONSTANTS.ipInflectionPoint) {
-            _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`, {
-              startTime: location.timestamp, 
+          let currentPeriod = _.get(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`, {
               targetEntityId: loc.entityId, 
               targetEntityType: loc.entityType,
               sourceEntityId: location.entityId,
               sourceEntityType: location.entityType
-            });
+          });
+          let prevIpq = _.get(current, `${location.entityUid}.${loc.entityUid}.ipq`, 0);
+          let ipq = calcIpq(prevIpq, location, loc, currentPeriod, timestamp);
+          _.set(current, `${location.entityUid}.${loc.entityUid}.ipq`, ipq);
+          if (prevIpq >= CONSTANTS.ipInflectionPoint && ipq < CONSTANTS.ipInflectionPoint) {
+            delete currentPeriod.endTime;
+            delete currentPeriod.startTime;
           }
-          _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod.endTime`, new Date(timestamp));
+          if (ipq >= CONSTANTS.ipInflectionPoint) {
+            if (prevIpq < CONSTANTS.ipInflectionPoint) {
+              currentPeriod.startTime = location.timestamp;
+            }
+          }
+          if (currentPeriod.startTime && (timestamp - currentPeriod.startTime) > (1000*60*CONSTANTS.ipMinRequiredInteractionTime)) {
+            currentPeriod.endTime = timestamp;
+          }
+          _.set(current, `${location.entityUid}.${loc.entityUid}.currentPeriod`, currentPeriod);
+
         });
       });
       return current;
@@ -239,10 +240,10 @@ exports.clearEntityLocations = functions.https.onRequest((request, res) => {
 
 exports.clearIpBuffers = functions.https.onRequest((request, res) => {
   let date = new Date(request.query.from);
-  return clear(request, res, `ip_buffers/${date.getMonth()}-${date.getDate()}-${date.getFullYear()}/flags`, 'timestamp')
+  return clear(request, res, `ip_buffers/${date.getMonth()+1}-${date.getDate()}-${date.getFullYear()}/flags`, 'timestamp')
     .then((msg) => {
       let message = msg;
-      return db.doc(`/classrooms/${request.query.classroom_id}/ip_buffers/${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`)
+      return db.doc(`/classrooms/${request.query.classroom_id}/ip_buffers/${date.getMonth()+1}-${date.getDate()}-${date.getFullYear()}`)
         .delete()
         .then(() => {
           res.status(200).send(message);
