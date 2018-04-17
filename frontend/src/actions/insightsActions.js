@@ -336,6 +336,9 @@ export const selectVisualization = (visualization) => {
     let state = getState();
     let entityId = _.get(state, 'insights.ui.currentEntityId');
     let entityType = _.get(state, 'insights.ui.currentEntityType');
+    if (visualization === 'segmentedTimeline') {
+      location.reload();
+    }
     dispatch({
       type: SELECT_VISUALIZATION,
       visualization
@@ -358,6 +361,10 @@ export const selectInteractionType = (interactionType) => {
 export const SELECT_DATE = 'SELECT_DATE'
 export const selectDate = (date) => {
   return (dispatch, getState) => {
+    let state = getState();
+    if (_.get(state, 'insights.ui.visualization') === 'segmentedTimeline') {
+      location.reload();
+    }
     dispatch({
       type: SELECT_DATE,
       date
@@ -369,6 +376,10 @@ export const selectDate = (date) => {
 export const SELECT_END_DATE = 'SELECT_END_DATE'
 export const selectEndDate = (endDate) => {
   return (dispatch, getState) => {
+    let state = getState();
+    if (_.get(state, 'insights.ui.visualization') === 'segmentedTimeline') {
+      location.reload();
+    }
     dispatch({
       type: SELECT_END_DATE,
       endDate

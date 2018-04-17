@@ -18,36 +18,25 @@ const TZO = (new Date()).getTimezoneOffset()*60*1000;
  */
 export default function segmentedTimeline() {
 
-  document.querySelector("div#segmentedTimeline").innerHTML = "<svg id='labels'></svg><div id='chart'><svg class='chart'><g id='top-ticks' class='ticks'></g><g id='bottom-ticks' class='ticks'></g></svg></div>";
+  document.querySelector("div#segmentedTimeline").innerHTML = "<div class='fixed-label-chart'><svg class='chart-labels'></svg><div class='chart-container'><svg class='chart'><g id='top-ticks' class='ticks'></g><g id='bottom-ticks' class='ticks'></g></svg></div></div>";
   let vizElement = document.querySelector("#visualization #segmentedTimeline");
+  let labels = d3.select("#visualization div#segmentedTimeline svg.chart-labels");
   let chartElement = document.querySelector("#visualization");
+  let chartContainer = document.querySelector("div#segmentedTimeline .chart-container");
   let chart = d3.select("#visualization div#segmentedTimeline svg.chart");
-  let labels = d3.select("#visualization div#segmentedTimeline svg#labels");
-  let chartContainer = document.querySelector("#chart");
   let topTicks = chart.select("g#top-ticks");
   let bottomTicks = chart.select("g#bottom-ticks");
   let color = d3.scaleOrdinal(d3.schemeCategory10).domain([0,5]);
-  let rawData;
-  let zoom;
 
-  let updateChart = (event, zoomKick) => {
+  let updateChart = (event) => {
 
-    if (!event.detail) {
-      return;
-    }
-
-    rawData = event.detail;
-    zoom = _.get(store.getState(), "insights.ui.zoom", 1);
-
-    let data = transformIps(rawData);
-
+    let data = event.detail
+    if (!data) return;
+    data = transformIps(data);
+    let zoom = _.get(store.getState(), "insights.ui.zoom", 1);
     chartContainer.style.marginLeft = `${offset}px`;
     chartContainer.style.width = `calc(100% - ${offset}px)`
-
-    var t = d3.transition()
-    .duration(400)
-    .ease(d3.easeLinear);
-
+    let t = d3.transition().duration(400).ease(d3.easeLinear);
     let chartWidth = 1260 * zoom; // how wide the width of the visualization is
     let segmentedData = segmentData(data);
     let {startTime} = startAndEndTimes(data.timestamps);
@@ -125,13 +114,6 @@ export default function segmentedTimeline() {
 
       topTicks.call(timeTicks, ticks, {y: 10, zoom, chartHeight, offset: 0})
       bottomTicks.call(timeTicks, ticks, {y: chartHeight+20, zoom, hideLines: true, offset: 0})
-      // if (!_.isUndefined(zoomKick)) return;
-      // setTimeout(() => {
-      //   updateChart(event, zoom === 5 ? 4 : 5)
-      //   setTimeout(() => {
-      //     updateChart(event, zoom);
-      //   },200)
-      // },200)
 
   }
 

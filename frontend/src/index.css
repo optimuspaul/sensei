@@ -14,7 +14,7 @@
 }
 
 
-#foundation #visualization #segmentedTimeline #chart {
+#foundation #visualization .fixed-label-chart .chart-container {
   width: 100%;
   overflow: scroll;
   height: 100%;
@@ -22,7 +22,7 @@
   padding: 15px;
 }
 
-#foundation #visualization #segmentedTimeline #labels {
+#foundation #visualization .fixed-label-chart .chart-labels {
   background-color: white;
   border-right: 1px solid #ddd;
   padding-left: 10px;
