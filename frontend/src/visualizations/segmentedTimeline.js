@@ -8,6 +8,13 @@ import _ from 'lodash';
 const rowHeight = 30; // how tall each row of data in timeline is
 const offset = 150; // how far to the right the interaction segments should start being drawn from
 
+const ENTITIES_TO_SHOW = {
+  child: ['children','materials', 'teachers'],
+  teacher: ['children', 'areas'],
+  area: ['children', 'teachers'],
+  material:  ['children']
+}
+
 const TZO = (new Date()).getTimezoneOffset()*60*1000;
 
 /*
@@ -38,7 +45,7 @@ export default function segmentedTimeline() {
     chartContainer.style.width = `calc(100% - ${offset}px)`
     let t = d3.transition().duration(400).ease(d3.easeLinear);
     let chartWidth = 1260 * zoom; // how wide the width of the visualization is
-    let segmentedData = segmentData(data);
+    let segmentedData = segmentData(data, ENTITIES_TO_SHOW);
     let {startTime} = startAndEndTimes(data.timestamps);
     let endTime = new Date(startTime.getTime());
     startTime.setHours(7);
@@ -86,7 +93,7 @@ export default function segmentedTimeline() {
 
     rect.enter().append("rect")
       .merge(rect)
-      
+      .transition(t)
       .attr("x", (d) => {
         let timestamp = new Date(d[0]);
         timestamp.setDate(firstDate);

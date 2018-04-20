@@ -112,9 +112,12 @@ class ActivityTimelineControls extends React.Component {
 
   componentWillReceiveProps(nextProps) {
     let params = QueryParams.decode(location.search.slice(1));
-    params = _.pick(params, ['currentDate', 'endDate', 'visualization', 'currentEntityType', 'currentEntityId', 'zoom', 'interactionType'])
+    let toPick = ['currentDate', 'endDate', 'visualization', 'currentEntityType', 'currentEntityId', 'zoom', 'interactionType'];
+    params = _.pick(params, toPick)
+    let nextParams = _.pick(nextProps.insights.ui, toPick);
+    let prevParams = _.pick(this.props.insights.ui, toPick);
     this.setState({zoom: params.zoom})
-    if (!_.isEqual(this.props.insights.ui, nextProps.insights.ui) && !_.isEqual(params, nextProps.insights.ui)) {
+    if (!_.isEqual(prevParams, nextParams) && !_.isEqual(params, nextParams)) {
       history.push({
         search: QueryParams.encode(_.merge(params, _.omit(nextProps.insights.ui, ['visualizationTitle'])))
       });
