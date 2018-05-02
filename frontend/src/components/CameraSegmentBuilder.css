@@ -3,7 +3,13 @@ html, body {
 }
 body {
   font-family: "Raleway", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  padding-bottom: 100px;
 }
+
+.sensei {
+  padding-bottom: 100px;
+}
+
 .panel-primary {
   border-color: #20a79f;
 }
@@ -80,19 +86,30 @@ body {
 }
 
 .carousel-inner .item {
-  min-height: 700px;
+  min-height: 800px;
   background-color: black;
-  padding-top: 75px;
+  /*padding-top: 75px;*/
 }
 
 .carousel-inner .item img {
+  position: relative;
+  margin: 0px auto;
+  width: auto;
+  max-height: 800px;
+  background: black;
+  display: block;
+}
+
+.carousel-inner .item video {
   position: absolute;
   width: 100%;
   background: black;
 }
 
-.carousel-inner .item.future,
-.carousel-inner .item.past {
+.carousel-inner .camera-camera .item.future,
+.carousel-inner .camera-overlays .item.future,
+.carousel-inner .camera-camera .item.past,
+.carousel-inner .camera-overlays .item.past {
   display: inline;
   z-index: 1000;
   position: absolute;
@@ -101,6 +118,35 @@ body {
   width: 100%;
   height: 70px;
   overflow: hidden;
+}
+
+.carousel.video .carousel-inner .camera-video .item, 
+.carousel.video .carousel-inner {
+  overflow: visible !important;
+}
+
+
+.carousel-inner .item.camera-video {
+  width: 100%;
+  padding-top: 0px;
+  margin: 0px auto;
+}
+
+.carousel-inner .item.camera-video video {
+  height: 800px;
+}
+
+.carousel.video .carousel-control {
+  bottom: 30px;
+}
+
+.carousel .carousel-control {
+  bottom: 30px;
+  width: 8%;
+}
+
+.carousel-inner .item.camera-video .sub-item.camera-video {
+
 }
 
 .carousel-inner .item.future .sub-item,
@@ -153,36 +199,40 @@ body {
   display: none;
 }
 
-.carousel-inner .item.camera-camera.vantage-point-camera01 .sub-item.camera-camera.vantage-point-camera01 {
-  display: inline;
+.carousel-inner .item.camera-camera.vantage-point-camera01 .sub-item.camera-camera.vantage-point-camera01,
+.carousel-inner .item.camera-video.vantage-point-camera01 .sub-item.camera-video.vantage-point-camera01 {
+  display: block;
 }
 
-.carousel-inner .item.camera-camera.vantage-point-camera02 .sub-item.camera-camera.vantage-point-camera02 {
-  display: inline;
+.carousel-inner .item.camera-camera.vantage-point-camera02 .sub-item.camera-camera.vantage-point-camera02,
+.carousel-inner .item.camera-video.vantage-point-camera02 .sub-item.camera-video.vantage-point-camera02 {
+  display: block;
 }
 
-.carousel-inner .item.camera-camera.vantage-point-camera03 .sub-item.camera-camera.vantage-point-camera03 {
-  display: inline;
+.carousel-inner .item.camera-camera.vantage-point-camera03 .sub-item.camera-camera.vantage-point-camera03,
+.carousel-inner .item.camera-video.vantage-point-camera03 .sub-item.camera-video.vantage-point-camera03 {
+  display: block;
 }
 
-.carousel-inner .item.camera-camera.vantage-point-camera04 .sub-item.camera-camera.vantage-point-camera04 {
-  display: inline;
+.carousel-inner .item.camera-camera.vantage-point-camera04 .sub-item.camera-camera.vantage-point-camera04,
+.carousel-inner .item.camera-video.vantage-point-camera04 .sub-item.camera-video.vantage-point-camera04 {
+  display: block;
 }
 
 .carousel-inner .item.camera-overlays.vantage-point-camera01 .sub-item.camera-overlays.vantage-point-camera01 {
-  display: inline;
+  display: block;
 }
 
 .carousel-inner .item.camera-overlays.vantage-point-camera02 .sub-item.camera-overlays.vantage-point-camera02 {
-  display: inline;
+  display: block;
 }
 
 .carousel-inner .item.camera-overlays.vantage-point-camera03 .sub-item.camera-overlays.vantage-point-camera03 {
-  display: inline;
+  display: block;
 }
 
 .carousel-inner .item.camera-overlays.vantage-point-camera04 .sub-item.camera-overlays.vantage-point-camera04 {
-  display: inline;
+  display: block;
 }
 
 .form-group {

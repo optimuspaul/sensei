@@ -27,7 +27,8 @@ class CameraSegmentBuilder extends React.Component {
       carouselIndex: 0,
       page: 0,
       photos: [],
-      showLocations: params.locations === 'hide' ? false : true 
+      showLocations: params.locations === 'hide' ? false : true,
+      segments: true
     }
   }
 
@@ -156,8 +157,8 @@ class CameraSegmentBuilder extends React.Component {
   componentDidMount() {
     let params = QueryParams.decode(location.search.slice(1));
 
-    if (params.currentLocation && params.currentCamera && params.currentVantagePoint && params.currentDate){
-      this.props.handleDateChange(params.currentLocation, params.currentCamera, params.currentDate);
+    if (params.currentLocation && params.currentDate){
+      this.props.handleDateChange(params.currentLocation, params.currentCamera || 'camera', params.currentDate);
       this.setState(_.omit(params));
     } else {
       history.push({
@@ -220,12 +221,16 @@ class CameraSegmentBuilder extends React.Component {
 
 
 
-  switchCamera = (event) => {
-    event.preventDefault();    
-    let newState = {currentCamera: this.state.currentCamera === 'camera' ? 'overlays' : 'camera'};
+  switchCamera = (kind) => {
+    let newState = {currentCamera: this.state.currentCamera !== kind ? kind : 'camera'};
     this.setState(newState);
     this.updateQueryParam(newState);
   }
+
+  toggleSegmentBuilder = () => {
+    this.setState({showSegmentBuilder: !this.state.showSegmentBuilder})
+  }
+
 
   switchVantagePoint = (event) => {
     event.preventDefault();
@@ -267,7 +272,19 @@ class CameraSegmentBuilder extends React.Component {
 
     let overlaysToggle = (
       <FormGroup>
-        <Button onClick={this.switchCamera} bsStyle={this.state.currentCamera === 'overlays' ? 'success' : 'default' } active={this.state.currentCamera === 'overlays'}>Overlay</Button>
+        <Button onClick={(e) => { e.preventDefault(); this.switchCamera('overlays')}} bsStyle={this.state.currentCamera === 'overlays' ? 'success' : 'default' } active={this.state.currentCamera === 'overlays'}>Overlay</Button>
+      </FormGroup>
+    )
+
+    let videoToggle = (
+      <FormGroup>
+        <Button onClick={(e) => { e.preventDefault(); this.switchCamera('video')}} bsStyle={this.state.currentCamera === 'video' ? 'success' : 'default' } active={this.state.currentCamera === 'video'}>Video</Button>
+      </FormGroup>
+    )
+
+    let segmentBuilderToggle = (
+      <FormGroup>
+        <Button onClick={(e) => { e.preventDefault(); this.toggleSegmentBuilder()}} bsStyle={this.state.showSegmentBuilder ? 'success' : 'default' } active={this.state.showSegmentBuilder}>Segments</Button>
       </FormGroup>
     )
 
@@ -275,7 +292,9 @@ class CameraSegmentBuilder extends React.Component {
       <Tooltip placement="bottom">
         <table style={{textAlign: 'left'}}>
           <tr><td>l</td><td>&nbsp; toggle locations viz</td></tr>
-          <tr><td>o</td><td>&nbsp; toggle overlays</td></tr>
+          <tr><td>o</td><td>&nbsp; show pose overlays</td></tr>
+          <tr><td>p</td><td>&nbsp; show pictures</td></tr>
+          <tr><td>v</td><td>&nbsp; show videos</td></tr>
           <tr><td>↑ & ↓</td><td>&nbsp; switch between camera</td></tr>
           <tr><td>→</td><td>&nbsp; advance 1 frame</td></tr>
           <tr><td>←</td><td>&nbsp; back 1 frame</td></tr>
@@ -300,12 +319,20 @@ class CameraSegmentBuilder extends React.Component {
           </FormControl>
         </FormGroup>
         <FormGroup controlId="formControlsSelect">
+          <FormControl onChange={this.handleCameraChange} value={this.state.currentCamera} componentClass="select">
+            <option value="select">select a mode</option>
+            {_.map(this.props.cameraData.cameras, (camera) => { return <option key={camera} value={camera}>{camera}</option> } ) }
+          </FormControl>
+        </FormGroup>
+        <FormGroup controlId="formControlsSelect">
           <FormControl onChange={this.handleVantagePointChange} value={this.state.currentVantagePoint} componentClass="select">
             <option value="select">select a camera</option>
             {_.map(this.props.cameraData.vantagePoints, (vantagePoint) => { return <option key={vantagePoint} value={vantagePoint}>{vantagePoint.replace("0", " ")}</option> } ) }
           </FormControl>
         </FormGroup>
-        {_.includes(this.props.cameraData.cameras, 'overlays') ? overlaysToggle : ''}
+{/*        {_.includes(this.props.cameraData.cameras, 'overlays') ? overlaysToggle : ''}
+        {_.includes(this.props.cameraData.cameras, 'video') ? videoToggle : ''}*/}
+        { segmentBuilderToggle }
         <OverlayTrigger placement="bottom" overlay={keyboardShortcuts}>
           <Badge>⌘ shortcuts</Badge>
         </OverlayTrigger>
@@ -386,12 +413,15 @@ class CameraSegmentBuilder extends React.Component {
       <div>
         <KeyHandler keyEventName={KEYDOWN} keyValue="ArrowUp" onKeyHandle={this.switchVantagePoint} />
         <KeyHandler keyEventName={KEYDOWN} keyValue="ArrowDown" onKeyHandle={this.switchVantagePoint} />
-        <KeyHandler keyEventName={KEYDOWN} keyValue="o" onKeyHandle={this.switchCamera} />
+        <KeyHandler keyEventName={KEYDOWN} keyValue="o" onKeyHandle={(e) => {e.preventDefault(); this.switchCamera('overlays')}} />
+        <KeyHandler keyEventName={KEYDOWN} keyValue="v" onKeyHandle={(e) => {e.preventDefault(); this.switchCamera('video')}} />
+        <KeyHandler keyEventName={KEYDOWN} keyValue="p" onKeyHandle={(e) => {e.preventDefault(); this.switchCamera('camera')}} />
         <KeyHandler keyEventName={KEYDOWN} keyValue="l" onKeyHandle={this.toggleLocationsViz} />
+        <KeyHandler keyEventName={KEYDOWN} keyValue="s" onKeyHandle={this.toggleSegmentBuilder} />
         <nav className="navbar navbar-default">
           <div className="container-fluid">
             <div className="navbar-header">
-              <a className="navbar-brand" href="/">Wildflower Schools: Camera Segment Builder</a>
+              <a className="navbar-brand" href="/">Wildflower Schools Camera Viewer</a>
             </div>
             {this.props.authenticated ? selectors : authForm}
             <ul id="logout-actions" className={`nav navbar-nav navbar-right ${this.props.authenticated ? '' : 'hidden'}`}>
@@ -401,17 +431,19 @@ class CameraSegmentBuilder extends React.Component {
         </nav>
         <div className="photo-container container-fluid">
           <div className="row">
-            <div className="col-xs-12 col-sm-6 col-lg-8">
+            <div className={this.state.showSegmentBuilder || this.state.showLocations ? `col-xs-12 col-sm-6 col-lg-8` : `col-xs-12`}>
               {this.props.authenticated && !_.isEmpty(this.props.currentPhotos) ? imageBrowser : this.props.fetchPhotosStatus === 'fetching' ? <Spinner className="spinner" useLayout="true" /> : 'No cameras found'}
             </div>
-            <div className="col-xs-12 col-sm-6 col-lg-4">
-              {this.state.showLocations ? locationsViz : ''}
-              <div className="row">
-                <div className="col">
-                  {this.state.currentLocation ? <ProximitySegmentsEditor segments={this.props.segments} getCurrentTime={this.getCurrentTime.bind(this)} currentLocation={this.state.currentLocation} onSave={this.props.saveCameraSegment} /> : ''}
+            { this.state.showSegmentBuilder || this.state.showLocations ? (
+              <div className="col-xs-12 col-sm-6 col-lg-4">
+                {this.state.showLocations ? locationsViz : ''}
+                <div className="row">
+                  <div className="col">
+                    {this.state.currentLocation && this.state.showSegmentBuilder ? <ProximitySegmentsEditor segments={this.props.segments} getCurrentTime={this.getCurrentTime.bind(this)} currentLocation={this.state.currentLocation} onSave={this.props.saveCameraSegment} /> : ''}
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : ''}
           </div>
 
           
