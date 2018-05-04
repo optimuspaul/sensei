@@ -270,9 +270,9 @@ class CameraSegmentBuilder extends React.Component {
 
   render() {
 
-    let overlaysToggle = (
+    let locationsVizToggle = (
       <FormGroup>
-        <Button onClick={(e) => { e.preventDefault(); this.switchCamera('overlays')}} bsStyle={this.state.currentCamera === 'overlays' ? 'success' : 'default' } active={this.state.currentCamera === 'overlays'}>Overlay</Button>
+        <Button onClick={this.toggleLocationsViz} bsStyle={this.state.showLocations ? 'success' : 'default' } active={this.state.showLocations}>Locations</Button>
       </FormGroup>
     )
 
@@ -330,9 +330,8 @@ class CameraSegmentBuilder extends React.Component {
             {_.map(this.props.cameraData.vantagePoints, (vantagePoint) => { return <option key={vantagePoint} value={vantagePoint}>{vantagePoint.replace("0", " ")}</option> } ) }
           </FormControl>
         </FormGroup>
-{/*        {_.includes(this.props.cameraData.cameras, 'overlays') ? overlaysToggle : ''}
-        {_.includes(this.props.cameraData.cameras, 'video') ? videoToggle : ''}*/}
-        { segmentBuilderToggle }
+        
+        { locationsVizToggle }
         <OverlayTrigger placement="bottom" overlay={keyboardShortcuts}>
           <Badge>⌘ shortcuts</Badge>
         </OverlayTrigger>
