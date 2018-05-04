@@ -48,6 +48,17 @@
   opacity: 1;
 }
 
+#foundation #visualization #locations svg .paths path {
+  stroke-width: 2px;
+  stroke-opacity: 0.01;
+  display: none;
+  fill: transparent;
+}
+
+#foundation #visualization #locations svg .paths path.show {
+  stroke-opacity: 0.5;
+  display: inline !important;
+}
 
 .lgnd {
   margin-left: 20px;
@@ -76,6 +87,23 @@
 .lgnd strong.children{
   color: #ff0000;
 }
+
+#foundation #visualization #locations svg .paths path.child.stroke {
+  stroke: #ff0000;
+}
+
+#foundation #visualization #locations svg .paths path.teacher.stroke {
+  stroke: #5b3cc1;
+}
+
+#foundation #visualization #locations svg .paths path.material.stroke {
+  stroke: #3cc150;
+}
+
+#foundation #visualization #locations svg .paths path.area.stroke {
+  stroke: #3c97c1;
+}
+
 
 #foundation #visualization #locations svg .sensors circle.teacher.pulse {
   stroke: #5b3cc1;
