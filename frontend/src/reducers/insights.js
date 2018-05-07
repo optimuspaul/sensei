@@ -51,7 +51,9 @@ export default function sensorMappings(state = initialState, action) {
       _.each(_.values(action.interactionPeriods), (interactionPeriod) => {
         ips.push(interactionPeriod);
       });
-
+      entityName = _.get(action, 'entity.displayName');
+      dateString = (new Date(date)).toDateString();
+      dateString += ` to ${(new Date(state.ui.endDate)).toDateString()}`
       
 
       return {
@@ -66,7 +68,7 @@ export default function sensorMappings(state = initialState, action) {
         currentObservationsData: ips,
         ui: {
           ...state.ui,
-          visualizationTitle: hasData ? `${entityName} <small>${dateString}</small>` : 'No data...'
+          visualizationTitle: !_.isEmpty(ips) ? `${entityName} <small>${dateString}</small>` : 'No data...'
         },
         status: 'fetched'
       }
@@ -112,8 +114,8 @@ export default function sensorMappings(state = initialState, action) {
           ...state.ui,
           currentEntityId: action.entityId,
           currentEntityType: action.entityType,
-          entity: action.entity
         },
+        entity: action.entity,
         status: 'fetching'
       }
     case 'SELECT_VISUALIZATION':

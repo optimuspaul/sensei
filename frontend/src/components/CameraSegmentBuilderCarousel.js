@@ -21,7 +21,8 @@ class CameraSegmentBuilderCarousel extends React.Component {
   }
 
   handleSelect = (selectedIndex, e) => {
-    this.props.onCarouselChange(selectedIndex);
+    let delta = selectedIndex - this.state.index;
+    this.props.onCarouselChange(delta, selectedIndex);
     this.setState({
       index: selectedIndex,
       direction: e.direction
@@ -64,12 +65,22 @@ class CameraSegmentBuilderCarousel extends React.Component {
       let content = _.reduce(_.keys(this.props.photos), (current, camera) => {
         _.each(this.props.vantagePoints, (vantagePoint, i) => {
           let url = this.props.photos[camera][index];
-          if (url && (delta === 0 || (Math.abs(delta) < 5 && this.props.vantagePoint === vantagePoint && this.props.camera === camera))) {
-            url = url.replace('camera01', vantagePoint).replace('/camera/', `/${camera}/`).replace('.jpg', camera === 'overlays' ? '_rendered.png' : '.jpg');
+          let maxDelta = camera === 'video' ? 1 : 5;
+          if (url && delta === 0 || ((Math.abs(delta) < maxDelta && this.props.vantagePoint === vantagePoint && this.props.camera === camera))) {
+            url = url.replace('camera01', vantagePoint).replace('/camera/', `/${camera === 'overlays' ? 'overlays' : 'camera'}/`).replace('still', camera === 'video' ? 'video' : 'still').replace('.jpg', camera === 'camera' ? '.jpg' : (camera === 'video' ? '.mp4' : '_rendered.png') );
             let subItemClass = `sub-item camera-${camera} vantage-point-${vantagePoint}`;
-            current.images.push(<img key={`image-${camera}-${vantagePoint}`}
-                                 className={subItemClass}
-                                 src={`${baseUrl()}/api/v1/camera_data/signed_url/${url}`}/>)
+            
+            if (camera === 'video') {
+              current.images.push(<video key={`image-${camera}-${vantagePoint}`} className={subItemClass} controls autoPlay>
+                                    <source src={`${baseUrl()}/api/v1/camera_data/signed_url/${url}`} type="video/mp4"/>
+                                  </video>
+                                  )
+            } else {
+              current.images.push(<img key={`image-${camera}-${vantagePoint}`}
+                                   className={subItemClass}
+                                   src={`${baseUrl()}/api/v1/camera_data/signed_url/${url}`}/>)
+              
+            }
             current.captions.push(<Carousel.Caption key={`image-${camera}-${vantagePoint}`} className={subItemClass}>
                                     <h3>{moment(parsePhotoSegmentTimestamp(url)).tz(this.props.timezone).format("h:mm:ss A z")}</h3>
                                   </Carousel.Caption>)
@@ -99,6 +110,7 @@ class CameraSegmentBuilderCarousel extends React.Component {
         <KeyHandler keyEventName={KEYDOWN} keyValue="ArrowLeft" onKeyHandle={this.moveCarousel} />
 
         <Carousel
+          className={this.props.camera === 'video' ? 'video' : ''}
           slide={false}
           wrap={false}
           activeIndex={this.state.index}

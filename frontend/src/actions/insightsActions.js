@@ -125,8 +125,9 @@ export const fetchInteractionPeriods = (entityId, entityType, date) => {
           .onSnapshot(function(snapshot) {
             let docs = _.filter(snapshot.docChanges, {type: "added"});
             let ips = _.map(snapshot.docs, doc => doc.data());
+            let entity = _.get(state, `entities.${entityInflections[entityType]}.${entityId}`);
             if (!_.isEmpty(ips)) {
-              dispatch(receiveInteractionPeriods(entityId, entityType, ips));
+              dispatch(receiveInteractionPeriods(entityId, entityType, ips, entity));
             }
           });
       })
@@ -134,14 +135,15 @@ export const fetchInteractionPeriods = (entityId, entityType, date) => {
 }
 
 export const RECEIVE_INTERACTION_PERIODS = 'RECEIVE_INTERACTION_PERIODS';
-export const receiveInteractionPeriods = (entityId, entityType, interactionPeriods) => {
+export const receiveInteractionPeriods = (entityId, entityType, interactionPeriods, entity) => {
   return (dispatch, getState) => {
     let state = getState();
     dispatch({
       type: RECEIVE_INTERACTION_PERIODS,
       interactionPeriods,
       entityId,
-      entityType
+      entityType,
+      entity
     });
   }
 }

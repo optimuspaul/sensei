@@ -41,6 +41,7 @@ export const segmentData = (data, entitiesToShow = ENTITIES_TO_SHOW) => {
     let entityName = entity ? entity.displayName : "Unknown";
     current[entityType] = current[entityType] || {entities: []};
     current[entityType].entities.push({entityName, entityId, entityType, obs: data.obs[index]});
+    current[entityType].entities = _.orderBy(current[entityType].entities, ['entityName'], ['asc'])
     current[entityType].y = current[entityType].y || index + _.size(current);
     return current;
   }, {});

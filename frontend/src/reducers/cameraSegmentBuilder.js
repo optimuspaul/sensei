@@ -52,7 +52,7 @@ export default function cameraSegmentBuilder(state = initialState, action) {
       }
     case 'RECEIVED_PHOTOS':
       let locations = {...state.locations, ...action.cameraData};
-      let cameras = _.keys(_.omit(_.get(action.cameraData, `${action.location}`, {}), ['classroom_info']));
+      let cameras = _.keys(_.omit(_.get(action.cameraData, `${action.location}`, {}), ['classroom_info'])) || [];
       
       let vantagePoints = _.keys(_.get(action.cameraData, `${action.location}.camera.${action.date}`, {}));
       let dates = _.keys(_.get(action.cameraData, `${action.location}.camera`, {}));
@@ -62,8 +62,13 @@ export default function cameraSegmentBuilder(state = initialState, action) {
 
       let masters = _.find(_.get(locations, `${action.location}.camera.${action.date}`, {}), photos => !_.isEmpty(photos));
       let hasOverlays = _.includes(_.keys(_.get(locations, `${action.location}.overlays`, {})), action.date);
-      if (!hasOverlays) {
-        cameras = ['camera'];
+      if (hasOverlays && !_.includes(cameras, 'overlays')) {
+        cameras.push('overlays');
+      }
+
+      let hasVideos = _.find(masters, (photo) => _.includes(photo, '.mp4'))
+      if (hasVideos) {
+        cameras.push('video');
       }
       
       if (masters && action.location && action.date) {
@@ -74,9 +79,11 @@ export default function cameraSegmentBuilder(state = initialState, action) {
         let startDate = parsePhotoSegmentTimestamp(firstPhoto);
         let lastPhoto = masters[masters.length-1];
         let endDate = parsePhotoSegmentTimestamp(lastPhoto);
+
         while (startDate < endDate) {
           _.each(cameras, (camera) => {
-            let url = `${action.location}/${camera}/${action.date}/camera01/still_${moment.utc(startDate).format("YYYY-MM-DD-HH-mm-ss")}${camera === 'camera' ? '.jpg' : '_rendered.png'}`
+
+            let url = `${action.location}/${camera}/${action.date}/camera01/still_${moment.utc(startDate).format("YYYY-MM-DD-HH-mm-ss")}${camera === 'camera' ? '.jpg' : (camera === 'video' ? '.mp4' : '_rendered.png')}`
             let photos = _.get(locations, `${action.location}.${camera}.${action.date}`);
             photos.push(url)
             _.set(locations, `${action.location}.${camera}.${action.date}`, photos);
