@@ -20,12 +20,14 @@ const functions = require('firebase-functions'),
       logging = require('@google-cloud/logging')(),
       https = require('https'),
       _ = require('lodash'),
-      crypto = require('crypto');
+      crypto = require('crypto'),
+      MessageValidator = require('sns-validator');
+      
 
 admin.initializeApp(functions.config().firebase);
 
 const db = admin.firestore();
-
+const validator = new MessageValidator();
 
 
 exports.flagForInteractionPeriodGeneration = functions.firestore.document('/classrooms/{classroomId}/entity_locations/{entityLocationId}').onCreate(event => {
@@ -379,6 +381,90 @@ exports.radioObservations = functions.https.onRequest((request, res) => {
     .catch((error) => {
       reportError(error, {obs, classroomId})
     });
+
+});
+
+
+
+exports.cameraDataSNS = functions.https.onRequest((req, res) => {
+
+  const expectedTopicArn = 'arn:aws:sns:us-east-1:204031725010:classroom-data-upload';
+
+  // we only respond to POST method HTTP requests
+  if (req.method !== 'POST') {
+    res.status(405).end('only post method accepted');
+    return;
+  }
+
+  // all valid SNS requests should have this header
+  var snsHeader = req.get('x-amz-sns-message-type');
+  if (snsHeader === undefined) {
+    res.status(403).end('invalid SNS message');
+    return;
+  }
+
+
+
+  // use the sns-validator library to verify signature
+  // we first parse the cloud function body into a javascript object
+  validator.validate(JSON.parse(req.body), function (err, message) {
+    if (err) {
+      let messageBody = JSON.parse(req.body);
+      if (messageBody.Records) {
+        db.collection('/camera_data_sns')
+          .add(messageBody)
+          .then((docRef) => {
+              console.log("Document written with ID: ", messageBody);
+              res.status(200).end('ok');
+          })
+          .catch((error) => {
+              console.error("Error adding document: ", error, messageBody);
+              reportError("Error adding document: ", error, messageBody)
+          });
+        } else {
+          console.error('invalid SNS Topic', err, message);
+          res.status(403).end('invalid SNS Topic');
+        }
+      return;
+    }
+    if (message.TopicArn !== expectedTopicArn) {
+      // we got a request from a topic we were not expecting to
+      // this sample is set up to only receive from one specified SNS topic
+      // one could adapt this to accept an array, but if you do not check
+      // the origin of the message, anyone could end up publishing to your
+      // cloud function
+      res.status(403).end('invalid SNS Topic');
+      return;
+    }
+
+    // here we handle either a request to confirm subscription, or a new
+    // message
+    switch (message.Type.toLowerCase()) {
+      case 'subscriptionconfirmation':
+        console.log('confirming subscription ' + message.SubscribeURL);
+        // SNS subscriptions are confirmed by requesting the special URL sent
+        // by the service as a confirmation
+        https.get(message.SubscribeURL, (subRes) => {
+          console.log('statusCode:', subRes.statusCode);
+          console.log('headers:', subRes.headers);
+
+          subRes.on('data', (d) => {
+            console.log(d);
+            res.status(200).end('ok');
+          });
+        }).on('error', (e) => {
+          console.error(e);
+          res.status(500).end('confirmation failed');
+        });
+        break;
+      case 'notification':
+        console.log(message.MessageId + ': ' + message.Message);
+        break;
+      default:
+        console.error('should not have gotten to default block');
+        res.status(400).end('invalid SNS message');
+    }
+  });
 
 });
 

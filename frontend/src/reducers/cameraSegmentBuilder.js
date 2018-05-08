@@ -66,7 +66,7 @@ export default function cameraSegmentBuilder(state = initialState, action) {
         cameras.push('overlays');
       }
 
-      let hasVideos = _.find(masters, (photo) => _.includes(photo, '.mp4'))
+      let hasVideos = _.some(_.get(locations, `${action.location}.camera.${action.date}`, {}), (masters, key) => { return !_.isUndefined(_.findLast(masters, (photo) => _.includes(photo, '.mp4'))) && key });
       if (hasVideos) {
         cameras.push('video');
       }
