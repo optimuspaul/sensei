@@ -205,7 +205,8 @@ export const updateCurrentVisualization = () => {
     switch(visualization) {
       case 'locations':
         let date = new Date(currentDate);
-        dispatch(fetchLocations(date));
+        date.setHours(12);
+        dispatch(fetchLocations(date, 16));
         break;
       case 'activityTimeline':
         dispatch(fetchObservations(currentEntityId, currentEntityType, currentDate, interactionType));
