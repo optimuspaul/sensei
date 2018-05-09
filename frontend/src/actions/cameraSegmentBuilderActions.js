@@ -137,6 +137,45 @@ export const saveCameraSegment = (cameraSegment, requestId) => {
   }
 }
 
+
+let unsubscribeFromSNS;
+export const SUBSCRIBE_TO_CAMERA_DATA_SNS = 'SUBSCRIBE_TO_CAMERA_DATA_SNS'
+export const subscribeToCameraDataSNS = (entityId, entityType, date) => {
+  return (dispatch, getState) => {
+    let state = getState();
+    date = date || _.get(state, 'insights.ui.currentDate');
+    date = date ? new Date(date) : new Date();
+    date.setHours(date.getHours()+(date.getTimezoneOffset()/60));
+
+
+
+    firebase.firestore()
+      .doc(`/classrooms/${getClassroomId()}`)
+      .get()
+      .then((doc) => {
+        if (!doc.exists) {
+          return Promise.reject()
+        }
+        let classroom = doc.data();
+        unsubscribeFromSNS = doc.ref.collection(`camera_data_sns`)
+          .where('endTime', '>', date)
+          .where('endTime', '<', endDate)
+          .where('sourceEntityId', '==', parseInt(entityId))
+          .where('sourceEntityType', '==', entityType)
+          .orderBy('endTime', 'desc')
+          .onSnapshot(function(snapshot) {
+            let docs = _.filter(snapshot.docChanges, {type: "added"});
+            let ips = _.map(snapshot.docs, doc => doc.data());
+            let entity = _.get(state, `entities.${entityInflections[entityType]}.${entityId}`);
+            if (!_.isEmpty(ips)) {
+              dispatch(receiveInteractionPeriods(entityId, entityType, ips, entity));
+            }
+          });
+      })
+  }
+}
+
+
 function getHeaders(state) {
   let creds = _.get(state, 'cameraSegmentBuilder.credentials');
   return {
