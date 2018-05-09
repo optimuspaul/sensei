@@ -245,7 +245,7 @@ export const receiveLocations = (locations, classroomLength, classroomWidth) => 
 
 let prevStartDate, prevEndDate, unsubscribe;
 export const FETCH_LOCATIONS = 'FETCH_LOCATIONS'
-export const fetchLocations = (date, range = 12, classroomId) => {
+export const fetchLocations = (date, range = 12, classroomId = getClassroomId()) => {
   return (dispatch, getState) => {
     let state = getState();
 
@@ -268,7 +268,7 @@ export const fetchLocations = (date, range = 12, classroomId) => {
     });
 
     unsubscribe && unsubscribe();
-    classroomId = classroomId || getClassroomId()
+
     firebase.firestore()
       .doc(`/classrooms/${classroomId}`)
       .get()
