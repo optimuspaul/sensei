@@ -19,6 +19,7 @@ class EntityRelationship(db.Model):
         frozenset([MappingType.child, MappingType.area]),
         frozenset([MappingType.teacher, MappingType.area]),
         frozenset([MappingType.teacher, MappingType.material]),
+        frozenset([MappingType.material, MappingType.area]),
     ])
 
     def __init__(self, classroom_id, entity1_type, entity1_id, entity2_type, entity2_id):
