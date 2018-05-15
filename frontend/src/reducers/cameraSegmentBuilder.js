@@ -59,6 +59,7 @@ export default function cameraSegmentBuilder(state = initialState, action) {
       let currentLocation = action.location || state.currentLocation;
       let currentCamera = action.camera || state.currentCamera;
       let currentDate = action.date || state.currentDate;
+      let currentVantagePoint = action.vangagePoint || state.currentVantagePoint;
 
       let masters = _.find(_.get(locations, `${action.location}.camera.${action.date}`, {}), photos => !_.isEmpty(photos));
       let hasOverlays = _.includes(_.keys(_.get(locations, `${action.location}.overlays`, {})), action.date);
@@ -101,6 +102,7 @@ export default function cameraSegmentBuilder(state = initialState, action) {
         currentDate,
         currentPhotos,
         vantagePoints,
+        currentVantagePoint,
         locations,
         cameras,
         dates,
@@ -114,10 +116,37 @@ export default function cameraSegmentBuilder(state = initialState, action) {
           ...state.cameraSegments
         ]
       }
+    case 'TOGGLE_LIVE_MODE': 
+      return {
+        ...state,
+        live: !state.live
+      }
     case 'RECEIVE_CAMERA_SEGMENTS':
       return {
         ...state,
         cameraSegments: action.cameraSegments
+      }
+    case 'RECEIVE_CAMERA_DATA_SNS':
+      let key = action.key;
+      let parsedSamplePhoto, parsedSampleVangagePoint;
+      let parsed = key.split("/");
+      let parsedLocation = parsed[0];
+      let parsedCamera = parsed[1];
+      let parsedDate = parsed[2];
+      let parsedVantagePoint = parsed[3];
+      let samplePhoto = state.currentPhotos[0];
+      if (samplePhoto) {
+        parsedSamplePhoto = samplePhoto.split("/");
+        parsedSampleVangagePoint = parsed[3];
+      }
+      if (parsedDate === state.currentDate && parsedLocation === state.currentLocation) {
+
+        return {
+          ...state,
+          livePhoto: key
+        }
+      } else {
+        return state;
       }
     default:
       return state

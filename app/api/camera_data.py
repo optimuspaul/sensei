@@ -79,9 +79,11 @@ def camera_data_index():
           if not output[iam_name][camera].get(date):
             output[iam_name][camera][date] = {}
           result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/', Prefix=o.get('Prefix'))
-          for o in result.get('CommonPrefixes'):
-            vantage_point = o.get('Prefix').split('/')[3]
-            output[iam_name][camera][date][vantage_point] = []
+          prefixes = result.get('CommonPrefixes')
+          if prefixes:
+            for o in result.get('CommonPrefixes'):
+              vantage_point = o.get('Prefix').split('/')[3]
+              output[iam_name][camera][date][vantage_point] = []
 
   s3_folder_name = request.args.get('s3_folder_name')
   date = request.args.get('date')

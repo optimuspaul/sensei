@@ -1,8 +1,9 @@
 import _ from 'lodash';
-import {getSenseiToken,  baseUrl} from './../constants';
+import {getSenseiToken, getClassroomId, baseUrl, entityInflections} from './../constants';
 import {handleRequest} from './requestActions';
 import {changeCase} from './../utils';
-
+import moment from 'moment';
+import firebase from './../firebase';
 
 
 export const authenticate = (username, password) => {
@@ -35,7 +36,7 @@ export const deauthenticate = () => {
   }
 }
 
-export const fetchPhotos = (location, camera, date) => {
+export const fetchPhotos = (location, camera, date, vantagePoint) => {
   return (dispatch, getState) => {
     dispatch({
       type: 'FETCHING_PHOTOS'
@@ -52,7 +53,8 @@ export const fetchPhotos = (location, camera, date) => {
         cameraData,
         location,
         date,
-        camera
+        camera,
+        vantagePoint
       });
     })
   }
@@ -103,7 +105,14 @@ export const fetchCameraSegments = (location, date) => {
   }
 }
 
+toggleLiveMode
 
+const TOGGLE_LIVE_MODE = 'TOGGLE_LIVE_MODE';
+export const toggleLiveMode = () => {
+  return {
+    type: TOGGLE_LIVE_MODE
+  }
+}
 
 const HANDLE_SAVE_CAMERA_SEGMENT_SUCCESS = 'HANDLE_SAVE_CAMERA_SEGMENT_SUCCESS';
 export const handleSaveCameraSegmentSuccess = (cameraSegment) => {
@@ -138,40 +147,38 @@ export const saveCameraSegment = (cameraSegment, requestId) => {
 }
 
 
-let unsubscribeFromSNS;
+let unsubscribeFromSNS, prevKeys;
 export const SUBSCRIBE_TO_CAMERA_DATA_SNS = 'SUBSCRIBE_TO_CAMERA_DATA_SNS'
-export const subscribeToCameraDataSNS = (entityId, entityType, date) => {
+export const subscribeToCameraDataSNS = () => {
   return (dispatch, getState) => {
     let state = getState();
-    date = date || _.get(state, 'insights.ui.currentDate');
-    date = date ? new Date(date) : new Date();
-    date.setHours(date.getHours()+(date.getTimezoneOffset()/60));
-
-
-
-    firebase.firestore()
-      .doc(`/classrooms/${getClassroomId()}`)
-      .get()
-      .then((doc) => {
-        if (!doc.exists) {
-          return Promise.reject()
+    prevKeys = [];
+    unsubscribeFromSNS && unsubscribeFromSNS();
+    let classroomIam = _.get(state, 'cameraSegmentBuilder.currentLocation');
+    unsubscribeFromSNS = firebase.
+      firestore()
+      .doc(`camera_data_sns/${classroomIam}`)
+      .onSnapshot((doc) => {
+        if (doc.exists) {
+          let data = doc.data()
+          let key = data.cameraDataSNS.key;
+          if (!_.includes(prevKeys, key) && !_.includes(key, 'json')) {
+            dispatch(receiveCameraDataSNS(key));
+            prevKeys.push(key);
+          }
         }
-        let classroom = doc.data();
-        unsubscribeFromSNS = doc.ref.collection(`camera_data_sns`)
-          .where('endTime', '>', date)
-          .where('endTime', '<', endDate)
-          .where('sourceEntityId', '==', parseInt(entityId))
-          .where('sourceEntityType', '==', entityType)
-          .orderBy('endTime', 'desc')
-          .onSnapshot(function(snapshot) {
-            let docs = _.filter(snapshot.docChanges, {type: "added"});
-            let ips = _.map(snapshot.docs, doc => doc.data());
-            let entity = _.get(state, `entities.${entityInflections[entityType]}.${entityId}`);
-            if (!_.isEmpty(ips)) {
-              dispatch(receiveInteractionPeriods(entityId, entityType, ips, entity));
-            }
-          });
-      })
+      });
+  }
+}
+
+export const RECEIVE_CAMERA_DATA_SNS = 'RECEIVE_CAMERA_DATA_SNS';
+export const receiveCameraDataSNS = (key) => {
+  return (dispatch, getState) => {
+    let state = getState();
+    dispatch({
+      type: RECEIVE_CAMERA_DATA_SNS,
+      key
+    });
   }
 }
 

@@ -402,8 +402,9 @@ exports.cameraDataSNS = functions.https.onRequest((req, res) => {
     res.status(403).end('invalid SNS message');
     return;
   }
-
-
+  // console.log("ok")
+  // res.status(200).end('ok');
+  // return;
 
   // use the sns-validator library to verify signature
   // we first parse the cloud function body into a javascript object
@@ -411,20 +412,37 @@ exports.cameraDataSNS = functions.https.onRequest((req, res) => {
     if (err) {
       let messageBody = JSON.parse(req.body);
       if (messageBody.Records) {
-        db.collection('/camera_data_sns')
-          .add(messageBody)
-          .then((docRef) => {
-              console.log("Document written with ID: ", messageBody);
-              res.status(200).end('ok');
-          })
-          .catch((error) => {
-              console.error("Error adding document: ", error, messageBody);
-              reportError("Error adding document: ", error, messageBody)
-          });
-        } else {
-          console.error('invalid SNS Topic', err, message);
-          res.status(403).end('invalid SNS Topic');
+        try {
+
+          let record = messageBody.Records[0];
+          let key = record.s3.object.key;
+          let classroomIamName = key.split("/")[0];
+          let cameraDataSNS = {
+            key,
+            eventTime: new Date(record.eventTime),
+            eventName: record.eventName
+          }
+          
+          db.doc(`/camera_data_sns/${classroomIamName}`)
+            .set({cameraDataSNS})
+            .then((docRef) => {
+                console.log(`cameraDataSNS updated for classroom ${classroomIamName}: `, cameraDataSNS);
+                res.status(200).end('ok');
+            })
+            .catch((error) => {
+                console.error("Error adding document: ", error, messageBody);
+                reportError("Error adding document: ", error, messageBody)
+                res.status(403).end('Error adding document');
+            });
+        } catch(error) {
+          console.error("Error constructing cameraDataSNS: ", error, messageBody);
+          reportError("Error constructing cameraDataSNS: ", error, messageBody)
+          res.status(403).end('Error constructing cameraDataSNS');
         }
+      } else {
+        console.error('invalid SNS Topic', err, message);
+        res.status(403).end('invalid SNS Topic');
+      }
       return;
     }
     if (message.TopicArn !== expectedTopicArn) {
