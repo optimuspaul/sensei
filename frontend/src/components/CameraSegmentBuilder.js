@@ -21,6 +21,7 @@ class CameraSegmentBuilder extends React.Component {
 
     let params = QueryParams.decode(location.search.slice(1)) || {};
 
+
     this.state = {
       currentLocation: '',
       currentCamera: '',
@@ -28,6 +29,7 @@ class CameraSegmentBuilder extends React.Component {
       currentDate: '',
       index: 0,
       carouselIndex: 0,
+      live: params.live === 'true',
       page: 0,
       photos: [],
       showLocations: params.locations === 'hide' ? false : true,
@@ -208,10 +210,11 @@ class CameraSegmentBuilder extends React.Component {
     if (((!_.isEqual(nextLocs, prevLocs) && !_.isEmpty(nextLocs)) || !_.isEqual(this.props.zoom, nextProps.zoom)) && this.state.showLocations) {
       this.updateLocations(nextSensorLocations);
     }
-    if (nextProps.live && !this.props.live) {
+    if (nextProps.live !== this.state.live) {
       this.props.subscribeToCameraDataSNS();
     }
-    if (!this.props.live && _.size(nextProps.currentPhotos) !== _.size(this.props.currentPhotos)) {
+
+    if (!nextProps.live && _.size(nextProps.currentPhotos) !== _.size(this.props.currentPhotos)) {
       if (this.state.showLocations) {
         this.props.fetchSensorLocations(this.getCurrentTime(nextProps.currentPhotos[0]), _.get(nextProps.cameraData.locations, `${this.state.currentLocation}.classroom_info.classroom_id`));
       }
@@ -226,15 +229,22 @@ class CameraSegmentBuilder extends React.Component {
       let currentVantagePoint = this.state.currentVantagePoint || nextProps.vantagePoints[0] || '';
       let currentCamera = this.state.currentCamera || nextProps.currentCamera || 'camera';
 
-      this.setState({ photos, max, authenticating: nextProps.authenticating, index, page, currentVantagePoint});
+      this.setState({ photos, max, authenticating: nextProps.authenticating, index, page, currentVantagePoint, live: this.state.live});
     }
+
+    this.setState({live: nextProps.live === undefined ? this.state.live : nextProps.live});
 
   }
 
   handleToggleLiveMode = () => {
-    if (!this.props.live) {
-      this.setState({index: (this.getAllPhotos().length-1)});
+    let newState;
+    if (!this.state.live) {
+      newState = {index: (this.getAllPhotos().length-1), live: true};
+    } else {
+      newState = {live: false};
     }
+    this.setState(newState);
+    this.updateQueryParam(newState);
     this.props.toggleLiveMode();
   }
 
@@ -310,7 +320,7 @@ class CameraSegmentBuilder extends React.Component {
 
     let liveToggle = (
       <FormGroup>
-        <Button onClick={(e) => { e.preventDefault(); this.handleToggleLiveMode()}} bsStyle={this.props.live ? 'success' : 'default' } active={this.props.live}>Live</Button>
+        <Button onClick={(e) => { e.preventDefault(); this.handleToggleLiveMode()}} bsStyle={this.state.live ? 'success' : 'default' } active={this.state.live}>Live</Button>
       </FormGroup>
     )
 
@@ -441,7 +451,7 @@ class CameraSegmentBuilder extends React.Component {
       livePhoto = (
         <div className="row live-photo-wrapper">
           <div className="col-md-12">
-            { this.state.currentCamera === 'video' ? <video controls autoPlay className="live-photo"><source src={livePhotoUrl} type="video/mp4"/></video> : <img src={livePhotoUrl} className="live-photo" /> }
+            { this.state.currentCamera === 'video' ? <video controls autoPlay key={key} className="live-photo"><source src={livePhotoUrl} type="video/mp4"/></video> : <img src={livePhotoUrl} className="live-photo" /> }
             <h3>{moment(parsePhotoSegmentTimestamp(key)).tz(this.getTimezone()).format("h:mm:ss A z")}</h3>
           </div>
         </div>
@@ -473,7 +483,7 @@ class CameraSegmentBuilder extends React.Component {
         <div className="photo-container container-fluid">
           <div className="row">
             <div className={this.state.showSegmentBuilder || this.state.showLocations ? `col-xs-12 col-sm-6 col-lg-8` : `col-xs-12`}>
-              {this.props.authenticated && !_.isEmpty(this.props.currentPhotos) ? (this.props.live ? livePhoto : imageBrowser) : this.props.fetchPhotosStatus === 'fetching' ? <Spinner className="spinner" useLayout="true" /> : 'No cameras found'}
+              {this.props.authenticated && !_.isEmpty(this.props.currentPhotos) ? (this.state.live ? livePhoto : imageBrowser) : this.props.fetchPhotosStatus === 'fetching' ? <Spinner className="spinner" useLayout="true" /> : 'No cameras found'}
             </div>
             { this.state.showSegmentBuilder || this.state.showLocations ? (
               <div className="col-xs-12 col-sm-6 col-lg-4">
