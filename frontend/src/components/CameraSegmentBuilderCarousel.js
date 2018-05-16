@@ -30,12 +30,14 @@ class CameraSegmentBuilderCarousel extends React.Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-
+    let index = this.state.index;
     if (!_.isEqual(nextProps.page, this.props.page)) {
-      this.setState({index: (nextProps.page > this.props.page ? 15 : 34)})
+      index = (nextProps.page > this.props.page ? 15 : 34);
+      index = index === this.state.index ? index+1 : index;
     } else if (!_.isEqual(nextProps.index, this.props.index)) {
-      this.setState({index: nextProps.index })
+      index = nextProps.index;
     }    
+    this.setState({index});
 
     return true;
   }

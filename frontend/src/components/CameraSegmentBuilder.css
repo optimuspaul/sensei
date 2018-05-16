@@ -242,3 +242,14 @@ body {
 .form-group input {
   margin-right: 5px;
 }
+
+.live-photo-wrapper {
+  background-color: black;
+}
+
+.live-photo-wrapper .live-photo {
+  height: 800px;
+  margin: 0px auto;
+  display: block;
+  position: relative;
+}

@@ -269,7 +269,6 @@ export const fetchLocations = (date, range = 12, classroomId = getClassroomId())
     });
 
     unsubscribe && unsubscribe();
-
     firebase.firestore()
       .doc(`/classrooms/${classroomId}`)
       .get()
