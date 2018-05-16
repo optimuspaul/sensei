@@ -307,7 +307,7 @@ class CameraSegmentBuilder extends React.Component {
 
     let liveToggle = (
       <FormGroup>
-        <Button onClick={(e) => { e.preventDefault(); this.handleToggleLiveMode()}} bsStyle={this.props.live ? 'success' : 'default' } active={this.props.live}>realtime</Button>
+        <Button onClick={(e) => { e.preventDefault(); this.handleToggleLiveMode()}} bsStyle={this.props.live ? 'success' : 'default' } active={this.props.live}>Live</Button>
       </FormGroup>
     )
 
