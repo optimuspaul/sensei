@@ -27,6 +27,7 @@ export const getKeyTime = (photoUrl) => {
 }
 
 export const parsePhotoSegmentTimestamp = (photoUrl) => {
+  photoUrl = photoUrl[0] === '/' ? photoUrl.substring(1) : photoUrl;
   let key = photoUrl.split('/')[4]
   let keyTime = key.match(/[0-9]{4}(.*(?=_)|.*(?=\.))/)[0];
 

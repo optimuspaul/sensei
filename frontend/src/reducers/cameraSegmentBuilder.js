@@ -12,6 +12,7 @@ const initialState = {
   cameraSegments: [
 
   ],
+  livePhoto: {},
   credentials: localStorage.getItem('TC_CAMERA_BUILDER_CREDS'),
   authenticated: !_.isNull(localStorage.getItem('TC_CAMERA_BUILDER_CREDS'))
 };
@@ -131,19 +132,23 @@ export default function cameraSegmentBuilder(state = initialState, action) {
       let parsedSamplePhoto, parsedSampleVangagePoint;
       let parsed = key.split("/");
       let parsedLocation = parsed[0];
-      let parsedCamera = parsed[1];
+      let parsedExtension = key.split(".")[1];
+      let parsedCamera = parsedExtension === 'mp4' ? 'video' : parsed[1];
       let parsedDate = parsed[2];
       let parsedVantagePoint = parsed[3];
       let samplePhoto = state.currentPhotos[0];
+      let parsedTimestamp = parsePhotoSegmentTimestamp(key);
+      let currentLivePhoto = _.get(state.livePhoto, `${parsedLocation}.${parsedCamera}.${parsedVantagePoint}`)
+      let currentParsedTimestamp = currentLivePhoto ? parsePhotoSegmentTimestamp(`/${currentLivePhoto}`) : null;
       if (samplePhoto) {
         parsedSamplePhoto = samplePhoto.split("/");
         parsedSampleVangagePoint = parsed[3];
       }
-      if (parsedDate === state.currentDate && parsedLocation === state.currentLocation) {
-
+      if (parsedDate === state.currentDate && parsedLocation === state.currentLocation && (!currentLivePhoto || (parsedTimestamp > currentParsedTimestamp))) {
+        let livePhoto = _.merge({}, state.livePhoto, _.set({}, `${parsedLocation}.${parsedCamera}.${parsedVantagePoint}`, key));
         return {
           ...state,
-          livePhoto: key
+          livePhoto
         }
       } else {
         return state;

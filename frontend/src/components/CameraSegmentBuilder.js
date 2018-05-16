@@ -432,14 +432,13 @@ class CameraSegmentBuilder extends React.Component {
       </div>
     )
     let livePhoto = '';
-    if (this.props.livePhoto) {
-      let keyTime = getKeyTime(this.props.livePhoto);
-      let finalKey = `${this.state.currentCamera === 'video' ? 'video_' : 'still_'}${keyTime}${this.state.currentCamera === 'overlays' ? '_rendered.png' : (this.state.currentCamera === 'video' ? '.mp4' : '.jpeg') }`;
-      let livePhotoUrl = `${baseUrl()}/api/v1/camera_data/signed_url/${this.state.currentLocation}/${this.state.currentCamera}/${this.state.currentDate}/${this.state.currentVantagePoint}/${finalKey}`
+    let key = _.get(this.props.livePhoto, `${this.state.currentLocation}.${this.state.currentCamera}.${this.state.currentVantagePoint}`)
+    if (key) {
+      let livePhotoUrl = `${baseUrl()}/api/v1/camera_data/signed_url/${key}`;
       livePhoto = (
         <div className="row live-photo-wrapper">
           <div className="col-md-12">
-            <img src={livePhotoUrl} className="live-photo" />
+            { this.state.currentCamera === 'video' ? <video controls autoPlay className="live-photo"><source src={livePhotoUrl} type="video/mp4"/></video> : <img src={livePhotoUrl} className="live-photo" /> }
           </div>
         </div>
       )
