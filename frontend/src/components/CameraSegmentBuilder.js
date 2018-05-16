@@ -10,6 +10,9 @@ import ProximitySegmentsEditor from './ProximitySegmentsEditor';
 import {locations} from './../visualizations';
 import QueryParams from 'query-params';
 import { history, getKeyTime } from '../utils';
+import moment from 'moment';
+import { parsePhotoSegmentTimestamp } from './../utils';
+import momentTimezoneSetup from 'moment-timezone';
 
 class CameraSegmentBuilder extends React.Component {
 
@@ -439,6 +442,7 @@ class CameraSegmentBuilder extends React.Component {
         <div className="row live-photo-wrapper">
           <div className="col-md-12">
             { this.state.currentCamera === 'video' ? <video controls autoPlay className="live-photo"><source src={livePhotoUrl} type="video/mp4"/></video> : <img src={livePhotoUrl} className="live-photo" /> }
+            <h3>{moment(parsePhotoSegmentTimestamp(key)).tz(this.getTimezone()).format("h:mm:ss A z")}</h3>
           </div>
         </div>
       )

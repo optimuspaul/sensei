@@ -3,8 +3,8 @@ import _ from 'lodash';
 import { Carousel } from 'react-bootstrap';
 import {getSenseiToken,  baseUrl, vantagePoints} from './../constants';
 import { Preload } from 'react-preload';
-import { parsePhotoSegmentTimestamp } from './../utils';
 import moment from 'moment';
+import { parsePhotoSegmentTimestamp } from './../utils';
 import momentTimezoneSetup from 'moment-timezone';
 import KeyHandler, {KEYDOWN} from 'react-key-handler';
 

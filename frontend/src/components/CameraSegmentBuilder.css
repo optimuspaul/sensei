@@ -247,6 +247,16 @@ body {
   background-color: black;
 }
 
+.live-photo-wrapper h3 {
+  text-align: center;
+  width: 100%;
+  position: relative;
+  top: -100px;
+  color: white;
+  background: rgba(0,0,0,0.4);
+  padding: 10px 0px;
+}
+
 .live-photo-wrapper .live-photo {
   height: 800px;
   margin: 0px auto;
