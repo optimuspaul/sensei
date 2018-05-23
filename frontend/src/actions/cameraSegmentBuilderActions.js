@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import {getSenseiToken, getClassroomId, baseUrl, entityInflections} from './../constants';
 import {handleRequest} from './requestActions';
-import {changeCase} from './../utils';
+import {changeCase, parsePhotoSegmentTimestamp} from './../utils';
 import moment from 'moment';
 import firebase from './../firebase';
 
@@ -36,12 +36,41 @@ export const deauthenticate = () => {
   }
 }
 
+
+let unsubscribers = {};
 export const fetchPhotos = (location, camera, date, vantagePoint) => {
   return (dispatch, getState) => {
+    let refPath;
+    let state = getState();
+
     dispatch({
       type: 'FETCHING_PHOTOS'
     })
-    return fetch(`${baseUrl()}/api/v1/camera_data?${location ? `s3_folder_name=${location}` : ''}${date ? `&date=${date}` : ''}`, {
+
+    if (location && camera && date && vantagePoint && !unsubscribers[refPath]) {
+
+      if (unsubscribers[refPath]) {
+        return dispatch(receivePhotos({}, location, camera, date, vantagePoint));
+      }
+
+      refPath = `${location}/${camera}/${date}/${vantagePoint}`;
+      unsubscribers[refPath] = firebase.firestore().collection(`/camera_data/${refPath}`)
+        .orderBy('LastModified', 'asc')
+        .onSnapshot(function(snapshot) {
+          let docs = _.filter(snapshot.docChanges, {type: "added"});
+          let photos = _.reduce(snapshot.docs, (current, doc) => {
+            let data = doc.data();
+            current[doc.id] = data;
+            current[doc.id].timestamp = parsePhotoSegmentTimestamp(data.Key);
+            return current;
+          }, {});
+          if (!_.isEmpty(photos)) {
+            dispatch(receivePhotos(photos, location, camera, date, vantagePoint));
+          }
+        });
+    }
+
+    return fetch(`${baseUrl()}/api/v1/camera_data?${location ? `s3_folder_name=${location}` : ''}${date ? `&date=${date}` : ''}${camera ? `&mode=${camera}` : ''}`, {
       headers: getHeaders(getState())
     })
     .then(function(response) {
@@ -59,6 +88,20 @@ export const fetchPhotos = (location, camera, date, vantagePoint) => {
     })
   }
 }
+
+
+export const RECEIVE_PHOTOS = 'RECEIVE_PHOTOS';
+export const receivePhotos = (photos, location, camera, date, vantagePoint) => {
+  return {
+    type: RECEIVE_PHOTOS,
+    photos,
+    location,
+    camera,
+    date,
+    vantagePoint
+  }
+}
+
 
 
 export const RECEIVE_CAMERA_SEGMENTS = 'RECEIVE_CAMERA_SEGMENTS';
@@ -86,6 +129,7 @@ export const fetchCameraSegments = (location, date) => {
     let startTime = encodeURIComponent(date.toISOString().split('.000Z')[0]);
     let endTime = encodeURIComponent(endDate.toISOString().split('.000Z')[0]);
 
+    
 
     fetch(`${baseUrl()}/api/v1/camera_data/segments?s3_folder_name=${location}&start_time=${startTime}&end_time=${endTime}`, {
       headers: getHeaders(getState())
@@ -105,7 +149,7 @@ export const fetchCameraSegments = (location, date) => {
   }
 }
 
-toggleLiveMode
+
 
 const TOGGLE_LIVE_MODE = 'TOGGLE_LIVE_MODE';
 export const toggleLiveMode = () => {

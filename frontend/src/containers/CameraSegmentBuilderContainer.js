@@ -4,21 +4,25 @@ import CameraSegmentBuilder from './../components/CameraSegmentBuilder';
 import { fetchPhotos, saveCameraSegment, fetchCameraSegments, authenticate, deauthenticate, subscribeToCameraDataSNS, toggleLiveMode } from './../actions/cameraSegmentBuilderActions';
 import { showLocationsAt, fetchLocations } from './../actions/insightsActions';
 
-const CamerSegmentBuilderContainer = connect((state) => ({
-  cameraData: state.cameraSegmentBuilder,
-  currentPhotos: state.cameraSegmentBuilder.currentPhotos,
-  vantagePoints: state.cameraSegmentBuilder.vantagePoints,
-  dates: state.cameraSegmentBuilder.dates,
-  authenticated: _.get(state, 'cameraSegmentBuilder.credentials') && _.get(state, 'cameraSegmentBuilder.authenticated') === true,
-  authenticating: _.get(state, 'cameraSegmentBuilder.authenticating'),
-  authFailed: _.get(state, 'cameraSegmentBuilder.authenticated') === false && _.get(state, 'cameraSegmentBuilder.credentials') && !_.get(state, 'cameraSegmentBuilder.authenticating'),
-  sensorLocations: _.get(state, 'insights.currentObservationsData'),
-  fetchLocsStatus: _.get(state, 'insights.status'),
-  livePhoto: _.get(state, 'cameraSegmentBuilder.livePhoto'),
-  live: _.get(state, 'cameraSegmentBuilder.live'),
-  zoom: _.get(state, 'insights.ui.zoom'),
-  fetchPhotosStatus: _.get(state, 'cameraSegmentBuilder.status')
-}),
+const CamerSegmentBuilderContainer = connect((state) => {
+  let currentPhotos = _.get(state, `cameraSegmentBuilder.cameraData.${_.get(state, 'cameraSegmentBuilder.currentLocation')}.${_.get(state, 'cameraSegmentBuilder.currentCamera')}.${_.get(state, 'cameraSegmentBuilder.currentDate')}.${_.get(state, 'cameraSegmentBuilder.currentVantagePoint')}`, {});
+  currentPhotos = _.map(_.orderBy(currentPhotos, ['timestamp'], ['asc']), p => p.Key)
+  return {
+    cameraData: _.get(state, 'cameraSegmentBuilder'),
+    currentPhotos,
+    vantagePoints: state.cameraSegmentBuilder.vantagePoints,
+    dates: state.cameraSegmentBuilder.dates,
+    authenticated: _.get(state, 'cameraSegmentBuilder.credentials') && _.get(state, 'cameraSegmentBuilder.authenticated') === true,
+    authenticating: _.get(state, 'cameraSegmentBuilder.authenticating'),
+    authFailed: _.get(state, 'cameraSegmentBuilder.authenticated') === false && _.get(state, 'cameraSegmentBuilder.credentials') && !_.get(state, 'cameraSegmentBuilder.authenticating'),
+    sensorLocations: _.get(state, 'insights.currentObservationsData'),
+    fetchLocsStatus: _.get(state, 'insights.status'),
+    livePhoto: _.get(state, 'cameraSegmentBuilder.livePhoto'),
+    live: _.get(state, 'cameraSegmentBuilder.live'),
+    zoom: _.get(state, 'insights.ui.zoom'),
+    fetchPhotosStatus: _.get(state, 'cameraSegmentBuilder.status')
+  } 
+},
 (dispatch) => ({
   dispatch,
   authenticate: (...args) => {

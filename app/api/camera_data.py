@@ -59,6 +59,10 @@ def camera_data_index():
   
   result = s3.list_objects(Bucket='wf-classroom-data', Delimiter='/')
 
+  date = request.args.get('date')
+  current_date = request.args.get('date')
+  mode = request.args.get('mode')
+
   for o in result.get('CommonPrefixes'):
     iam_name = o.get('Prefix')[:-1]
     
@@ -86,15 +90,32 @@ def camera_data_index():
               output[iam_name][camera][date][vantage_point] = []
 
   s3_folder_name = request.args.get('s3_folder_name')
-  date = request.args.get('date')
+
   
   if not s3_folder_name or not date:
     return jsonify(output)
 
-  
-  for vantage_point in output[s3_folder_name]['camera'][date].keys():
+  batch = firebase.db.batch()
+  i = 0
 
-    prefix = s3_folder_name + '/camera/' + date + '/' + vantage_point
+  current_path = 'camera_data/' + s3_folder_name + '/' + mode + '/' + current_date + '/' + vantage_point;
+
+  print 'current_path: %s' % current_path
+  photos_ref = firebase.db.collection(current_path)
+  photos = photos_ref.get()
+
+  num_photos = 0
+  for doc in photos:
+    print doc.to_dict()
+    num_photos += 1
+  print 'number of photos: %s' % num_photos
+
+  if num_photos > 0:
+    return "OK", 201
+
+  for vantage_point in output[s3_folder_name]['camera'][current_date].keys():
+
+    prefix = s3_folder_name + '/camera/' + current_date + '/' + vantage_point
     
     paginator = s3.get_paginator('list_objects')
     operation_parameters = {'Bucket':'wf-classroom-data',
@@ -113,7 +134,21 @@ def camera_data_index():
         if not output[s3_folder_name].get(parts[1]).get(parts[2]):
           output[s3_folder_name][parts[1]][parts[2]][parts[3]] = []
         output[s3_folder_name][parts[1]][parts[2]][parts[3]].append(file["Key"])
+        print file
 
+        path = 'camera_data/%s' % (file["Key"])
+        if '.mp4' in path:
+          path = path.replace('/camera/', '/video/')
+        print path
+        ref = firebase.db.document(path)
+        batch.set(ref, file)
+        i += 1
+        if i == 500:
+          # batch.commit()
+          i = 0
+          batch = firebase.db.batch()
+
+  # batch.commit()
 
   return jsonify(output)
 
