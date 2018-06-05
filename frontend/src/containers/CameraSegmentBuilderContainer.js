@@ -1,7 +1,7 @@
 import {connect} from 'react-redux';
 import _ from 'lodash';
 import CameraSegmentBuilder from './../components/CameraSegmentBuilder';
-import { fetchPhotos, saveCameraSegment, fetchCameraSegments, authenticate, deauthenticate, subscribeToCameraDataSNS, toggleLiveMode } from './../actions/cameraSegmentBuilderActions';
+import { fetchPhotos, saveCameraSegment, fetchCameraSegments, authenticate, deauthenticate, subscribeToCameraDataSNS, toggleLiveMode, updateParams } from './../actions/cameraSegmentBuilderActions';
 import { showLocationsAt, fetchLocations } from './../actions/insightsActions';
 
 const CamerSegmentBuilderContainer = connect((state) => {
@@ -19,6 +19,7 @@ const CamerSegmentBuilderContainer = connect((state) => {
     fetchLocsStatus: _.get(state, 'insights.status'),
     livePhoto: _.get(state, 'cameraSegmentBuilder.livePhoto'),
     live: _.get(state, 'cameraSegmentBuilder.live'),
+    index: _.get(state, 'cameraSegmentBuilder.index'),
     zoom: _.get(state, 'insights.ui.zoom'),
     fetchPhotosStatus: _.get(state, 'cameraSegmentBuilder.status')
   } 
@@ -42,6 +43,9 @@ const CamerSegmentBuilderContainer = connect((state) => {
   },
   fetchCameraSegments: (...args) => {
     dispatch(fetchCameraSegments(...args));
+  },
+  updateParams: (...args) => {
+    dispatch(updateParams(...args));
   },
   saveCameraSegment: (...args) => {
     dispatch(saveCameraSegment(...args));

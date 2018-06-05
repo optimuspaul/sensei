@@ -422,6 +422,13 @@ exports.cameraDataSNS = functions.https.onRequest((req, res) => {
             eventTime: new Date(record.eventTime),
             eventName: record.eventName
           }
+
+          if (_.includes(key, '.json')) return;
+
+          key = _.includes(key, '.mp4') ? key.replace('/camera/', '/video/') : key;
+
+          db.doc(`/camera_data/${key}`)
+            .set({Key: key})
           
           db.doc(`/camera_data_sns/${classroomIamName}`)
             .set({cameraDataSNS})

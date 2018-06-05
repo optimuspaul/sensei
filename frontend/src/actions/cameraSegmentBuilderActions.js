@@ -43,22 +43,21 @@ export const fetchPhotos = (location, camera, date, vantagePoint) => {
     let refPath;
     let state = getState();
 
-    dispatch({
-      type: 'FETCHING_PHOTOS'
-    })
+    
 
     if (location && camera && date && vantagePoint && !unsubscribers[refPath]) {
+      refPath = `${location}/${camera}/${date}/${vantagePoint}`;
+
+      updateParams(location, camera, date, vantagePoint)
 
       if (unsubscribers[refPath]) {
         return dispatch(receivePhotos({}, location, camera, date, vantagePoint));
       }
 
-      refPath = `${location}/${camera}/${date}/${vantagePoint}`;
       unsubscribers[refPath] = firebase.firestore().collection(`/camera_data/${refPath}`)
-        .orderBy('LastModified', 'asc')
         .onSnapshot(function(snapshot) {
-          let docs = _.filter(snapshot.docChanges, {type: "added"});
-          let photos = _.reduce(snapshot.docs, (current, doc) => {
+          let docs = _.map(_.filter(snapshot.docChanges, {type: "added"}), c => c.doc);
+          let photos = _.reduce(docs, (current, doc) => {
             let data = doc.data();
             current[doc.id] = data;
             current[doc.id].timestamp = parsePhotoSegmentTimestamp(data.Key);
@@ -70,7 +69,15 @@ export const fetchPhotos = (location, camera, date, vantagePoint) => {
         });
     }
 
-    return fetch(`${baseUrl()}/api/v1/camera_data?${location ? `s3_folder_name=${location}` : ''}${date ? `&date=${date}` : ''}${camera ? `&mode=${camera}` : ''}`, {
+    if (state.cameraSegmentBuilder.currentLocation === location) {
+      return dispatch(updateParams(location, camera, date, vantagePoint));
+    }
+
+    dispatch({
+      type: 'FETCHING_PHOTOS'
+    })
+
+    return fetch(`${baseUrl()}/api/v1/camera_data?${location ? `s3_folder_name=${location}` : ''}${date ? `&date=${date}` : ''}${date ? `&vantage_point=${vantagePoint}` : ''}${camera ? `&mode=${camera}` : ''}`, {
       headers: getHeaders(getState())
     })
     .then(function(response) {
@@ -86,6 +93,18 @@ export const fetchPhotos = (location, camera, date, vantagePoint) => {
         vantagePoint
       });
     })
+  }
+}
+
+
+export const UPDATE_PARAMS = 'UPDATE_PARAMS';
+export const updateParams = (location, camera, date, vantagePoint) => {
+  return {
+    type: UPDATE_PARAMS,
+    location,
+    camera,
+    date,
+    vantagePoint
   }
 }
 

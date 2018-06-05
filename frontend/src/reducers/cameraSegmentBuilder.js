@@ -1,6 +1,9 @@
 import _ from 'lodash';
 import {parsePhotoSegmentTimestamp} from './../utils';
 import moment from 'moment';
+import QueryParams from 'query-params';
+
+let params = QueryParams.decode(location.search.slice(1)) || {};
 
 const initialState = {
   locations: {},
@@ -13,6 +16,8 @@ const initialState = {
 
   ],
   livePhoto: {},
+  live: params.live === 'true',
+  index: 0,
   credentials: localStorage.getItem('TC_CAMERA_BUILDER_CREDS'),
   authenticated: !_.isNull(localStorage.getItem('TC_CAMERA_BUILDER_CREDS'))
 };
@@ -51,15 +56,36 @@ export default function cameraSegmentBuilder(state = initialState, action) {
         currentDate: '',
         status: 'fetching'
       }
+    case 'UPDATE_PARAMS':
+      return {
+        ...state,
+        currentLocation: action.location,
+        currentCamera: action.camera,
+        currentDate: action.date,
+        currentVantagePoint: action.vantagePoint,
+        index: 0
+      }
     case 'RECEIVE_PHOTOS':
       let cameraData = _.reduce(action.photos, (current, photo, id) => {
-        _.set(current, [action.location, action.camera, action.date, action.vantagePoint, id.replace('.', '')], photo);
+        _.set(current, [action.location, action.camera, action.date, action.vantagePoint, id], photo);
         return current;
       }, _.merge({}, state.cameraData));
+      
+      let latest = _.map(action.photos, p => p.Key).pop();
+      let index = state.index;
+      if (latest) {
+        if (action.location !== state.currentLocation || action.camera !== state.currentCamera || action.date !== state.currentDate || action.vantagePoint !== state.currentVantagePoint) {
+          index = 0;
+        }
+        let secondsDiff = moment(parsePhotoSegmentTimestamp(latest)).utc().tz('US/Eastern').diff(moment(currentDate).utc().tz('US/Eastern').startOf('day'), 'seconds');
+        let newIndex = secondsDiff/10;
+        index = (_.includes(latest, `${action.location}/${action.camera}/${action.date}/${action.vantagePoint}`) && newIndex > state.index) ? newIndex : state.index;
+      }
 
       return {
         ...state,
         cameraData,
+        index,
         currentLocation: action.location,
         currentCamera: action.camera,
         currentDate: action.date,
@@ -75,11 +101,13 @@ export default function cameraSegmentBuilder(state = initialState, action) {
       let currentCamera = action.camera || state.currentCamera;
       let currentDate = action.date || state.currentDate;
       let currentVantagePoint = action.vangagePoint || state.currentVantagePoint;
+
       
       return {
         ...state,
         loading: false,
         currentLocation,
+        cameraData: _.merge(action.cameraData, state.cameraData),
         currentCamera,
         currentDate,
         vantagePoints,
