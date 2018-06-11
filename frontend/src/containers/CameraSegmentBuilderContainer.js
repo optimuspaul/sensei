@@ -5,7 +5,7 @@ import { fetchPhotos, saveCameraSegment, fetchCameraSegments, authenticate, deau
 import { showLocationsAt, fetchLocations } from './../actions/insightsActions';
 
 const CamerSegmentBuilderContainer = connect((state) => {
-  let currentPhotos = _.get(state, `cameraSegmentBuilder.cameraData.${_.get(state, 'cameraSegmentBuilder.currentLocation')}.${_.get(state, 'cameraSegmentBuilder.currentCamera')}.${_.get(state, 'cameraSegmentBuilder.currentDate')}.${_.get(state, 'cameraSegmentBuilder.currentVantagePoint')}`, {});
+  let currentPhotos = _.get(state, `cameraSegmentBuilder.cameraData`, {});
   currentPhotos = _.map(_.orderBy(currentPhotos, ['timestamp'], ['asc']), p => p.Key)
   return {
     cameraData: _.get(state, 'cameraSegmentBuilder'),

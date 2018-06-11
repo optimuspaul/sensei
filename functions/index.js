@@ -21,6 +21,7 @@ const functions = require('firebase-functions'),
       https = require('https'),
       _ = require('lodash'),
       crypto = require('crypto'),
+      moment = require('moment'),
       MessageValidator = require('sns-validator');
       
 
@@ -426,9 +427,34 @@ exports.cameraDataSNS = functions.https.onRequest((req, res) => {
           if (_.includes(key, '.json')) return;
 
           key = _.includes(key, '.mp4') ? key.replace('/camera/', '/video/') : key;
+          
+
 
           db.doc(`/camera_data/${key}`)
             .set({Key: key})
+
+          try {
+
+            let location = key.split('/')[0];
+            let mode = key.split('/')[1];
+            let date = key.split('/')[2];
+            let vantagePoint = key.split('/')[3];
+            let filename = key.split('/')[4];
+            let datetime = filename.match(/[0-9]{4}(.*(?=_)|.*(?=\.))/)[0];
+            let timestamp = moment.utc(`${datetime.split('-').splice(0,3).join('-')} ${datetime.split('-').splice(3,3).join(':')}`);
+
+            db.doc(`/camera_data/${location}/${date}/${datetime}`)
+              .set({
+                Key: key, 
+                [`${vantagePoint}-${mode}`]: true,
+                timestamp: timestamp.toDate()
+              }, {
+                merge: true
+              });
+          } catch (error) {
+            console.error("Error updating datetime doc: ", error);
+            reportError("Error updating datetime doc: ", error)
+          }
           
           db.doc(`/camera_data_sns/${classroomIamName}`)
             .set({cameraDataSNS})

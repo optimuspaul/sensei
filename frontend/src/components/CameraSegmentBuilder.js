@@ -31,10 +31,9 @@ class CameraSegmentBuilder extends React.Component {
       currentDate: '',
       index: 0,
       carouselIndex: 0,
-      live: params.live === 'true',
       page: 0,
       photos: [],
-      showLocations: params.locations === 'hide' ? false : true,
+      showLocations: params.locations === 'show',
       segments: true
     }
   }
@@ -75,23 +74,23 @@ class CameraSegmentBuilder extends React.Component {
   }
 
   getIndexTime = (index = this.state.index) => {
-    return moment(this.state.currentDate).tz(this.getTimezone()).startOf('day').add(10*index, 's').utc();
+    return moment(this.state.currentDate).tz(this.getTimezone()).startOf('day').add(10*index, 's').utc().format("YYYY-MM-DD-HH-mm-ss");
   }
 
   getCurrentKey = (index = this.state.index) => {
-    let timestamp = this.getIndexTime(index).format("YYYY-MM-DD-HH-mm-ss");
+    let timestamp = this.getIndexTime(index)
     return `${this.state.currentCamera === 'video' ? 'video_' : 'still_'}${timestamp}${this.state.currentCamera === 'overlays' ? '_rendered' : ''}${this.state.currentCamera === 'video' ? '.mp4' : (this.state.currentCamera === 'overlays' ? '.png' : '.jpg')}`;
   }
 
   checkForCurrentPhoto = (index = this.state.index) => {
     if (this.state.currentLocation && this.state.currentCamera && this.state.currentDate && this.state.currentVantagePoint) {
-      return _.get(this.props.cameraData, ['cameraData', this.state.currentLocation, this.state.currentCamera, this.state.currentDate, this.state.currentVantagePoint, this.getCurrentKey(index), 'Key'], '');
+      return _.get(this.props.cameraData, ['cameraData', this.getIndexTime(index), `${this.state.currentVantagePoint}-${this.state.currentCamera}`], '');
     }
   }
 
   getCurrentPhoto = (index = this.state.index) => {
     if (this.state.currentLocation && this.state.currentCamera && this.state.currentDate && this.state.currentVantagePoint) {
-      return `${this.state.currentLocation}/${this.state.currentCamera}/${this.state.currentDate}/${this.state.currentVantagePoint}/${this.getCurrentKey(index)}`;
+      return `${this.state.currentLocation}/${this.state.currentCamera === 'video' ? 'camera' : this.state.currentCamera}/${this.state.currentDate}/${this.state.currentVantagePoint}/${this.getCurrentKey(index)}`;
     }
     return '';
   }
@@ -223,21 +222,21 @@ class CameraSegmentBuilder extends React.Component {
       // let currentVantagePoint = this.state.currentVantagePoint || 'camera01' || '';
       let currentCamera = this.state.currentCamera || nextProps.currentCamera || 'camera';
 
-      this.setState({ photos, max, authenticating: nextProps.authenticating, index, page, live: this.state.live});
+      this.setState({ photos, max, authenticating: nextProps.authenticating, index, page, live: this.props.live});
     }
 
-    // this.setState({live: nextProps.live === undefined ? this.state.live : nextProps.live});
+    // this.setState({live: nextProps.live === undefined ? this.props.live : nextProps.live});
 
   }
 
   handleToggleLiveMode = () => {
     let newState;
-    if (!this.state.live) {
-      newState = {index: (this.getAllPhotos().length-1), live: true};
+    if (!this.props.live) {
+      this.setState({index: (this.getAllPhotos().length-1)});
     } else {
       newState = {live: false};
     }
-    this.setState(newState);
+    
     this.updateQueryParam(newState);
     this.props.toggleLiveMode();
   }
@@ -318,7 +317,7 @@ class CameraSegmentBuilder extends React.Component {
 
     let liveToggle = (
       <FormGroup>
-        <Button onClick={(e) => { e.preventDefault(); this.handleToggleLiveMode()}} bsStyle={this.state.live ? 'success' : 'default' } active={this.state.live}>Live</Button>
+        <Button onClick={(e) => { e.preventDefault(); this.handleToggleLiveMode()}} bsStyle={this.props.live ? 'success' : 'default' } active={this.props.live}>Live</Button>
       </FormGroup>
     )
 
@@ -364,13 +363,13 @@ class CameraSegmentBuilder extends React.Component {
         <FormGroup controlId="formControlsSelect">
           <FormControl onChange={this.handleCameraChange} value={this.state.currentCamera} componentClass="select">
             <option value="select">select a mode</option>
-            {_.map(_.isEmpty(this.props.cameraData.cameras) ? ['camera', 'overlays', 'video'] : this.props.cameraData.cameras, (camera) => { return <option key={camera} value={camera}>{camera}</option> } ) }
+            {_.map(['camera', 'overlays', 'video'], (camera) => { return <option key={camera} value={camera}>{camera}</option> } ) }
           </FormControl>
         </FormGroup>
         <FormGroup controlId="formControlsSelect">
           <FormControl onChange={this.handleVantagePointChange} value={this.state.currentVantagePoint} componentClass="select">
             <option value="select">select a camera</option>
-            {_.map(_.isEmpty(this.props.cameraData.vantagePoints) ? ['camera01', 'camera02', 'camera03', 'camera04'] : this.props.cameraData.vantagePoints, (vantagePoint) => { return <option key={vantagePoint} value={vantagePoint}>{vantagePoint.replace("0", " ")}</option> } ) }
+            {_.map(['camera01', 'camera02', 'camera03', 'camera04'], (vantagePoint) => { return <option key={vantagePoint} value={vantagePoint}>{vantagePoint.replace("0", " ")}</option> } ) }
           </FormControl>
         </FormGroup>
         

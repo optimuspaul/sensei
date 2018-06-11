@@ -15,6 +15,7 @@ const initialState = {
   cameraSegments: [
 
   ],
+  currentDate: params.currentDate || moment().display("YYYY-MM-DD"),
   livePhoto: {},
   live: params.live === 'true',
   index: 0,
@@ -67,7 +68,7 @@ export default function cameraSegmentBuilder(state = initialState, action) {
       }
     case 'RECEIVE_PHOTOS':
       let cameraData = _.reduce(action.photos, (current, photo, id) => {
-        _.set(current, [action.location, action.camera, action.date, action.vantagePoint, id], photo);
+        _.set(current, [id], photo);
         return current;
       }, _.merge({}, state.cameraData));
       

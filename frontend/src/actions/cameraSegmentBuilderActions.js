@@ -37,7 +37,7 @@ export const deauthenticate = () => {
 }
 
 
-let unsubscribers = {};
+let unsubscribeFromCameraData;
 export const fetchPhotos = (location, camera, date, vantagePoint) => {
   return (dispatch, getState) => {
     let refPath;
@@ -45,22 +45,23 @@ export const fetchPhotos = (location, camera, date, vantagePoint) => {
 
     
 
-    if (location && camera && date && vantagePoint && !unsubscribers[refPath]) {
+    if (location && camera && date && vantagePoint) {
       refPath = `${location}/${camera}/${date}/${vantagePoint}`;
 
       updateParams(location, camera, date, vantagePoint)
 
-      if (unsubscribers[refPath]) {
+      if (!_.isEqual(_.get(state, 'cameraSegmentBuilder.currentLocation'), location) || !_.isEqual(_.get(state, 'cameraSegmentBuilder.currentDate'), date)) {
+        unsubscribeFromCameraData && unsubscribeFromCameraData();
+      } else {
         return dispatch(receivePhotos({}, location, camera, date, vantagePoint));
       }
 
-      unsubscribers[refPath] = firebase.firestore().collection(`/camera_data/${refPath}`)
+      unsubscribeFromCameraData = firebase.firestore().collection(`/camera_data/${location}/${date}/`)
         .onSnapshot(function(snapshot) {
-          let docs = _.map(_.filter(snapshot.docChanges, {type: "added"}), c => c.doc);
+          let docs = _.map(_.filter(snapshot.docChanges), c => c.doc);
           let photos = _.reduce(docs, (current, doc) => {
             let data = doc.data();
             current[doc.id] = data;
-            current[doc.id].timestamp = parsePhotoSegmentTimestamp(data.Key);
             return current;
           }, {});
           if (!_.isEmpty(photos)) {
@@ -69,7 +70,7 @@ export const fetchPhotos = (location, camera, date, vantagePoint) => {
         });
     }
 
-    if (state.cameraSegmentBuilder.currentLocation === location) {
+    if (location && state.cameraSegmentBuilder.currentLocation === location) {
       return dispatch(updateParams(location, camera, date, vantagePoint));
     }
 
