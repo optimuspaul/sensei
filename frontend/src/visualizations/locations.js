@@ -26,21 +26,25 @@ export default function locations() {
   chartWidth = _.get(vizElement, 'parentElement.offsetWidth', 800) - 20;
 
   let chart = d3.select("#visualization #locations svg")
-  chart.append('g')
-    .attr("class", 'sensors');
+  chart.append('g').attr("class", 'sensors');
+  chart.append('g').attr("class", 'paths');
 
+  let color = d3.scaleOrdinal(d3.schemeCategory10).domain([0,5]);
 
     let updateChart = (event) => {
 
-      let sensors = []
+      let sensors = [];
+      let pathsData = [];
+      let obs = [];
 
       let data = event.detail
-
+      let currentIndex;
       if (!_.isEmpty(data) && !_.isEmpty(data.obs)) {
         let obsCount = _.size(data.obs);
         let zoom = event.zoom || parseInt(_.get(store.getState(), "insights.ui.zoom")) || (obsCount-1);
-        let currentIndex = zoom === -1 ? obsCount + 1 : obsCount - zoom;
+        currentIndex = zoom === -1 ? obsCount + 1 : obsCount - zoom;
         sensors = _.get(data, `obs.${currentIndex}.sensors`);
+        obs = data.obs
       } else {
         data = {
           classroomLength: 0,
@@ -61,14 +65,27 @@ export default function locations() {
       classroomScale = d3.scaleLinear()
                       .domain([0, classroomLength])
                       .range([0, chartWidth]);
+      let classroomXScale = d3.scaleLinear()
+                      .domain([0, classroomLength])
+                      .range([0, chartWidth]);
       chartHeight = classroomScale(classroomWidth);
+      let classroomYScale = d3.scaleLinear()
+                      .domain([0, classroomWidth])
+                      .range([0, chartHeight]);
       chart.attr("width", chartWidth).attr("height", chartHeight)
 
       let sensorWrapper = chart.select('g.sensors');
-
+      let pathsWrapper = chart.select('g.paths');
+      let showPathFor;
       let t = d3.transition()
         .duration(1000)
         .ease(d3.easeCubic);
+
+
+
+      
+
+
 
       let circle = sensorWrapper
         .selectAll(`circle.fill`)
@@ -87,6 +104,23 @@ export default function locations() {
         .attr("r", 10)
         .attr("style", (sensor) => {
           return `stroke-width: ${pulseScale((sensor.xStdDev+sensor.yStdDev)/2)}`
+        })
+        
+      circle.on('click', (sensor) => {
+        let entityUid = `${sensor.entityType}-${sensor.entityId}`;
+          let path = vizElement.querySelector(`.${entityUid}-path`)
+          let prevPath = vizElement.querySelector(`path.show`);
+          if (prevPath) {
+            prevPath.classList.remove('show');
+            if (prevPath.hasClass(`${entityUid}-path`)) {
+              showPathFor = null;
+              return;
+            }
+          }
+          if (path) {
+            showPathFor = entityUid;
+            path.classList.add('show');
+          }
         })
 
       let text = sensorWrapper
@@ -111,6 +145,43 @@ export default function locations() {
         })
         .text(sensor => _.get(state, `entities.${entityInflections[sensor.entityType]}.${sensor.entityId}.displayName`))
 
+
+        if (!_.isEmpty(obs)) {
+        
+        let line = d3.line()
+                   .curve(d3.curveLinear)
+                   .x(function(d) { return classroomXScale(d[0]) })
+                   .y(function(d) { return classroomYScale(d[1]) });
+        pathsData = _.map(obs[0].sensors, (sensor, index) => {
+            let points = _.map(_.slice(obs, currentIndex), (ob) => {
+              return [ob.sensors[index].x, ob.sensors[index].y];
+            });
+            return _.merge({path: line(points)}, sensor);
+          });
+
+        let path = pathsWrapper
+          .selectAll('path')
+          .data(pathsData)
+
+        path.exit().remove();
+
+        path.enter().append("path")
+          .merge(path)
+          .transition(t)
+          .attr('d', sensor => sensor.path)
+          .attr('class', (sensor, i) => {
+            let entityUid = `${sensor.entityType}-${sensor.entityId}`;
+            return `${entityUid}-path ${sensor.entityType} stroke ${showPathFor === entityUid ? 'show' : ''}`
+          });
+          
+        path.on('click', (sensor) => {
+          let entityUid = `${sensor.entityType}-${sensor.entityId}`;
+          let path = vizElement.querySelector(`.${entityUid}-path`);
+          path.classList.remove('show');
+          showPathFor = null;
+        })
+        
+      }
 
 
     }

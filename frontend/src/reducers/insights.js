@@ -176,8 +176,9 @@ export default function sensorMappings(state = initialState, action) {
         }
       }
     case 'REFRESH_FROM_PARAMS':
-      let params = _.pick(action.params, ['currentDate', 'endDate', 'visualization', 'interactionType', 'currentEntityType', 'currentEntityId', 'zoom']);
+      let params = _.pick(action.params, ['currentDate', 'endDate', 'visualization', 'interactionType', 'currentEntityType', 'currentEntityId', 'zoom', 'isLive']);
       params.zoom = parseInt(params.zoom);
+      params.isLive === 'false' ? false : true;
       return {
         ...state,
         observations: state.observations,
