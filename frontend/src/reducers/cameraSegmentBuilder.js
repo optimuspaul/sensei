@@ -1,6 +1,9 @@
 import _ from 'lodash';
 import {parsePhotoSegmentTimestamp} from './../utils';
 import moment from 'moment';
+import QueryParams from 'query-params';
+
+let params = QueryParams.decode(location.search.slice(1)) || {};
 
 const initialState = {
   locations: {},
@@ -12,7 +15,10 @@ const initialState = {
   cameraSegments: [
 
   ],
+  currentDate: params.currentDate || moment().display("YYYY-MM-DD"),
   livePhoto: {},
+  live: params.live === 'true',
+  index: 0,
   credentials: localStorage.getItem('TC_CAMERA_BUILDER_CREDS'),
   authenticated: !_.isNull(localStorage.getItem('TC_CAMERA_BUILDER_CREDS'))
 };
@@ -51,6 +57,41 @@ export default function cameraSegmentBuilder(state = initialState, action) {
         currentDate: '',
         status: 'fetching'
       }
+    case 'UPDATE_PARAMS':
+      return {
+        ...state,
+        currentLocation: action.location,
+        currentCamera: action.camera,
+        currentDate: action.date,
+        currentVantagePoint: action.vantagePoint,
+        index: 0
+      }
+    case 'RECEIVE_PHOTOS':
+      let cameraData = _.reduce(action.photos, (current, photo, id) => {
+        _.set(current, [id], photo);
+        return current;
+      }, _.merge({}, state.cameraData));
+      
+      let latest = _.map(action.photos, p => p.Key).pop();
+      let index = state.index;
+      if (latest) {
+        if (action.location !== state.currentLocation || action.camera !== state.currentCamera || action.date !== state.currentDate || action.vantagePoint !== state.currentVantagePoint) {
+          index = 0;
+        }
+        let secondsDiff = moment(parsePhotoSegmentTimestamp(latest)).utc().tz('US/Eastern').diff(moment(currentDate).utc().tz('US/Eastern').startOf('day'), 'seconds');
+        let newIndex = secondsDiff/10;
+        index = (_.includes(latest, `${action.location}/${action.camera}/${action.date}/${action.vantagePoint}`) && newIndex > state.index) ? newIndex : state.index;
+      }
+
+      return {
+        ...state,
+        cameraData,
+        index,
+        currentLocation: action.location,
+        currentCamera: action.camera,
+        currentDate: action.date,
+        currentVantagePoint: action.vantagePoint
+      }
     case 'RECEIVED_PHOTOS':
       let locations = {...state.locations, ...action.cameraData};
       let cameras = _.keys(_.omit(_.get(action.cameraData, `${action.location}`, {}), ['classroom_info'])) || [];
@@ -62,46 +103,14 @@ export default function cameraSegmentBuilder(state = initialState, action) {
       let currentDate = action.date || state.currentDate;
       let currentVantagePoint = action.vangagePoint || state.currentVantagePoint;
 
-      let masters = _.find(_.get(locations, `${action.location}.camera.${action.date}`, {}), photos => !_.isEmpty(photos));
-      let hasOverlays = _.includes(_.keys(_.get(locations, `${action.location}.overlays`, {})), action.date);
-      if (hasOverlays && !_.includes(cameras, 'overlays')) {
-        cameras.push('overlays');
-      }
-
-      let hasVideos = _.some(_.get(locations, `${action.location}.camera.${action.date}`, {}), (masters, key) => { return !_.isUndefined(_.findLast(masters, (photo) => _.includes(photo, '.mp4'))) && key });
-      if (hasVideos) {
-        cameras.push('video');
-      }
-      
-      if (masters && action.location && action.date) {
-        _.each(cameras, (camera) => {
-          _.set(locations, `${action.location}.${camera}.${action.date}`, []);
-        });
-        let firstPhoto = masters[0];
-        let startDate = parsePhotoSegmentTimestamp(firstPhoto);
-        let lastPhoto = masters[masters.length-1];
-        let endDate = parsePhotoSegmentTimestamp(lastPhoto);
-
-        while (startDate < endDate) {
-          _.each(cameras, (camera) => {
-
-            let url = `${action.location}/${camera}/${action.date}/camera01/still_${moment.utc(startDate).format("YYYY-MM-DD-HH-mm-ss")}${camera === 'camera' ? '.jpg' : (camera === 'video' ? '.mp4' : '_rendered.png')}`
-            let photos = _.get(locations, `${action.location}.${camera}.${action.date}`);
-            photos.push(url)
-            _.set(locations, `${action.location}.${camera}.${action.date}`, photos);
-          });
-          startDate.setSeconds(startDate.getSeconds()+10);
-        }
-      }
-      let currentPhotos = _.get(locations, `${action.location}.camera.${action.date}`, []);
       
       return {
         ...state,
         loading: false,
         currentLocation,
+        cameraData: _.merge(action.cameraData, state.cameraData),
         currentCamera,
         currentDate,
-        currentPhotos,
         vantagePoints,
         currentVantagePoint,
         locations,

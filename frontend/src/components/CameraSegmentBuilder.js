@@ -9,10 +9,12 @@ import KeyHandler, {KEYDOWN} from 'react-key-handler';
 import ProximitySegmentsEditor from './ProximitySegmentsEditor';
 import {locations} from './../visualizations';
 import QueryParams from 'query-params';
-import { history, getKeyTime } from '../utils';
+import { history, getKeyTime, parsePhotoSegmentTimestamp } from './../utils';
 import moment from 'moment';
-import { parsePhotoSegmentTimestamp } from './../utils';
 import momentTimezoneSetup from 'moment-timezone';
+import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Legend, ResponsiveContainer } from 'recharts';
+import DayPickerInput from 'react-day-picker/DayPickerInput';
+import 'react-day-picker/lib/style.css';
 
 class CameraSegmentBuilder extends React.Component {
 
@@ -29,10 +31,9 @@ class CameraSegmentBuilder extends React.Component {
       currentDate: '',
       index: 0,
       carouselIndex: 0,
-      live: params.live === 'true',
       page: 0,
       photos: [],
-      showLocations: params.locations === 'hide' ? false : true,
+      showLocations: params.locations === 'show',
       segments: true
     }
   }
@@ -50,7 +51,7 @@ class CameraSegmentBuilder extends React.Component {
 
 
   getTimezone(cameraData = this.props.cameraData) {
-    return _.get(this.props.cameraData, `locations.${this.state.currentLocation}.classroom_info.timezone`, '');
+    return _.get(this.props.cameraData, `locations.${this.state.currentLocation}.classroom_info.timezone`, 'US/Eastern');
   }
 
   getClassroomId(cameraData = this.props.cameraData) {
@@ -58,15 +59,9 @@ class CameraSegmentBuilder extends React.Component {
   }
 
 
-  getCurrentTime(photoUrl, cameraData = this.props.cameraData) {
-    let currentPhoto = photoUrl || this.getCurrentPhoto(cameraData);
-    if (currentPhoto) {
-      let key = currentPhoto.split('/')[4]
-      let keyTime = key.match(/[0-9]{4}(.*(?=_)|.*(?=\.))/)[0];
-      let timestamp = new Date(`${keyTime.split('-').splice(0,3).join('-')} ${keyTime.split('-').splice(3,3).join(':')}`);
-      return timestamp;
-    }
-
+  getCurrentTime(photoUrl, currentPhotos = this.props.currentPhotos) {
+    let currentPhoto = photoUrl || this.getCurrentPhoto(currentPhotos);
+    return currentPhoto && parsePhotoSegmentTimestamp(currentPhoto);
   }
 
   getPhotos(index=0, cameraData = this.props.cameraData) {
@@ -78,71 +73,68 @@ class CameraSegmentBuilder extends React.Component {
     }, {})
   }
 
-  getCurrentPhoto(cameraData = this.props.cameraData) {
-    return _.get(cameraData, `locations.${this.state.currentLocation}.${this.state.currentCamera}.${this.state.currentDate}.${this.state.index}`);
+  getIndexTime = (index = this.state.index) => {
+    return moment(this.state.currentDate).tz(this.getTimezone()).startOf('day').add(10*index, 's').utc().format("YYYY-MM-DD-HH-mm-ss");
+  }
+
+  getCurrentKey = (index = this.state.index) => {
+    let timestamp = this.getIndexTime(index)
+    return `${this.state.currentCamera === 'video' ? 'video_' : 'still_'}${timestamp}${this.state.currentCamera === 'overlays' ? '_rendered' : ''}${this.state.currentCamera === 'video' ? '.mp4' : (this.state.currentCamera === 'overlays' ? '.png' : '.jpg')}`;
+  }
+
+  checkForCurrentPhoto = (index = this.state.index) => {
+    if (this.state.currentLocation && this.state.currentCamera && this.state.currentDate && this.state.currentVantagePoint) {
+      return _.get(this.props.cameraData, ['cameraData', this.getIndexTime(index), `${this.state.currentVantagePoint}-${this.state.currentCamera}`], '');
+    }
+  }
+
+  getCurrentPhoto = (index = this.state.index) => {
+    if (this.state.currentLocation && this.state.currentCamera && this.state.currentDate && this.state.currentVantagePoint) {
+      return `${this.state.currentLocation}/${this.state.currentCamera === 'video' ? 'camera' : this.state.currentCamera}/${this.state.currentDate}/${this.state.currentVantagePoint}/${this.getCurrentKey(index)}`;
+    }
+    return '';
   }
 
   getAllPhotos(cameraData = this.props.cameraData) {
-    return _.get(cameraData, `locations.${this.state.currentLocation}.${this.state.currentCamera}.${this.state.currentDate}`);
+    return this.props.currentPhotos;
   }
 
-  handleCarouselChange = (delta, carouselIndex, photo) => {
-    let currentIndex = this.state.index;
-    let page = this.state.page;
-    if (page < 0) return false;
-    let newIndex = currentIndex + delta;
-    let pageForward = delta > 0 && _.size(this.props.currentPhotos) > (newIndex+15) && carouselIndex > 35;
-    let pageBack = delta < 0 && 0 < (newIndex-15) && carouselIndex <= 15;
-    if ((pageForward || pageBack) && this.state.index > 35) {
-      let photos;
-      let newIndexModified;
-        if (pageBack) {
-          page--
-          newIndexModified = newIndex - 49 + 15;
-        } else {
-          newIndexModified = newIndex - 15;
-          page++;
-        }
-        photos = this.getPhotos(newIndexModified);
-      // }
-      this.setState({
-        photos,
-        index: newIndex,
-        page
-      })
-      this.updateQueryParam({index: newIndex});
-      return pageForward ? 'forward' : 'back';
-    } else {
-      this.setState({
-        index: newIndex
-      });
-      this.updateQueryParam({index: newIndex});
-      return false;
-    }
-    
+  moveCarousel = (event) => {
+    event.preventDefault();
+    let index = this.state.index;
+    let delta = (event.key === 'ArrowLeft' ? -1 : 1) * (event.shiftKey ? 10 : 1);
+    index += delta;
+    this.setState({index});
+    this.updateQueryParam({index});
   }
+
 
   handleLocationChange = (event) => {
     this.props.fetchPhotos(event.target.value);
-    this.props.subscribeToCameraDataSNS();
+    // this.props.subscribeToCameraDataSNS();
     this.setState({currentLocation: event.target.value, index: 0, page: 0, photos: [], currentVantagePoint: '', currentCamera: 'camera', currentDate: ''});
     this.updateQueryParam({currentLocation: event.target.value, index:0, currentVantagePoint: null, currentCamera: 'camera', currentDate: null });
   }
 
   handleCameraChange = (event) => {
-    this.setState({currentCamera: event.target.value});
-    this.updateQueryParam({currentCamera: event.target.value})
+    let currentCamera = event.target.value;
+    this.props.fetchPhotos(this.state.currentLocation, currentCamera, this.state.currentDate, this.state.currentVantagePoint);
+    this.setState({currentCamera});
+    this.updateQueryParam({currentCamera})
   }
 
   handleVantagePointChange = (event) => {
-    this.setState({currentVantagePoint: event.target.value});
-    this.updateQueryParam({currentVantagePoint: event.target.value})
+    let currentVantagePoint = event.target.value;
+    this.props.fetchPhotos(this.state.currentLocation, this.state.currentCamera, this.state.currentDate, currentVantagePoint);
+    this.setState({currentVantagePoint});
+    this.updateQueryParam({currentVantagePoint})
   }
 
-  handleDateChange = (event) => {
-    this.props.handleDateChange(this.state.currentLocation, this.state.currentCamera, event.target.value, this.state.currentVantagePoint);
-    this.setState({currentDate: event.target.value, index: 0, page: 0, photos: [], currentVantagePoint: ''});
-    this.updateQueryParam({currentDate: event.target.value, index: 0, currentVantagePoint: null, currentCamera: null});
+  handleDateChange = (selectedDay, modifiers) => {
+    let currentDate = selectedDay.format("YYYY-MM-DD");
+    this.props.fetchPhotos(this.state.currentLocation, this.state.currentCamera, currentDate, this.state.currentVantagePoint);
+    this.setState({currentDate});
+    this.updateQueryParam({currentDate, index: 0, currentVantagePoint: null, currentCamera: null});
   }
 
   handleEmailChange = (event) => {
@@ -160,7 +152,7 @@ class CameraSegmentBuilder extends React.Component {
   }
 
   refreshPhotos() {
-    this.props.fetchPhotos(this.state.currentLocation, this.state.currentCamera, this.state.currentDate);
+    this.props.fetchPhotos(this.state.currentLocation, this.state.currentCamera, this.state.currentDate, this.state.currentVantagePoint);
   }
 
   componentDidMount() {
@@ -210,8 +202,9 @@ class CameraSegmentBuilder extends React.Component {
     if (((!_.isEqual(nextLocs, prevLocs) && !_.isEmpty(nextLocs)) || !_.isEqual(this.props.zoom, nextProps.zoom)) && this.state.showLocations) {
       this.updateLocations(nextSensorLocations);
     }
-    if (nextProps.live !== this.state.live) {
-      this.props.subscribeToCameraDataSNS();
+    if (nextProps.live) {
+      this.setState({index: nextProps.index});
+      this.updateQueryParam({index: nextProps.index});
     }
 
     if (!nextProps.live && _.size(nextProps.currentPhotos) !== _.size(this.props.currentPhotos)) {
@@ -224,26 +217,26 @@ class CameraSegmentBuilder extends React.Component {
       page = parseInt(index/50);
       photos = this.getPhotos(page > 0 ? index-15 : 0, nextProps.cameraData);
       max = _.size(nextProps.currentPhotos);
-      index = nextProps.live ? (this.getAllPhotos().length-1) : (!_.isEmpty(params.index) ? parseInt(params.index) : 0);
+      index = !_.isEmpty(params.index) ? parseInt(params.index) : 0;
       
-      let currentVantagePoint = this.state.currentVantagePoint || nextProps.vantagePoints[0] || '';
+      // let currentVantagePoint = this.state.currentVantagePoint || 'camera01' || '';
       let currentCamera = this.state.currentCamera || nextProps.currentCamera || 'camera';
 
-      this.setState({ photos, max, authenticating: nextProps.authenticating, index, page, currentVantagePoint, live: this.state.live});
+      this.setState({ photos, max, authenticating: nextProps.authenticating, index, page, live: this.props.live});
     }
 
-    this.setState({live: nextProps.live === undefined ? this.state.live : nextProps.live});
+    // this.setState({live: nextProps.live === undefined ? this.props.live : nextProps.live});
 
   }
 
   handleToggleLiveMode = () => {
     let newState;
-    if (!this.state.live) {
-      newState = {index: (this.getAllPhotos().length-1), live: true};
+    if (!this.props.live) {
+      this.setState({index: (this.getAllPhotos().length-1)});
     } else {
       newState = {live: false};
     }
-    this.setState(newState);
+    
     this.updateQueryParam(newState);
     this.props.toggleLiveMode();
   }
@@ -253,6 +246,7 @@ class CameraSegmentBuilder extends React.Component {
     let newState = {currentCamera: this.state.currentCamera !== kind ? kind : 'camera'};
     this.setState(newState);
     this.updateQueryParam(newState);
+    this.props.fetchPhotos(this.state.currentLocation, newState.currentCamera, this.state.currentDate, this.state.currentVantagePoint);
   }
 
   toggleSegmentBuilder = () => {
@@ -262,6 +256,7 @@ class CameraSegmentBuilder extends React.Component {
 
   switchVantagePoint = (event) => {
     event.preventDefault();
+    let vantagePoints = this.props.vantagePoints;
     let currentVantagePointIndex = vantagePoints.indexOf(this.state.currentVantagePoint);
     let newState = {};
     if (event.key === 'ArrowDown' && currentVantagePointIndex > 0) {
@@ -272,6 +267,7 @@ class CameraSegmentBuilder extends React.Component {
     }
     this.setState(newState);
     this.updateQueryParam(newState);
+    this.props.fetchPhotos(this.state.currentLocation, this.state.currentCamera, this.state.currentDate, newState.currentVantagePoint);
   }
 
   toggleLocationsViz = (event) => {
@@ -290,13 +286,14 @@ class CameraSegmentBuilder extends React.Component {
 
 
 
-  handleSliderChange = (event) => {
-    let index = parseInt(event.target.value);
-    let page = parseInt(index/50)
+  handleSliderChange = _.throttle((index) => {
+    console.log("slider changed index to: ", index);
     this.updateQueryParam({index});
-    let carouselIndex = page === this.state.page ? this.state.carouselIndex : 16;
-    this.setState({index, carouselIndex, page, photos: this.getPhotos(index-15)});
-  }
+    this.setState({index});
+  }, 1000)
+
+
+  
 
   render() {
 
@@ -320,7 +317,7 @@ class CameraSegmentBuilder extends React.Component {
 
     let liveToggle = (
       <FormGroup>
-        <Button onClick={(e) => { e.preventDefault(); this.handleToggleLiveMode()}} bsStyle={this.state.live ? 'success' : 'default' } active={this.state.live}>Live</Button>
+        <Button onClick={(e) => { e.preventDefault(); this.handleToggleLiveMode()}} bsStyle={this.props.live ? 'success' : 'default' } active={this.props.live}>Live</Button>
       </FormGroup>
     )
 
@@ -350,21 +347,29 @@ class CameraSegmentBuilder extends React.Component {
           </FormControl>
         </FormGroup>
         <FormGroup controlId="formControlsSelect">
-          <FormControl onChange={this.handleDateChange} value={this.state.currentDate} componentClass="select">
+          <DayPickerInput
+            className="form-control"
+            value={this.state.currentDate}
+            onDayChange={this.handleDateChange}
+            dayPickerProps={{
+              selectedDays: moment(this.state.currentDate)
+            }}
+          />
+          {/*<FormControl onChange={this.handleDateChange} value={this.state.currentDate} componentClass="select">
             <option value="select">select a date</option>
             {_.map(this.props.dates, (date) => { return <option key={date} value={date}>{date}</option> } ) }
-          </FormControl>
+          </FormControl>*/}
         </FormGroup>
         <FormGroup controlId="formControlsSelect">
           <FormControl onChange={this.handleCameraChange} value={this.state.currentCamera} componentClass="select">
             <option value="select">select a mode</option>
-            {_.map(this.props.cameraData.cameras, (camera) => { return <option key={camera} value={camera}>{camera}</option> } ) }
+            {_.map(['camera', 'overlays', 'video'], (camera) => { return <option key={camera} value={camera}>{camera}</option> } ) }
           </FormControl>
         </FormGroup>
         <FormGroup controlId="formControlsSelect">
           <FormControl onChange={this.handleVantagePointChange} value={this.state.currentVantagePoint} componentClass="select">
             <option value="select">select a camera</option>
-            {_.map(this.props.cameraData.vantagePoints, (vantagePoint) => { return <option key={vantagePoint} value={vantagePoint}>{vantagePoint.replace("0", " ")}</option> } ) }
+            {_.map(['camera01', 'camera02', 'camera03', 'camera04'], (vantagePoint) => { return <option key={vantagePoint} value={vantagePoint}>{vantagePoint.replace("0", " ")}</option> } ) }
           </FormControl>
         </FormGroup>
         
@@ -407,30 +412,6 @@ class CameraSegmentBuilder extends React.Component {
     )
 
 
-    let imageBrowser = (
-      <div>
-        <div className="row">
-          <div className="col-md-12">
-            <input
-              id="zoom-slider"
-              type="range"
-              value={this.state.index}
-              min="0"
-              max={this.state.max}
-              step="1"
-              onChange={_.throttle(this.handleSliderChange).bind(this)}
-            />
-          </div>
-        </div>
-        <div className="row">
-          <div className="col-md-12">
-            <div className="photo-viewer">
-              <CameraSegmentBuilderCarousel timezone={this.getTimezone()} vantagePoints={this.props.cameraData.vantagePoints} index={this.state.carouselIndex} page={this.state.page} photos={this.state.photos} camera={this.state.currentCamera} vantagePoint={this.state.currentVantagePoint} onCarouselChange={this.handleCarouselChange} />
-            </div>
-          </div>
-        </div>
-      </div>
-    )
 
     let locationsViz = (
       <div className="row">
@@ -445,7 +426,7 @@ class CameraSegmentBuilder extends React.Component {
       </div>
     )
     let livePhoto = '';
-    let key = _.get(this.props.livePhoto, `${this.state.currentLocation}.${this.state.currentCamera}.${this.state.currentVantagePoint}`)
+    let key = this.getCurrentPhoto();
     if (key) {
       let livePhotoUrl = `${baseUrl()}/api/v1/camera_data/signed_url/${key}`;
       livePhoto = (
@@ -458,6 +439,53 @@ class CameraSegmentBuilder extends React.Component {
       )
     }
 
+    let slider = (
+      <div className="row">
+        <div className="col-md-12">
+          <input
+            id="zoom-slider"
+            type="range"
+            value={this.state.index}
+            min="2160"
+            max="6444"
+            step="1"
+            onChange={(event) => { this.handleSliderChange(parseInt(event.target.value, 10)) } }
+          />
+        </div>
+      </div>
+    )
+
+    let scatterData = _.times(119, (i) => {
+      i+=60
+      let value = _.sum(_.times(36, (j) => {
+        return this.checkForCurrentPhoto((i*36)+j) ? 1 : 0;
+      }))
+      return {index: 1, value, interval: `${moment.duration(i*36*10, 'seconds').asHours()}h`}
+    });
+
+    const domain = [
+      0,
+      Math.max.apply(null, [
+        ...scatterData.map(entry => entry.value)
+      ])
+    ];
+    const range = [0, 36];
+
+    let scatterMap = (
+      <div className="row">
+        <div className="col-md-12">
+          <ResponsiveContainer  width="100%" height={60}>
+            <ScatterChart margin={{top: 10, right: 0, bottom: 0, left: 0}}>
+              <XAxis type="category" dataKey="interval" interval={9}  tickLine={false} />
+              <YAxis type="number" dataKey="index" name="photos" height={5} width={0} tick={false} tickLine={false} axisLine={false} />
+              <ZAxis type="number" dataKey="value" domain={domain} range={range} />
+              {/*<Tooltip cursor={{strokeDasharray: '3 3'}} wrapperStyle={{ zIndex: 100 }} content={this.renderTooltip} />*/}
+              <Scatter data={scatterData} fill='#8884d8'/>
+            </ScatterChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    )
 
     return (
       <div>
@@ -469,6 +497,8 @@ class CameraSegmentBuilder extends React.Component {
         <KeyHandler keyEventName={KEYDOWN} keyValue="l" onKeyHandle={this.toggleLocationsViz} />
         <KeyHandler keyEventName={KEYDOWN} keyValue="s" onKeyHandle={this.toggleSegmentBuilder} />
         <KeyHandler keyEventName={KEYDOWN} keyValue="r" onKeyHandle={this.handleToggleLiveMode} />
+        <KeyHandler keyEventName={KEYDOWN} keyValue="ArrowRight" onKeyHandle={this.moveCarousel} />
+        <KeyHandler keyEventName={KEYDOWN} keyValue="ArrowLeft" onKeyHandle={this.moveCarousel} />
         <nav className="navbar navbar-default">
           <div className="container-fluid">
             <div className="navbar-header">
@@ -483,7 +513,9 @@ class CameraSegmentBuilder extends React.Component {
         <div className="photo-container container-fluid">
           <div className="row">
             <div className={this.state.showSegmentBuilder || this.state.showLocations ? `col-xs-12 col-sm-6 col-lg-8` : `col-xs-12`}>
-              {this.props.authenticated && !_.isEmpty(this.props.currentPhotos) ? (this.state.live ? livePhoto : imageBrowser) : this.props.fetchPhotosStatus === 'fetching' ? <Spinner className="spinner" useLayout="true" /> : 'No cameras found'}
+              {scatterMap}
+              {slider}
+              {this.props.authenticated && !_.isEmpty(this.props.currentPhotos) ? livePhoto : this.props.fetchPhotosStatus === 'fetching' ? <Spinner className="spinner" useLayout="true" /> : 'No cameras found'}
             </div>
             { this.state.showSegmentBuilder || this.state.showLocations ? (
               <div className="col-xs-12 col-sm-6 col-lg-4">
