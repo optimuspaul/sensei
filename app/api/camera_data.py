@@ -51,7 +51,8 @@ def camera_data_index():
         classroom_info.pop('interactions', None)
         classroom_info['classroom_id'] = classroom_id
         camera_mappings[iam_name] = classroom_info
-    
+  
+  return jsonify(camera_mappings)
 
   s3 = get_s3_client()
 

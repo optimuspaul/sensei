@@ -52,6 +52,9 @@ export const fetchPhotos = (location, camera, date, vantagePoint) => {
 
       if (!_.isEqual(_.get(state, 'cameraSegmentBuilder.currentLocation'), location) || !_.isEqual(_.get(state, 'cameraSegmentBuilder.currentDate'), date)) {
         unsubscribeFromCameraData && unsubscribeFromCameraData();
+        dispatch({
+          type: 'FETCHING_PHOTOS'
+        });
       } else {
         return dispatch(receivePhotos({}, location, camera, date, vantagePoint));
       }

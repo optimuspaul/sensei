@@ -15,7 +15,7 @@ const initialState = {
   cameraSegments: [
 
   ],
-  currentDate: params.currentDate || moment().display("YYYY-MM-DD"),
+  currentDate: params.currentDate,
   livePhoto: {},
   live: params.live === 'true',
   index: 0,
@@ -53,6 +53,7 @@ export default function cameraSegmentBuilder(state = initialState, action) {
     case 'FETCHING_PHOTOS':
       return {
         ...state,
+        cameraData: {},
         currentPhotos: [],
         currentDate: '',
         status: 'fetching'
@@ -67,13 +68,14 @@ export default function cameraSegmentBuilder(state = initialState, action) {
         index: 0
       }
     case 'RECEIVE_PHOTOS':
-      let cameraData = _.reduce(action.photos, (current, photo, id) => {
+      let cameraData = {};
+      let index = state.index;
+
+      cameraData = _.reduce(action.photos, (current, photo, id) => {
         _.set(current, [id], photo);
         return current;
       }, _.merge({}, state.cameraData));
-      
       let latest = _.map(action.photos, p => p.Key).pop();
-      let index = state.index;
       if (latest) {
         if (action.location !== state.currentLocation || action.camera !== state.currentCamera || action.date !== state.currentDate || action.vantagePoint !== state.currentVantagePoint) {
           index = 0;
@@ -82,6 +84,7 @@ export default function cameraSegmentBuilder(state = initialState, action) {
         let newIndex = secondsDiff/10;
         index = (_.includes(latest, `${action.location}/${action.camera}/${action.date}/${action.vantagePoint}`) && newIndex > state.index) ? newIndex : state.index;
       }
+    
 
       return {
         ...state,

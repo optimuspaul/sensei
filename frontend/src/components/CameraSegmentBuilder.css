@@ -44,6 +44,10 @@ body {
   margin-top: 100px;
 }
 
+.form-group .DayPickerInput input.form-control {
+  width: 100px;
+}
+
 #foundation {
   position: relative;
 }

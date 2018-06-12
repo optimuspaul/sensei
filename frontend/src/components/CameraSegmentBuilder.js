@@ -15,6 +15,7 @@ import momentTimezoneSetup from 'moment-timezone';
 import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Legend, ResponsiveContainer } from 'recharts';
 import DayPickerInput from 'react-day-picker/DayPickerInput';
 import 'react-day-picker/lib/style.css';
+import CameraViewerControls from './CameraViewerControls';
 
 class CameraSegmentBuilder extends React.Component {
 
@@ -45,10 +46,7 @@ class CameraSegmentBuilder extends React.Component {
     });
   }
 
-  getLocations(cameraData = this.props.cameraData) {
-    return _.keys(cameraData.locations);
-  }
-
+  
 
   getTimezone(cameraData = this.props.cameraData) {
     return _.get(this.props.cameraData, `locations.${this.state.currentLocation}.classroom_info.timezone`, 'US/Eastern');
@@ -58,19 +56,9 @@ class CameraSegmentBuilder extends React.Component {
     return _.get(this.props.cameraData, `locations.${this.state.currentLocation}.classroom_info.classroom_id`, []);
   }
 
-
   getCurrentTime(photoUrl, currentPhotos = this.props.currentPhotos) {
     let currentPhoto = photoUrl || this.getCurrentPhoto(currentPhotos);
     return currentPhoto && parsePhotoSegmentTimestamp(currentPhoto);
-  }
-
-  getPhotos(index=0, cameraData = this.props.cameraData) {
-    return _.reduce(cameraData.cameras, (current, camera) => {
-      if (!_.isEmpty(cameraData.currentPhotos)) {
-        current[camera] = cameraData.currentPhotos.slice(index,index+50)
-      }
-      return current;
-    }, {})
   }
 
   getIndexTime = (index = this.state.index) => {
@@ -95,10 +83,6 @@ class CameraSegmentBuilder extends React.Component {
     return '';
   }
 
-  getAllPhotos(cameraData = this.props.cameraData) {
-    return this.props.currentPhotos;
-  }
-
   moveCarousel = (event) => {
     event.preventDefault();
     let index = this.state.index;
@@ -106,35 +90,6 @@ class CameraSegmentBuilder extends React.Component {
     index += delta;
     this.setState({index});
     this.updateQueryParam({index});
-  }
-
-
-  handleLocationChange = (event) => {
-    this.props.fetchPhotos(event.target.value);
-    // this.props.subscribeToCameraDataSNS();
-    this.setState({currentLocation: event.target.value, index: 0, page: 0, photos: [], currentVantagePoint: '', currentCamera: 'camera', currentDate: ''});
-    this.updateQueryParam({currentLocation: event.target.value, index:0, currentVantagePoint: null, currentCamera: 'camera', currentDate: null });
-  }
-
-  handleCameraChange = (event) => {
-    let currentCamera = event.target.value;
-    this.props.fetchPhotos(this.state.currentLocation, currentCamera, this.state.currentDate, this.state.currentVantagePoint);
-    this.setState({currentCamera});
-    this.updateQueryParam({currentCamera})
-  }
-
-  handleVantagePointChange = (event) => {
-    let currentVantagePoint = event.target.value;
-    this.props.fetchPhotos(this.state.currentLocation, this.state.currentCamera, this.state.currentDate, currentVantagePoint);
-    this.setState({currentVantagePoint});
-    this.updateQueryParam({currentVantagePoint})
-  }
-
-  handleDateChange = (selectedDay, modifiers) => {
-    let currentDate = selectedDay.format("YYYY-MM-DD");
-    this.props.fetchPhotos(this.state.currentLocation, this.state.currentCamera, currentDate, this.state.currentVantagePoint);
-    this.setState({currentDate});
-    this.updateQueryParam({currentDate, index: 0, currentVantagePoint: null, currentCamera: null});
   }
 
   handleEmailChange = (event) => {
@@ -149,10 +104,6 @@ class CameraSegmentBuilder extends React.Component {
     event.preventDefault();
     this.setState({authenticating: true})
     this.props.authenticate(this.state.email, this.state.password);
-  }
-
-  refreshPhotos() {
-    this.props.fetchPhotos(this.state.currentLocation, this.state.currentCamera, this.state.currentDate, this.state.currentVantagePoint);
   }
 
   componentDidMount() {
@@ -212,78 +163,29 @@ class CameraSegmentBuilder extends React.Component {
         this.props.fetchSensorLocations(this.getCurrentTime(nextProps.currentPhotos[0]), _.get(nextProps.cameraData.locations, `${this.state.currentLocation}.classroom_info.classroom_id`));
       }
 
-      let params = QueryParams.decode(location.search.slice(1));
-      let page, photos, index, max;
-      page = parseInt(index/50);
-      photos = this.getPhotos(page > 0 ? index-15 : 0, nextProps.cameraData);
-      max = _.size(nextProps.currentPhotos);
-      index = !_.isEmpty(params.index) ? parseInt(params.index) : 0;
-      
-      // let currentVantagePoint = this.state.currentVantagePoint || 'camera01' || '';
-      let currentCamera = this.state.currentCamera || nextProps.currentCamera || 'camera';
+      let params = QueryParams.decode(location.search.slice(1));;
 
-      this.setState({ photos, max, authenticating: nextProps.authenticating, index, page, live: this.props.live});
+      this.setState({authenticating: nextProps.authenticating, live: this.props.live});
     }
 
-    // this.setState({live: nextProps.live === undefined ? this.props.live : nextProps.live});
-
   }
 
-  handleToggleLiveMode = () => {
-    let newState;
-    if (!this.props.live) {
-      this.setState({index: (this.getAllPhotos().length-1)});
-    } else {
-      newState = {live: false};
+  handleControlsChanged = (nextSettings) => {
+
+    if (this.props.live !== nextSettings.live) {
+      if (!nextSettings.live) {
+        nextSettings.index = (_.size(this.this.props.currentPhotos)-1);
+      }
+      this.props.toggleLiveMode();
     }
-    
-    this.updateQueryParam(newState);
-    this.props.toggleLiveMode();
-  }
-
-
-  switchCamera = (kind) => {
-    let newState = {currentCamera: this.state.currentCamera !== kind ? kind : 'camera'};
-    this.setState(newState);
-    this.updateQueryParam(newState);
-    this.props.fetchPhotos(this.state.currentLocation, newState.currentCamera, this.state.currentDate, this.state.currentVantagePoint);
-  }
-
-  toggleSegmentBuilder = () => {
-    this.setState({showSegmentBuilder: !this.state.showSegmentBuilder})
-  }
-
-
-  switchVantagePoint = (event) => {
-    event.preventDefault();
-    let vantagePoints = this.props.vantagePoints;
-    let currentVantagePointIndex = vantagePoints.indexOf(this.state.currentVantagePoint);
-    let newState = {};
-    if (event.key === 'ArrowDown' && currentVantagePointIndex > 0) {
-      newState = {currentVantagePoint: this.props.cameraData.vantagePoints[currentVantagePointIndex-1]};
-    }
-    if (event.key === 'ArrowUp' && currentVantagePointIndex < (_.size(vantagePoints)-1)) {
-      newState = {currentVantagePoint: this.props.cameraData.vantagePoints[currentVantagePointIndex+1]};
-    }
-    this.setState(newState);
-    this.updateQueryParam(newState);
-    this.props.fetchPhotos(this.state.currentLocation, this.state.currentCamera, this.state.currentDate, newState.currentVantagePoint);
-  }
-
-  toggleLocationsViz = (event) => {
-    let showLocations;
-    if (this.state.showLocations === true) {
-      showLocations = false;
-      this.setState({showLocations});
-    } else {
-      showLocations = true;
+    if (!this.props.showLocations && nextSettings.showLocations) {
       this.props.fetchSensorLocations(this.getCurrentTime(this.props.currentPhotos[0]), this.getClassroomId());
-      this.setState({showLocations: true});
       setTimeout(locations, 1000);
     }
-    this.updateQueryParam({locations: showLocations ? 'show' : 'hide'});
+    this.props.fetchPhotos(nextSettings.currentLocation, nextSettings.currentCamera, nextSettings.currentDate, nextSettings.currentVantagePoint)
+    this.setState(nextSettings);
+    this.updateQueryParam(nextSettings);
   }
-
 
 
   handleSliderChange = _.throttle((index) => {
@@ -292,94 +194,13 @@ class CameraSegmentBuilder extends React.Component {
     this.setState({index});
   }, 1000)
 
-
-  
+  handleScatterClick = (data) => {
+    this.updateQueryParam({index: data.index+18});
+    this.setState({index: data.index+18});
+  }
 
   render() {
 
-    let locationsVizToggle = (
-      <FormGroup>
-        <Button onClick={this.toggleLocationsViz} bsStyle={this.state.showLocations ? 'success' : 'default' } active={this.state.showLocations}>Locations</Button>
-      </FormGroup>
-    )
-
-    let videoToggle = (
-      <FormGroup>
-        <Button onClick={(e) => { e.preventDefault(); this.switchCamera('video')}} bsStyle={this.state.currentCamera === 'video' ? 'success' : 'default' } active={this.state.currentCamera === 'video'}>Video</Button>
-      </FormGroup>
-    )
-
-    let segmentBuilderToggle = (
-      <FormGroup>
-        <Button onClick={(e) => { e.preventDefault(); this.toggleSegmentBuilder()}} bsStyle={this.state.showSegmentBuilder ? 'success' : 'default' } active={this.state.showSegmentBuilder}>Segments</Button>
-      </FormGroup>
-    )
-
-    let liveToggle = (
-      <FormGroup>
-        <Button onClick={(e) => { e.preventDefault(); this.handleToggleLiveMode()}} bsStyle={this.props.live ? 'success' : 'default' } active={this.props.live}>Live</Button>
-      </FormGroup>
-    )
-
-    let keyboardShortcuts = (
-      <Tooltip placement="bottom">
-        <table style={{textAlign: 'left'}}>
-          <tr><td>l</td><td>&nbsp; toggle locations viz</td></tr>
-          <tr><td>o</td><td>&nbsp; show pose overlays</td></tr>
-          <tr><td>p</td><td>&nbsp; show pictures</td></tr>
-          <tr><td>v</td><td>&nbsp; show videos</td></tr>
-          <tr><td>r</td><td>&nbsp; toggle realtime mode</td></tr>
-          <tr><td>↑ & ↓</td><td>&nbsp; switch between camera</td></tr>
-          <tr><td>→</td><td>&nbsp; advance 1 frame</td></tr>
-          <tr><td>←</td><td>&nbsp; back 1 frame</td></tr>
-          <tr><td>&#8679; →</td><td>&nbsp; advance 10 frames</td></tr>
-          <tr><td>&#8679; ←</td><td>&nbsp; back 10 frames</td></tr>
-        </table>
-      </Tooltip>
-    )
-
-    let selectors = (
-      <form className="navbar-form navbar-left" role="search">
-        <FormGroup controlId="formControlsSelect">
-          <FormControl onChange={this.handleLocationChange} value={this.state.currentLocation} componentClass="select">
-            <option value="select">select a classroom</option>
-            {_.map(this.getLocations(), (location) => { return <option key={location} value={location}>{location}</option> } ) }
-          </FormControl>
-        </FormGroup>
-        <FormGroup controlId="formControlsSelect">
-          <DayPickerInput
-            className="form-control"
-            value={this.state.currentDate}
-            onDayChange={this.handleDateChange}
-            dayPickerProps={{
-              selectedDays: moment(this.state.currentDate)
-            }}
-          />
-          {/*<FormControl onChange={this.handleDateChange} value={this.state.currentDate} componentClass="select">
-            <option value="select">select a date</option>
-            {_.map(this.props.dates, (date) => { return <option key={date} value={date}>{date}</option> } ) }
-          </FormControl>*/}
-        </FormGroup>
-        <FormGroup controlId="formControlsSelect">
-          <FormControl onChange={this.handleCameraChange} value={this.state.currentCamera} componentClass="select">
-            <option value="select">select a mode</option>
-            {_.map(['camera', 'overlays', 'video'], (camera) => { return <option key={camera} value={camera}>{camera}</option> } ) }
-          </FormControl>
-        </FormGroup>
-        <FormGroup controlId="formControlsSelect">
-          <FormControl onChange={this.handleVantagePointChange} value={this.state.currentVantagePoint} componentClass="select">
-            <option value="select">select a camera</option>
-            {_.map(['camera01', 'camera02', 'camera03', 'camera04'], (vantagePoint) => { return <option key={vantagePoint} value={vantagePoint}>{vantagePoint.replace("0", " ")}</option> } ) }
-          </FormControl>
-        </FormGroup>
-        
-        { locationsVizToggle }
-        { liveToggle }
-        <OverlayTrigger placement="bottom" overlay={keyboardShortcuts}>
-          <Badge>⌘ shortcuts</Badge>
-        </OverlayTrigger>
-      </form>
-    )
 
     let authForm = (
       <form onSubmit={this.handleAuthSubmit} className="navbar-form navbar-left" role="search">
@@ -404,7 +225,7 @@ class CameraSegmentBuilder extends React.Component {
             name="password"
             onChange={this.handlePasswordChange}
           />
-        <Button onClick={this.handleAuthSubmit} type="submit" disabled={this.props.authenticating}>{this.props.authenticating ? 'submitting...' : 'Submit'}</Button>
+        <Button onClick={this.handleAuthSubmit} type="submit" disabled={this.state.authenticating}>{this.state.authenticating ? 'submitting...' : 'Submit'}</Button>
         </FormGroup>
         { this.props.authFailed ? <FormGroup validationState={this.props.authFailed ? 'error' : null}><HelpBlock>wrong credentials</HelpBlock></FormGroup> : ''}
         
@@ -460,7 +281,7 @@ class CameraSegmentBuilder extends React.Component {
       let value = _.sum(_.times(36, (j) => {
         return this.checkForCurrentPhoto((i*36)+j) ? 1 : 0;
       }))
-      return {index: 1, value, interval: `${moment.duration(i*36*10, 'seconds').asHours()}h`}
+      return {index: i*36, value, interval: `${moment.duration(i*36*10, 'seconds').asHours()}h`}
     });
 
     const domain = [
@@ -480,7 +301,7 @@ class CameraSegmentBuilder extends React.Component {
               <YAxis type="number" dataKey="index" name="photos" height={5} width={0} tick={false} tickLine={false} axisLine={false} />
               <ZAxis type="number" dataKey="value" domain={domain} range={range} />
               {/*<Tooltip cursor={{strokeDasharray: '3 3'}} wrapperStyle={{ zIndex: 100 }} content={this.renderTooltip} />*/}
-              <Scatter data={scatterData} fill='#8884d8'/>
+              <Scatter data={scatterData} fill='#8884d8' onClick={this.handleScatterClick}/>
             </ScatterChart>
           </ResponsiveContainer>
         </div>
@@ -489,14 +310,8 @@ class CameraSegmentBuilder extends React.Component {
 
     return (
       <div>
-        <KeyHandler keyEventName={KEYDOWN} keyValue="ArrowUp" onKeyHandle={this.switchVantagePoint} />
-        <KeyHandler keyEventName={KEYDOWN} keyValue="ArrowDown" onKeyHandle={this.switchVantagePoint} />
-        <KeyHandler keyEventName={KEYDOWN} keyValue="o" onKeyHandle={(e) => {e.preventDefault(); this.switchCamera('overlays')}} />
-        <KeyHandler keyEventName={KEYDOWN} keyValue="v" onKeyHandle={(e) => {e.preventDefault(); this.switchCamera('video')}} />
-        <KeyHandler keyEventName={KEYDOWN} keyValue="p" onKeyHandle={(e) => {e.preventDefault(); this.switchCamera('camera')}} />
-        <KeyHandler keyEventName={KEYDOWN} keyValue="l" onKeyHandle={this.toggleLocationsViz} />
-        <KeyHandler keyEventName={KEYDOWN} keyValue="s" onKeyHandle={this.toggleSegmentBuilder} />
-        <KeyHandler keyEventName={KEYDOWN} keyValue="r" onKeyHandle={this.handleToggleLiveMode} />
+        
+        
         <KeyHandler keyEventName={KEYDOWN} keyValue="ArrowRight" onKeyHandle={this.moveCarousel} />
         <KeyHandler keyEventName={KEYDOWN} keyValue="ArrowLeft" onKeyHandle={this.moveCarousel} />
         <nav className="navbar navbar-default">
@@ -504,7 +319,7 @@ class CameraSegmentBuilder extends React.Component {
             <div className="navbar-header">
               <a className="navbar-brand" href="/">Wildflower Schools Camera Viewer</a>
             </div>
-            {this.props.authenticated ? selectors : authForm}
+            {this.props.authenticated ? <CameraViewerControls {...this.props.cameraData} onControlsChanged={this.handleControlsChanged}/> : authForm }
             <ul id="logout-actions" className={`nav navbar-nav navbar-right ${this.props.authenticated ? '' : 'hidden'}`}>
               <li><a id="logout" onClick={this.props.deauthenticate} href="#">Sign out</a></li>
             </ul>
@@ -528,7 +343,6 @@ class CameraSegmentBuilder extends React.Component {
               </div>
             ) : ''}
           </div>
-
           
         </div>
         <div id="export-modal" className="modal fade" tabIndex="-1" role="dialog">
