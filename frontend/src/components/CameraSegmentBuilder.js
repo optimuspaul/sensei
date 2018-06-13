@@ -16,6 +16,7 @@ import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Legend, Resp
 import DayPickerInput from 'react-day-picker/DayPickerInput';
 import 'react-day-picker/lib/style.css';
 import CameraViewerControls from './CameraViewerControls';
+import AuthForm from './AuthForm';
 
 class CameraSegmentBuilder extends React.Component {
 
@@ -45,8 +46,6 @@ class CameraSegmentBuilder extends React.Component {
       search: QueryParams.encode(_.merge(params, paramObj))
     });
   }
-
-  
 
   getTimezone(cameraData = this.props.cameraData) {
     return _.get(this.props.cameraData, `locations.${this.state.currentLocation}.classroom_info.timezone`, 'US/Eastern');
@@ -90,20 +89,6 @@ class CameraSegmentBuilder extends React.Component {
     index += delta;
     this.setState({index});
     this.updateQueryParam({index});
-  }
-
-  handleEmailChange = (event) => {
-    this.setState({email: event.target.value})
-  }
-
-  handlePasswordChange = (event) => {
-    this.setState({password: event.target.value})
-  }
-
-  handleAuthSubmit = (event) => {
-    event.preventDefault();
-    this.setState({authenticating: true})
-    this.props.authenticate(this.state.email, this.state.password);
   }
 
   componentDidMount() {
@@ -171,7 +156,6 @@ class CameraSegmentBuilder extends React.Component {
   }
 
   handleControlsChanged = (nextSettings) => {
-
     if (this.props.live !== nextSettings.live) {
       if (!nextSettings.live) {
         nextSettings.index = (_.size(this.this.props.currentPhotos)-1);
@@ -200,39 +184,6 @@ class CameraSegmentBuilder extends React.Component {
   }
 
   render() {
-
-
-    let authForm = (
-      <form onSubmit={this.handleAuthSubmit} className="navbar-form navbar-left" role="search">
-
-        <FormGroup validationState={this.props.authFailed ? 'error' : null}>
-
-          <FormControl
-            id="formControlsEmail"
-            type="email"
-            label="TC Email"
-            placeholder="tc email"
-            name="email"
-            autoComplete="username"
-            onChange={this.handleEmailChange}
-          />
-          <FormControl 
-            id="formControlsPassword" 
-            label="Password" 
-            type="password" 
-            autoComplete="password"
-            placeholder="tc password"
-            name="password"
-            onChange={this.handlePasswordChange}
-          />
-        <Button onClick={this.handleAuthSubmit} type="submit" disabled={this.state.authenticating}>{this.state.authenticating ? 'submitting...' : 'Submit'}</Button>
-        </FormGroup>
-        { this.props.authFailed ? <FormGroup validationState={this.props.authFailed ? 'error' : null}><HelpBlock>wrong credentials</HelpBlock></FormGroup> : ''}
-        
-      </form>
-    )
-
-
 
     let locationsViz = (
       <div className="row">
@@ -319,7 +270,7 @@ class CameraSegmentBuilder extends React.Component {
             <div className="navbar-header">
               <a className="navbar-brand" href="/">Wildflower Schools Camera Viewer</a>
             </div>
-            {this.props.authenticated ? <CameraViewerControls {...this.props.cameraData} onControlsChanged={this.handleControlsChanged}/> : authForm }
+            {this.props.authenticated ? <CameraViewerControls {...this.props.cameraData} onControlsChanged={this.handleControlsChanged}/> : <AuthForm authStatus={this.props.authenticating} authFailed={this.props.authFailed} onSubmit={this.props.authenticate} /> }
             <ul id="logout-actions" className={`nav navbar-nav navbar-right ${this.props.authenticated ? '' : 'hidden'}`}>
               <li><a id="logout" onClick={this.props.deauthenticate} href="#">Sign out</a></li>
             </ul>
