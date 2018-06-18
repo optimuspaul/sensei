@@ -16,6 +16,8 @@ const initialState = {
 
   ],
   currentDate: params.currentDate,
+  currentVantagePoint: params.currentVantagePoint,
+  currentCAmera: params.currentCAmera,
   livePhoto: {},
   live: params.live === 'true',
   index: 0,
@@ -84,7 +86,6 @@ export default function cameraSegmentBuilder(state = initialState, action) {
         let newIndex = secondsDiff/10;
         index = (_.includes(latest, `${action.location}/${action.camera}/${action.date}/${action.vantagePoint}`) && newIndex > state.index) ? newIndex : state.index;
       }
-    
 
       return {
         ...state,
@@ -95,30 +96,21 @@ export default function cameraSegmentBuilder(state = initialState, action) {
         currentDate: action.date,
         currentVantagePoint: action.vantagePoint
       }
-    case 'RECEIVED_PHOTOS':
+    case 'RECEIVED_CAMERA_DATA':
       let locations = {...state.locations, ...action.cameraData};
-      let cameras = _.keys(_.omit(_.get(action.cameraData, `${action.location}`, {}), ['classroom_info'])) || [];
-      
-      let vantagePoints = _.keys(_.get(action.cameraData, `${action.location}.camera.${action.date}`, {}));
-      let dates = _.keys(_.get(action.cameraData, `${action.location}.camera`, {}));
       let currentLocation = action.location || state.currentLocation;
       let currentCamera = action.camera || state.currentCamera;
       let currentDate = action.date || state.currentDate;
       let currentVantagePoint = action.vangagePoint || state.currentVantagePoint;
-
-      
       return {
         ...state,
-        loading: false,
-        currentLocation,
         cameraData: _.merge(action.cameraData, state.cameraData),
+        currentLocation,
         currentCamera,
         currentDate,
-        vantagePoints,
-        currentVantagePoint,
         locations,
-        cameras,
-        dates,
+        currentVantagePoint,
+        loading: false,
         status: 'fetched'
       }
     case 'HANDLE_SAVE_CAMERA_SEGMENT_SUCCESS':

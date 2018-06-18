@@ -40,13 +40,8 @@ export const deauthenticate = () => {
 let unsubscribeFromCameraData;
 export const fetchPhotos = (location, camera, date, vantagePoint) => {
   return (dispatch, getState) => {
-    let refPath;
     let state = getState();
-
-    
-
     if (location && camera && date && vantagePoint) {
-      refPath = `${location}/${camera}/${date}/${vantagePoint}`;
 
       updateParams(location, camera, date, vantagePoint)
 
@@ -73,15 +68,22 @@ export const fetchPhotos = (location, camera, date, vantagePoint) => {
         });
     }
 
+    dispatch(fetchCameraData(location, camera, date, vantagePoint));
+
     if (location && state.cameraSegmentBuilder.currentLocation === location) {
       return dispatch(updateParams(location, camera, date, vantagePoint));
     }
 
+  }
+}
+
+export const fetchCameraData = (location, camera, date, vantagePoint) => {
+  return (dispatch, getState) => {
     dispatch({
-      type: 'FETCHING_PHOTOS'
+      type: 'FETCHING_CAMERA_DATA'
     })
 
-    return fetch(`${baseUrl()}/api/v1/camera_data?${location ? `s3_folder_name=${location}` : ''}${date ? `&date=${date}` : ''}${date ? `&vantage_point=${vantagePoint}` : ''}${camera ? `&mode=${camera}` : ''}`, {
+    return fetch(`${baseUrl()}/api/v1/camera_data`, {
       headers: getHeaders(getState())
     })
     .then(function(response) {
@@ -89,17 +91,12 @@ export const fetchPhotos = (location, camera, date, vantagePoint) => {
     }).then((body) => {
       let cameraData = JSON.parse(body);
       dispatch({
-        type: 'RECEIVED_PHOTOS',
-        cameraData,
-        location,
-        date,
-        camera,
-        vantagePoint
+        type: 'RECEIVED_CAMERA_DATA',
+        cameraData
       });
     })
   }
 }
-
 
 export const UPDATE_PARAMS = 'UPDATE_PARAMS';
 export const updateParams = (location, camera, date, vantagePoint) => {
@@ -124,7 +121,6 @@ export const receivePhotos = (photos, location, camera, date, vantagePoint) => {
     vantagePoint
   }
 }
-
 
 
 export const RECEIVE_CAMERA_SEGMENTS = 'RECEIVE_CAMERA_SEGMENTS';
@@ -213,41 +209,6 @@ export const saveCameraSegment = (cameraSegment, requestId) => {
   }
 }
 
-
-let unsubscribeFromSNS, prevKeys;
-export const SUBSCRIBE_TO_CAMERA_DATA_SNS = 'SUBSCRIBE_TO_CAMERA_DATA_SNS'
-export const subscribeToCameraDataSNS = () => {
-  return (dispatch, getState) => {
-    let state = getState();
-    prevKeys = [];
-    unsubscribeFromSNS && unsubscribeFromSNS();
-    let classroomIam = _.get(state, 'cameraSegmentBuilder.currentLocation');
-    unsubscribeFromSNS = firebase.
-      firestore()
-      .doc(`camera_data_sns/${classroomIam}`)
-      .onSnapshot((doc) => {
-        if (doc.exists) {
-          let data = doc.data()
-          let key = data.cameraDataSNS.key;
-          if (!_.includes(prevKeys, key) && !_.includes(key, 'json')) {
-            dispatch(receiveCameraDataSNS(key));
-            prevKeys.push(key);
-          }
-        }
-      });
-  }
-}
-
-export const RECEIVE_CAMERA_DATA_SNS = 'RECEIVE_CAMERA_DATA_SNS';
-export const receiveCameraDataSNS = (key) => {
-  return (dispatch, getState) => {
-    let state = getState();
-    dispatch({
-      type: RECEIVE_CAMERA_DATA_SNS,
-      key
-    });
-  }
-}
 
 
 function getHeaders(state) {

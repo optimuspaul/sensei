@@ -1,7 +1,7 @@
 import {connect} from 'react-redux';
 import _ from 'lodash';
 import CameraSegmentBuilder from './../components/CameraSegmentBuilder';
-import { fetchPhotos, saveCameraSegment, fetchCameraSegments, authenticate, deauthenticate, subscribeToCameraDataSNS, toggleLiveMode, updateParams } from './../actions/cameraSegmentBuilderActions';
+import { fetchPhotos, saveCameraSegment, fetchCameraSegments, fetchCameraData, authenticate, deauthenticate, subscribeToCameraDataSNS, toggleLiveMode, updateParams } from './../actions/cameraSegmentBuilderActions';
 import { showLocationsAt, fetchLocations } from './../actions/insightsActions';
 
 const CamerSegmentBuilderContainer = connect((state) => {
@@ -10,7 +10,6 @@ const CamerSegmentBuilderContainer = connect((state) => {
   return {
     cameraData: _.get(state, 'cameraSegmentBuilder'),
     currentPhotos,
-    vantagePoints: state.cameraSegmentBuilder.vantagePoints,
     dates: state.cameraSegmentBuilder.dates,
     authenticated: _.get(state, 'cameraSegmentBuilder.credentials') && _.get(state, 'cameraSegmentBuilder.authenticated') === true,
     authenticating: _.get(state, 'cameraSegmentBuilder.authenticating'),
@@ -29,9 +28,6 @@ const CamerSegmentBuilderContainer = connect((state) => {
   authenticate: (...args) => {
     return dispatch(authenticate(...args));
   },
-  subscribeToCameraDataSNS: () => {
-    dispatch(subscribeToCameraDataSNS());
-  },
   toggleLiveMode: () => {
     dispatch(toggleLiveMode());
   },
@@ -40,6 +36,9 @@ const CamerSegmentBuilderContainer = connect((state) => {
   },
   fetchPhotos: (...args) => {
     dispatch(fetchPhotos(...args));
+  },
+  fetchCameraData: (...args) => {
+    dispatch(fetchCameraData(...args));
   },
   fetchCameraSegments: (...args) => {
     dispatch(fetchCameraSegments(...args));

@@ -138,7 +138,7 @@ class CameraViewerControls extends React.Component {
             <Button onClick={this.toggleLocationsViz} bsStyle={this.props.showLocations ? 'success' : 'default' } active={this.props.showLocations}>Locations</Button>
           </FormGroup>
           <FormGroup>
-            <Button onClick={this.toggleLiveMode} bsStyle={this.props.live ? 'success' : 'default' } active={this.props.live}>Live</Button>
+            <Button onClick={this.handleToggleLiveMode} bsStyle={this.props.live ? 'success' : 'default' } active={this.props.live}>Live</Button>
           </FormGroup>
           <FormGroup>
             <Button onClick={this.toggleSegmentBuilder} bsStyle={this.props.showSegmentBuilder ? 'success' : 'default' } active={this.props.showSegmentBuilder}>Segments</Button>

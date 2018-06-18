@@ -25,7 +25,6 @@ class CameraSegmentBuilder extends React.Component {
 
     let params = QueryParams.decode(location.search.slice(1)) || {};
 
-
     this.state = {
       currentLocation: '',
       currentCamera: '',
@@ -92,6 +91,7 @@ class CameraSegmentBuilder extends React.Component {
   }
 
   componentDidMount() {
+    this.props.fetchCameraData();
     let params = QueryParams.decode(location.search.slice(1));
 
     if (params.currentLocation && params.currentDate){
@@ -101,7 +101,7 @@ class CameraSegmentBuilder extends React.Component {
       history.push({
         search: QueryParams.encode({})
       });
-      this.props.fetchPhotos();
+      
     }
     if (this.state.showLocations) {
       setTimeout(locations, 1000);
@@ -158,7 +158,7 @@ class CameraSegmentBuilder extends React.Component {
   handleControlsChanged = (nextSettings) => {
     if (this.props.live !== nextSettings.live) {
       if (!nextSettings.live) {
-        nextSettings.index = (_.size(this.this.props.currentPhotos)-1);
+        nextSettings.index = (_.size(this.props.currentPhotos)-1);
       }
       this.props.toggleLiveMode();
     }
