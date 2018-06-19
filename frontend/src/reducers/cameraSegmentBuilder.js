@@ -15,7 +15,7 @@ const initialState = {
   cameraSegments: [
 
   ],
-  currentDate: params.currentDate || moment().display("YYYY-MM-DD"),
+  currentDate: params.currentDate,
   livePhoto: {},
   live: params.live === 'true',
   index: 0,
