@@ -23,7 +23,7 @@ class CameraViewerControls extends React.Component {
   }
 
   getSettings(newState = {}) {
-    return _.merge(_.pick(this.props, ['currentLocation', 'currentCamera', 'currentDate', 'currentVantagePoint', 'live', 'showSegmentBuilder', 'locations']), newState);
+    return _.merge(_.pick(this.props, ['currentLocation', 'currentCamera', 'currentDate', 'currentVantagePoint', 'live', 'showSegmentBuilder', 'showLocations']), newState);
   }
   
   getLocations(cameraData = this.props.cameraData) {
@@ -79,13 +79,13 @@ class CameraViewerControls extends React.Component {
   render() {
 
     let keyboardShortcuts = (
-      <Tooltip placement="bottom">
+      <Tooltip placement="bottom" id="keyboard-shortcuts">
         <table style={{textAlign: 'left'}}>
           <tr><td>l</td><td>&nbsp; toggle locations viz</td></tr>
           <tr><td>o</td><td>&nbsp; show pose overlays</td></tr>
           <tr><td>p</td><td>&nbsp; show pictures</td></tr>
           <tr><td>v</td><td>&nbsp; show videos</td></tr>
-          <tr><td>r</td><td>&nbsp; toggle realtime mode</td></tr>
+          <tr><td>k</td><td>&nbsp; toggle live mode</td></tr>
           <tr><td>↑ & ↓</td><td>&nbsp; switch between camera</td></tr>
           <tr><td>→</td><td>&nbsp; advance 1 frame</td></tr>
           <tr><td>←</td><td>&nbsp; back 1 frame</td></tr>
@@ -104,7 +104,7 @@ class CameraViewerControls extends React.Component {
         <KeyHandler keyEventName={KEYDOWN} keyValue="p" onKeyHandle={(e) => {e.preventDefault(); this.switchCamera('camera')}} />
         <KeyHandler keyEventName={KEYDOWN} keyValue="l" onKeyHandle={this.toggleLocationsViz} />
         <KeyHandler keyEventName={KEYDOWN} keyValue="s" onKeyHandle={this.toggleSegmentBuilder} />
-        <KeyHandler keyEventName={KEYDOWN} keyValue="r" onKeyHandle={this.handleToggleLiveMode} />
+        <KeyHandler keyEventName={KEYDOWN} keyValue="k" onKeyHandle={this.handleToggleLiveMode} />
         <form className="navbar-form navbar-left" role="search">
           <FormGroup controlId="formControlsSelect">
             <FormControl onChange={this.handleLocationChange} value={this.props.currentLocation} componentClass="select">

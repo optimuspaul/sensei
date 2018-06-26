@@ -1,7 +1,7 @@
 import {connect} from 'react-redux';
 import _ from 'lodash';
 import CameraSegmentBuilder from './../components/CameraSegmentBuilder';
-import { fetchPhotos, saveCameraSegment, fetchCameraSegments, fetchCameraData, authenticate, deauthenticate, subscribeToCameraDataSNS, toggleLiveMode, updateParams } from './../actions/cameraSegmentBuilderActions';
+import { fetchPhotos, saveCameraSegment, fetchCameraSegments, fetchCameraData, authenticate, deauthenticate, subscribeToCameraDataSNS, toggleLiveMode, toggleShowLocations, updateParams } from './../actions/cameraSegmentBuilderActions';
 import { showLocationsAt, fetchLocations } from './../actions/insightsActions';
 
 const CamerSegmentBuilderContainer = connect((state) => {
@@ -18,6 +18,7 @@ const CamerSegmentBuilderContainer = connect((state) => {
     fetchLocsStatus: _.get(state, 'insights.status'),
     livePhoto: _.get(state, 'cameraSegmentBuilder.livePhoto'),
     live: _.get(state, 'cameraSegmentBuilder.live'),
+    showLocations: _.get(state, 'cameraSegmentBuilder.showLocations'),
     index: _.get(state, 'cameraSegmentBuilder.index'),
     zoom: _.get(state, 'insights.ui.zoom'),
     fetchPhotosStatus: _.get(state, 'cameraSegmentBuilder.status')
@@ -30,6 +31,9 @@ const CamerSegmentBuilderContainer = connect((state) => {
   },
   toggleLiveMode: () => {
     dispatch(toggleLiveMode());
+  },
+  toggleShowLocations: () => {
+    dispatch(toggleShowLocations());
   },
   deauthenticate: () => {
     return dispatch(deauthenticate());
@@ -55,7 +59,7 @@ const CamerSegmentBuilderContainer = connect((state) => {
   },
   fetchSensorLocations: (date, classroomId) => {
     date = new Date(date);
-    dispatch(fetchLocations(date, 2, classroomId));
+    dispatch(fetchLocations(date, 24, classroomId));
   },
   showLocationsAt: (date) => {
     dispatch(showLocationsAt(date));

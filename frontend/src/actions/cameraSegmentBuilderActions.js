@@ -41,11 +41,12 @@ let unsubscribeFromCameraData;
 export const fetchPhotos = (location, camera, date, vantagePoint) => {
   return (dispatch, getState) => {
     let state = getState();
+    date = date ? date : _.get(state, 'cameraSegmentBuilder.currentDate');
     if (location && camera && date && vantagePoint) {
 
       updateParams(location, camera, date, vantagePoint)
 
-      if (!_.isEqual(_.get(state, 'cameraSegmentBuilder.currentLocation'), location) || !_.isEqual(_.get(state, 'cameraSegmentBuilder.currentDate'), date)) {
+      if (!unsubscribeFromCameraData || !_.isEqual(_.get(state, 'cameraSegmentBuilder.currentLocation'), location) || !_.isEqual(_.get(state, 'cameraSegmentBuilder.currentDate'), date)) {
         unsubscribeFromCameraData && unsubscribeFromCameraData();
         dispatch({
           type: 'FETCHING_PHOTOS'
@@ -53,7 +54,7 @@ export const fetchPhotos = (location, camera, date, vantagePoint) => {
       } else {
         return dispatch(receivePhotos({}, location, camera, date, vantagePoint));
       }
-
+      
       unsubscribeFromCameraData = firebase.firestore().collection(`/camera_data/${location}/${date}/`)
         .onSnapshot(function(snapshot) {
           let docs = _.map(_.filter(snapshot.docChanges), c => c.doc);
@@ -174,6 +175,13 @@ const TOGGLE_LIVE_MODE = 'TOGGLE_LIVE_MODE';
 export const toggleLiveMode = () => {
   return {
     type: TOGGLE_LIVE_MODE
+  }
+}
+
+const TOGGLE_SHOW_LOCATIONS = 'TOGGLE_SHOW_LOCATIONS';
+export const toggleShowLocations = () => {
+  return {
+    type: TOGGLE_SHOW_LOCATIONS
   }
 }
 

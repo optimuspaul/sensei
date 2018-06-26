@@ -251,7 +251,7 @@ export const fetchLocations = (date, range = 12, classroomId = getClassroomId())
     let state = getState();
 
     date = new Date(date);
-    if (prevStartDate && prevEndDate && (date > prevStartDate && date < prevEndDate)) return;
+    if (prevStartDate && prevEndDate && (date > prevStartDate || date < prevEndDate)) return;
     let startDate = new Date(date);
     startDate.setHours(startDate.getHours()-range)
     prevStartDate = new Date(startDate)
@@ -319,7 +319,7 @@ export const showLocationsAt = (date) => {
         return _.isEqual(ob.timestamp, date); 
       });
       if (zoomIndex < 0) {
-        return dispatch(fetchLocations(date, 2, classroomId))
+        return dispatch(fetchLocations(date, 24, classroomId))
       }
       zoom = zoomIndex;
     }

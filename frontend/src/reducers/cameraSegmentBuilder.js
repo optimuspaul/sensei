@@ -17,9 +17,11 @@ const initialState = {
   ],
   currentDate: params.currentDate,
   currentVantagePoint: params.currentVantagePoint,
-  currentCAmera: params.currentCAmera,
+  currentCamera: params.currentCamera,
+  currentLocation: params.currentLocation,
   livePhoto: {},
   live: params.live === 'true',
+  showLocations: params.showLocations === 'true',
   index: 0,
   credentials: localStorage.getItem('TC_CAMERA_BUILDER_CREDS'),
   authenticated: !_.isNull(localStorage.getItem('TC_CAMERA_BUILDER_CREDS'))
@@ -77,7 +79,7 @@ export default function cameraSegmentBuilder(state = initialState, action) {
         _.set(current, [id], photo);
         return current;
       }, _.merge({}, state.cameraData));
-      let latest = _.map(action.photos, p => p.Key).pop();
+      let latest = _.map(cameraData, p => p.Key).pop();
       if (latest) {
         if (action.location !== state.currentLocation || action.camera !== state.currentCamera || action.date !== state.currentDate || action.vantagePoint !== state.currentVantagePoint) {
           index = 0;
@@ -126,36 +128,15 @@ export default function cameraSegmentBuilder(state = initialState, action) {
         ...state,
         live: !state.live
       }
+    case 'TOGGLE_SHOW_LOCATIONS': 
+      return {
+        ...state,
+        showLocations: !state.showLocations
+      }
     case 'RECEIVE_CAMERA_SEGMENTS':
       return {
         ...state,
         cameraSegments: action.cameraSegments
-      }
-    case 'RECEIVE_CAMERA_DATA_SNS':
-      let key = action.key;
-      let parsedSamplePhoto, parsedSampleVangagePoint;
-      let parsed = key.split("/");
-      let parsedLocation = parsed[0];
-      let parsedExtension = key.split(".")[1];
-      let parsedCamera = parsedExtension === 'mp4' ? 'video' : parsed[1];
-      let parsedDate = parsed[2];
-      let parsedVantagePoint = parsed[3];
-      let samplePhoto = state.currentPhotos[0];
-      let parsedTimestamp = parsePhotoSegmentTimestamp(key);
-      let currentLivePhoto = _.get(state.livePhoto, `${parsedLocation}.${parsedCamera}.${parsedVantagePoint}`)
-      let currentParsedTimestamp = currentLivePhoto ? parsePhotoSegmentTimestamp(`/${currentLivePhoto}`) : null;
-      if (samplePhoto) {
-        parsedSamplePhoto = samplePhoto.split("/");
-        parsedSampleVangagePoint = parsed[3];
-      }
-      if (parsedDate === state.currentDate && parsedLocation === state.currentLocation && (!currentLivePhoto || (parsedTimestamp > currentParsedTimestamp))) {
-        let livePhoto = _.merge({}, state.livePhoto, _.set({}, `${parsedLocation}.${parsedCamera}.${parsedVantagePoint}`, key));
-        return {
-          ...state,
-          livePhoto
-        }
-      } else {
-        return state;
       }
     default:
       return state
