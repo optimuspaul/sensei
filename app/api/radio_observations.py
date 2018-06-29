@@ -83,7 +83,7 @@ def post_radio_observations():
                     'rssi': json_data['rssi'],
                     'remoteType': u'%s' % json_data['remote_type'],
                     'remoteId': json_data['remote_id'],
-                    'observedAt': u'%s' % json_data['observed_at'],
+                    'observedAt': assert_iso8601_time(json_data['observed_at']),
                 })
 
     db.session.commit() # This stores the new relationships
@@ -196,3 +196,10 @@ def radio_observations_index():
         })
     else:
         return jsonify([o.as_dict_for_web_resource() for o in obs])
+
+
+def assert_iso8601_time(datestring):
+    timestamp = dateutil.parser.parse(datestring)
+    if timestamp.tzinfo != None:
+        timestamp = timestamp.astimezone(pytz.utc).replace(tzinfo=None)
+    return timestamp

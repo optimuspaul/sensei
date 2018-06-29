@@ -4,7 +4,8 @@ import {entityInflections, getClassroomId} from './../constants';
 import store from './../store/configureStore';
 import firebase from './../firebase';
 import _ from 'lodash';
-
+import d3Tip from "d3-tip";
+d3.tip = d3Tip;
 
 export default function locations() {
 
@@ -20,6 +21,11 @@ export default function locations() {
   let pulseScale = d3.scaleLinear()
                       .domain([0, 1])
                       .range([0, 15]); 
+
+  let rssiScale = d3.scaleLinear()
+                        .domain([-50, -100])
+                        .range([0, 0.3])
+
   let state = store.getState();
   let storeEntities = state.entities;
   let vizElement = document.querySelector("#visualization #locations");
@@ -27,6 +33,7 @@ export default function locations() {
 
   let chart = d3.select("#visualization #locations svg")
   chart.append('g').attr("class", 'sensors');
+  chart.append('g').attr("class", 'radio-obs');
   chart.append('g').attr("class", 'paths');
 
   let color = d3.scaleOrdinal(d3.schemeCategory10).domain([0,5]);
@@ -36,8 +43,12 @@ export default function locations() {
       let sensors = [];
       let pathsData = [];
       let obs = [];
+      let timestamp;
 
-      let data = event.detail
+      let data = event.detail;
+      obs = _.get(data, 'currentRadioObservations', []);
+      let diagnosticsMode = _.get(store.getState(), "insights.ui.diagnosticsMode");
+      let currentRadioObservations = diagnosticsMode ? _.get(data, 'currentRadioObservations', [])  : [];
       let currentIndex;
       if (!_.isEmpty(data) && !_.isEmpty(data.obs)) {
         let obsCount = _.size(data.obs);
@@ -65,6 +76,7 @@ export default function locations() {
       classroomScale = d3.scaleLinear()
                       .domain([0, classroomLength])
                       .range([0, chartWidth]);
+      
       let classroomXScale = d3.scaleLinear()
                       .domain([0, classroomLength])
                       .range([0, chartWidth]);
@@ -76,16 +88,60 @@ export default function locations() {
 
       let sensorWrapper = chart.select('g.sensors');
       let pathsWrapper = chart.select('g.paths');
+      let radioObsWrapper = chart.select('g.radio-obs');
       let showPathFor;
       let t = d3.transition()
         .duration(1000)
         .ease(d3.easeCubic);
 
+    
+
+      currentRadioObservations =  _.filter(currentRadioObservations, (ob) => {
+        return _.find(sensors, (sensor) => { 
+          return ob.local_id === sensor.entityId && ob.local_type === sensor.entityType
+        });
+      })
+
+      currentRadioObservations = _.map(currentRadioObservations, (ob) => {
+        let remoteSensor = _.find(sensors, (sensor) => { return ob.remote_id === sensor.entityId && ob.remote_type === sensor.entityType });
+        let localSensor = _.find(sensors, (sensor) => { return ob.local_id === sensor.entityId && ob.local_type === sensor.entityType });
+        return {
+          x1: localSensor.x,
+          x2: remoteSensor.x,
+          y1: localSensor.y,
+          y2: remoteSensor.y,
+          rssi: ob.rssi,
+          entityType: ob.remote_type
+        }
+      });
+
+      let tip = d3.tip().attr('class', 'd3-tip').html(function(ob, index, rects) {
+        return ob.rssi;
+      });
+      chart.call(tip)
+
+      let radioObsCone = radioObsWrapper
+        .selectAll('polygon.radio-obs')
+        .data(currentRadioObservations)
+        .on('mouseover', tip.show)
+        .on('mouseout', tip.hide)
+
+      radioObsCone.exit().remove();
+      radioObsCone.enter().append('polygon')
+        .merge(radioObsCone)
+        .transition(t)
+        .attr('class', (ob) => {
+          return  `${ob.entityType} fill radio-obs`
+        })
+        .attr("points",function(ob) { 
+          return `${classroomScale(ob.x1)},${classroomScale(ob.y1)} ${classroomScale(ob.x2)-10},${classroomScale(ob.y2)-10} ${classroomScale(ob.x2)+10},${classroomScale(ob.y2)+10} ${classroomScale(ob.x1)},${classroomScale(ob.y1)}`
+        })
+        .attr('style', (ob) => {
+          return `opacity: ${rssiScale(ob.rssi)}`
+        })   
 
 
       
-
-
 
       let circle = sensorWrapper
         .selectAll(`circle.fill`)

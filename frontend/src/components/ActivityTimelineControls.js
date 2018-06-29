@@ -128,6 +128,10 @@ class ActivityTimelineControls extends React.Component {
     this.setState({zoom:event.target.value});
   }
 
+  handleToggleDiagnostics = (event) => {
+    this.props.dispatch(this.props.toggleDiagnosticsMode());
+  }
+
   handleZoomSet(event) {
     let zoom = this.state.zoom;
     if (event.key) {
@@ -316,6 +320,7 @@ class ActivityTimelineControls extends React.Component {
 
     return (
       <div>
+        <KeyHandler keyEventName={KEYDOWN} keyValue="d" onKeyHandle={this.handleToggleDiagnostics} />
         <div className="row">
           <div className="col-md-12">
             <form>

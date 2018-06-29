@@ -4,7 +4,6 @@ import './CameraSegmentBuilder.css';
 import Spinner from './Spinner';
 import { Carousel, FormGroup, FormControl, ControlLabel, HelpBlock, Button, OverlayTrigger, Tooltip, Badge } from 'react-bootstrap';
 import {getSenseiToken,  baseUrl, vantagePoints} from './../constants';
-import CameraSegmentBuilderCarousel from './CameraSegmentBuilderCarousel';
 import KeyHandler, {KEYDOWN} from 'react-key-handler';
 import ProximitySegmentsEditor from './ProximitySegmentsEditor';
 import {locations} from './../visualizations';
@@ -23,19 +22,7 @@ class CameraSegmentBuilder extends React.Component {
   constructor(props) {
     super(props);
 
-    let params = QueryParams.decode(location.search.slice(1)) || {};
-
     this.state = {
-      currentLocation: params.currentLocation,
-      currentCamera: params.currentCamera,
-      currentVantagePoint: params.currentVantagePoint,
-      currentDate: params.currentDate,
-      index: 0,
-      carouselIndex: 0,
-      page: 0,
-      photos: [],
-      showLocations: params.showLocations === 'true',
-      segments: true
     }
   }
 
@@ -46,47 +33,38 @@ class CameraSegmentBuilder extends React.Component {
     });
   }
 
-  getTimezone(cameraData = this.props.cameraData) {
-    return _.get(this.props.cameraData, `locations.${this.state.currentLocation}.classroom_info.timezone`, 'US/Eastern');
-  }
-
-  getClassroomId(cameraData = this.props.cameraData) {
-    return _.get(this.props.cameraData, `locations.${this.state.currentLocation}.classroom_info.classroom_id`, []);
-  }
-
   getCurrentTime(photoUrl, currentPhotos = this.props.currentPhotos) {
     let currentPhoto = photoUrl || this.getCurrentPhoto(currentPhotos);
     return currentPhoto && parsePhotoSegmentTimestamp(currentPhoto);
   }
 
-  getIndexTime = (index = this.state.index) => {
-    return moment(this.state.currentDate).tz(this.getTimezone()).startOf('day').add(10*index, 's').utc();
+  getIndexTime = (index = this.props.index) => {
+    return moment(this.props.currentDate).tz(this.props.timezone).startOf('day').add(10*index, 's').utc();
   }
 
-  getCurrentKey = (index = this.state.index) => {
+  getCurrentKey = (index = this.props.index) => {
     let timestamp = this.getIndexTime(index).format("YYYY-MM-DD-HH-mm-ss");
-    return `${this.state.currentCamera === 'video' ? 'video_' : 'still_'}${timestamp}${this.state.currentCamera === 'overlays' ? '_rendered' : ''}${this.state.currentCamera === 'video' ? '.mp4' : (this.state.currentCamera === 'overlays' ? '.png' : '.jpg')}`;
+    return `${this.props.currentCamera === 'video' ? 'video_' : 'still_'}${timestamp}${this.props.currentCamera === 'overlays' ? '_rendered' : ''}${this.props.currentCamera === 'video' ? '.mp4' : (this.props.currentCamera === 'overlays' ? '.png' : '.jpg')}`;
   }
 
-  checkForCurrentPhoto = (index = this.state.index) => {
-    if (this.state.currentLocation && this.state.currentCamera && this.state.currentDate && this.state.currentVantagePoint) {
-      return _.get(this.props.cameraData, ['cameraData', this.getIndexTime(index).format("YYYY-MM-DD-HH-mm-ss"), `${this.state.currentVantagePoint}-${this.state.currentCamera}`], '');
+  checkForCurrentPhoto = (index = this.props.index) => {
+    if (this.props.currentLocation && this.props.currentCamera && this.props.currentDate && this.props.currentVantagePoint) {
+      return _.get(this.props.cameraData, ['cameraData', this.getIndexTime(index).format("YYYY-MM-DD-HH-mm-ss"), `${this.props.currentVantagePoint}-${this.props.currentCamera}`], '');
     }
   }
 
-  getCurrentPhoto = (index = this.state.index) => {
-    if (this.state.currentLocation && this.state.currentCamera && this.state.currentDate && this.state.currentVantagePoint) {
-      return `${this.state.currentLocation}/${this.state.currentCamera === 'video' ? 'camera' : this.state.currentCamera}/${this.state.currentDate}/${this.state.currentVantagePoint}/${this.getCurrentKey(index)}`;
+  getCurrentPhoto = (index = this.props.index) => {
+    if (this.props.currentLocation && this.props.currentCamera && this.props.currentDate && this.props.currentVantagePoint) {
+      return `${this.props.currentLocation}/${this.props.currentCamera === 'video' ? 'camera' : this.props.currentCamera}/${this.props.currentDate}/${this.props.currentVantagePoint}/${this.getCurrentKey(index)}`;
     }
     return '';
   }
 
   moveCarousel = (event) => {
     event.preventDefault();
-    let index = this.state.index;
+    let index = this.props.index;
     let delta = (event.key === 'ArrowLeft' ? -1 : 1) * (event.shiftKey ? 10 : 1);
     index += delta;
-    this.setState({index});
     this.updateQueryParam({index});
   }
 
@@ -96,7 +74,6 @@ class CameraSegmentBuilder extends React.Component {
 
     if (params.currentLocation && params.currentDate){
       this.props.handleDateChange(params.currentLocation, params.currentCamera || 'camera', params.currentDate, params.currentVantagePoint);
-      this.setState(_.omit(params));
       if (params.showLocations === 'true') {
         setTimeout(locations, 2000);
       }
@@ -120,11 +97,10 @@ class CameraSegmentBuilder extends React.Component {
   componentWillUpdate(nextProps, nextState) {
     
     let currentTime = this.getIndexTime().toDate();
-    let classroomId = _.get(nextProps.cameraData.locations, `${nextState.currentLocation}.classroom_info.classroom_id`);
-    if (nextState.currentDate && currentTime && classroomId && this.props.showLocations) {
-      this.props.fetchSensorLocations(currentTime, classroomId);
+    if (nextState.currentDate && currentTime && this.props.classroomId && this.props.showLocations) {
+      this.props.fetchSensorLocations(currentTime, this.props.classroomId);
     }
-    if (!_.isEqual(nextState.index, this.state.index)) {
+    if (!_.isEqual(nextProps.index, this.props.index)) {
       if (this.props.showLocations) {
         this.props.showLocationsAt(currentTime);
         let nextSensorLocations = _.get(nextProps, 'sensorLocations');
@@ -141,10 +117,8 @@ class CameraSegmentBuilder extends React.Component {
       this.updateLocations(nextSensorLocations);
     }
     if (nextProps.live) {
-      this.setState({index: nextProps.index});
       this.updateQueryParam({index: nextProps.index});
     }
-
   }
 
   handleControlsChanged = (nextSettings) => {
@@ -157,25 +131,27 @@ class CameraSegmentBuilder extends React.Component {
     if (this.props.showLocations !== nextSettings.showLocations) {
       this.props.toggleShowLocations();
       if (nextSettings.showLocations) {
-        this.props.fetchSensorLocations(this.getCurrentTime(this.props.currentPhotos[0]), this.getClassroomId());
+        this.props.fetchSensorLocations(this.getIndexTime().toDate(), this.props.classroomId);
         setTimeout(locations, 1000);
       }
     }
     this.props.fetchPhotos(nextSettings.currentLocation, nextSettings.currentCamera, nextSettings.currentDate, nextSettings.currentVantagePoint)
-    this.setState(nextSettings);
     this.updateQueryParam(nextSettings);
   }
 
 
   handleSliderChange = _.throttle((index) => {
     console.log("slider changed index to: ", index);
+    this.props.live && this.props.toggleLiveMode(false);
     this.updateQueryParam({index});
-    this.setState({index});
+    this.props.setIndex(index);
   }, 1000)
 
   handleScatterClick = (data) => {
-    this.updateQueryParam({index: data.index+18});
-    this.setState({index: data.index+18});
+    let index = data.index+18;
+    this.props.live && this.props.toggleLiveMode(false);
+    this.updateQueryParam({index});
+    this.props.setIndex(index);
   }
 
   render() {
@@ -198,8 +174,8 @@ class CameraSegmentBuilder extends React.Component {
     let photo = key ? (
       <div className="row live-photo-wrapper">
         <div className="col-md-12">
-          { this.state.currentCamera === 'video' ? <video controls autoPlay key={key} className="live-photo"><source src={s3Url} type="video/mp4"/></video> : <img src={s3Url} className="live-photo" /> }
-          <h3>{moment(parsePhotoSegmentTimestamp(key)).tz(this.getTimezone()).format("h:mm:ss A z")}</h3>
+          { this.props.currentCamera === 'video' ? <video controls autoPlay key={key} className="live-photo"><source src={s3Url} type="video/mp4"/></video> : <img src={s3Url} className="live-photo" /> }
+          <h3>{moment(parsePhotoSegmentTimestamp(key)).tz(this.props.timezone).format("h:mm:ss A z")}</h3>
         </div>
       </div>
     ) : '';
@@ -210,7 +186,7 @@ class CameraSegmentBuilder extends React.Component {
           <input
             id="zoom-slider"
             type="range"
-            value={this.state.index}
+            value={this.props.index}
             min="2160"
             max="6444"
             step="1"
@@ -281,7 +257,7 @@ class CameraSegmentBuilder extends React.Component {
                 {this.props.showLocations ? locationsViz : ''}
                 <div className="row">
                   <div className="col">
-                    {this.state.currentLocation && this.state.showSegmentBuilder ? <ProximitySegmentsEditor segments={this.props.segments} getCurrentTime={this.getCurrentTime.bind(this)} currentLocation={this.state.currentLocation} onSave={this.props.saveCameraSegment} /> : ''}
+                    {this.props.currentLocation && this.state.showSegmentBuilder ? <ProximitySegmentsEditor segments={this.props.segments} getCurrentTime={this.getCurrentTime.bind(this)} currentLocation={this.props.currentLocation} onSave={this.props.saveCameraSegment} /> : ''}
                   </div>
                 </div>
               </div>

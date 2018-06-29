@@ -126,12 +126,17 @@ export default function cameraSegmentBuilder(state = initialState, action) {
     case 'TOGGLE_LIVE_MODE': 
       return {
         ...state,
-        live: !state.live
+        live: _.isBoolean(action.bool) ? action.bool : !state.live
       }
     case 'TOGGLE_SHOW_LOCATIONS': 
       return {
         ...state,
-        showLocations: !state.showLocations
+        showLocations: _.isBoolean(action.bool) ? action.bool : !state.showLocations
+      }
+    case 'SET_INDEX':
+      return {
+        ...state,
+        index: action.index
       }
     case 'RECEIVE_CAMERA_SEGMENTS':
       return {

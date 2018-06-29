@@ -106,6 +106,15 @@ export default function sensorMappings(state = initialState, action) {
         },
         status: 'fetched'
       }
+    case 'RECEIVE_CURRENT_RADIO_OBSERVATIONS':
+      return {
+        ...state,
+        currentObservationsData: {
+          ...state.currentObservationsData,
+          currentRadioObservations: action.currentRadioObservations
+        },
+        status: 'fetched'
+      }
     case 'SELECT_ENTITY':
       return {
         ...state,
@@ -173,6 +182,14 @@ export default function sensorMappings(state = initialState, action) {
         ui: {
           ...state.ui,
           isLive: action.isLive
+        }
+      }
+    case 'TOGGLE_DIAGNOSTICS_MODE':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          diagnosticsMode: action.diagnosticsMode
         }
       }
     case 'REFRESH_FROM_PARAMS':

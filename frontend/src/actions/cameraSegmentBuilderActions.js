@@ -54,7 +54,7 @@ export const fetchPhotos = (location, camera, date, vantagePoint) => {
       } else {
         return dispatch(receivePhotos({}, location, camera, date, vantagePoint));
       }
-      
+
       unsubscribeFromCameraData = firebase.firestore().collection(`/camera_data/${location}/${date}/`)
         .onSnapshot(function(snapshot) {
           let docs = _.map(_.filter(snapshot.docChanges), c => c.doc);
@@ -169,19 +169,27 @@ export const fetchCameraSegments = (location, date) => {
   }
 }
 
-
+const SET_INDEX = 'SET_INDEX';
+export const setIndex = (index) => {
+  return {
+    type: SET_INDEX,
+    index
+  }
+}
 
 const TOGGLE_LIVE_MODE = 'TOGGLE_LIVE_MODE';
-export const toggleLiveMode = () => {
+export const toggleLiveMode = (bool) => {
   return {
-    type: TOGGLE_LIVE_MODE
+    type: TOGGLE_LIVE_MODE,
+    bool
   }
 }
 
 const TOGGLE_SHOW_LOCATIONS = 'TOGGLE_SHOW_LOCATIONS';
-export const toggleShowLocations = () => {
+export const toggleShowLocations = (bool) => {
   return {
-    type: TOGGLE_SHOW_LOCATIONS
+    type: TOGGLE_SHOW_LOCATIONS,
+    bool
   }
 }
 

@@ -51,36 +51,6 @@ export const fetchObservations = (entityId, entityType, date) => {
     })
   }
 }
-// export const fetchInteractionPeriods = (entityId, entityType, date) => {
-//   return (dispatch, getState) => {
-//     let state = getState();
-//     date = date || _.get(state, 'insights.ui.currentDate');
-//     date = date ? new Date(date) : new Date();
-//     date.setHours(0);
-
-    
-
-//     let endDate = _.get(state, 'insights.ui.endDate');
-//     endDate = endDate || _.get(state, 'insights.ui.endDate');
-//     endDate = endDate ? new Date(endDate) : new Date();
-//     endDate.setHours(23);
-//     let startTime = encodeURIComponent(date.toISOString());
-//     let endTime = encodeURIComponent(endDate.toISOString());
-
-
-//     fetch(`${baseUrl()}/api/v1/interaction_periods?classroom_id=${getClassroomId()}&entity_id=${entityId}&entity_type=${entityType}&start_time=${startTime}&end_time=${endTime}`, {
-//       headers: {
-//         'X-SenseiToken': getSenseiToken(),
-//         'Content-Type': 'application/json'
-//       }
-//     }).then(function(response) {
-//       return (response && response.text()) || ''
-//     }).then((body) => {
-//       let observations = JSON.parse(body);
-//       dispatch(addObservations(entityId, entityType, observations));
-//     })
-//   }
-// }
 
 
 let prevInteractionPeriodDate, unsubscribeFromInteractionPeriods;
@@ -303,6 +273,53 @@ export const fetchLocations = (date, range = 12, classroomId = getClassroomId())
 }
 
 
+export const FETCH_CURRENT_RADIO_OBSERVATIONS = 'FETCH_CURRENT_RADIO_OBSERVATIONS'
+export const fetchCurrentRadioObservations = (timestamp, classroomId = getClassroomId()) => {
+  return (dispatch, getState) => {
+    let startTime = moment(timestamp).toISOString();
+    let endTime = moment(timestamp).endOf('day').toISOString();
+    let state = getState();
+    dispatch({
+      type: FETCH_CURRENT_RADIO_OBSERVATIONS, 
+      classroomId
+    });
+
+    fetch(`${baseUrl()}/api/v1/radio_observations?classroom_id=${classroomId}&start_time=${startTime}&end_time=${startTime}`, {
+      headers: {
+        'X-SenseiToken': getSenseiToken(),
+        'Content-Type': 'application/json'
+      }
+    }).then(function(response) {
+      return (response && response.text()) || ''
+    }).then((body) => {
+      let currentRadioObservations = JSON.parse(body);
+      dispatch(receiveCurrentRadioObservations(currentRadioObservations));
+    })
+
+    // firebase.firestore().collection(`/classrooms/${classroomId}/radio_observations`)
+    //   .where('observatedAt', '==', timestamp).get()
+    //   .then((radioObservations) => {
+    //     let currentRadioObservations = _.reduce(radioObservations.docs, (current, ob) => {
+    //       let data = ob.doc.data();
+    //       _.set(current, `entities.${data.localType}-${data.localId}.${data.remoteType}-${data.remoteId}`, data);
+    //       return current;
+    //     }, {})
+    //     dispatch(receiveCurrentRadioObservations(currentRadioObservations));
+    //   });
+  }
+}
+
+export const RECEIVE_CURRENT_RADIO_OBSERVATIONS = 'RECEIVE_CURRENT_RADIO_OBSERVATIONS';
+export const receiveCurrentRadioObservations = (currentRadioObservations) => {
+  return (dispatch, getState) => {
+    dispatch({
+      type: RECEIVE_CURRENT_RADIO_OBSERVATIONS,
+      currentRadioObservations
+    });
+  }
+}
+
+
 export const SHOW_LOCATIONS_AT = 'SHOW_LOCATIONS_AT'
 export const showLocationsAt = (date) => {
   return (dispatch, getState) => {
@@ -428,9 +445,19 @@ export const refreshFromParams = (params) => {
   }
 }
 
+let prevTimestamp;
 export const SET_ZOOM = 'SET_ZOOM'
 export const setZoom = (zoom) => {
   return (dispatch, getState) => {
+    let state = getState();
+    let data = _.get(state, 'insights.currentObservationsData')
+    let obsCount = _.size(data.obs);
+    let currentIndex = zoom === -1 ? obsCount + 1 : obsCount - zoom;
+    let timestamp = _.get(data, `obs.${currentIndex}.timestamp`);
+    if (timestamp !== prevTimestamp) {
+      dispatch(fetchCurrentRadioObservations(timestamp))
+      prevTimestamp = timestamp;
+    }
     dispatch({
       type: SET_ZOOM,
       zoom
@@ -448,3 +475,15 @@ export const toggleLive = (zoom) => {
     });
   }
 }
+
+export const TOGGLE_DIAGNOSTICS_MODE = 'TOGGLE_DIAGNOSTICS_MODE'
+export const toggleDiagnosticsMode = (zoom) => {
+  return (dispatch, getState) => {
+    let state = getState();
+    dispatch({
+      type: TOGGLE_DIAGNOSTICS_MODE,
+      diagnosticsMode: !_.get(state, 'insights.ui.diagnosticsMode', false)
+    });
+  }
+}
+

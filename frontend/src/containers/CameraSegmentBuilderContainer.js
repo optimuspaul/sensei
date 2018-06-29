@@ -1,15 +1,26 @@
 import {connect} from 'react-redux';
 import _ from 'lodash';
 import CameraSegmentBuilder from './../components/CameraSegmentBuilder';
-import { fetchPhotos, saveCameraSegment, fetchCameraSegments, fetchCameraData, authenticate, deauthenticate, subscribeToCameraDataSNS, toggleLiveMode, toggleShowLocations, updateParams } from './../actions/cameraSegmentBuilderActions';
+import { fetchPhotos, saveCameraSegment, fetchCameraSegments, fetchCameraData, authenticate, setIndex, deauthenticate, subscribeToCameraDataSNS, toggleLiveMode, toggleShowLocations, updateParams } from './../actions/cameraSegmentBuilderActions';
 import { showLocationsAt, fetchLocations } from './../actions/insightsActions';
 
 const CamerSegmentBuilderContainer = connect((state) => {
   let currentPhotos = _.get(state, `cameraSegmentBuilder.cameraData`, {});
   currentPhotos = _.map(_.orderBy(currentPhotos, ['timestamp'], ['asc']), p => p.Key)
+  let currentLocation = _.get(state, 'cameraSegmentBuilder.currentLocation');
+  let currentCamera = _.get(state, 'cameraSegmentBuilder.currentCamera');
+  let currentVantagePoint = _.get(state, 'cameraSegmentBuilder.currentVantagePoint');
+  let currentDate = _.get(state, 'cameraSegmentBuilder.currentDate');
+
   return {
     cameraData: _.get(state, 'cameraSegmentBuilder'),
     currentPhotos,
+    currentLocation,
+    currentCamera,
+    currentVantagePoint,
+    currentDate,
+    timezone: _.get(state, `cameraData.locations.${currentLocation}.classroom_info.timezone`, 'US/Eastern'),
+    classroomId: _.get(state, `cameraData.locations.${currentLocation}.classroom_info.classroom_id`),
     dates: state.cameraSegmentBuilder.dates,
     authenticated: _.get(state, 'cameraSegmentBuilder.credentials') && _.get(state, 'cameraSegmentBuilder.authenticated') === true,
     authenticating: _.get(state, 'cameraSegmentBuilder.authenticating'),
@@ -29,11 +40,14 @@ const CamerSegmentBuilderContainer = connect((state) => {
   authenticate: (...args) => {
     return dispatch(authenticate(...args));
   },
-  toggleLiveMode: () => {
-    dispatch(toggleLiveMode());
+  setIndex: (...args) => {
+    dispatch(setIndex(...args));
   },
-  toggleShowLocations: () => {
-    dispatch(toggleShowLocations());
+  toggleLiveMode: (...args) => {
+    dispatch(toggleLiveMode(...args));
+  },
+  toggleShowLocations: (...args) => {
+    dispatch(toggleShowLocations(...args));
   },
   deauthenticate: () => {
     return dispatch(deauthenticate());

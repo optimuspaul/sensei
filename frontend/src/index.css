@@ -88,6 +88,12 @@
   color: #ff0000;
 }
 
+  
+
+#foundation #visualization #locations svg polygon.radio-obs {
+  fill: red;
+}
+
 #foundation #visualization #locations svg .paths path.child.stroke {
   stroke: #ff0000;
 }
@@ -121,27 +127,32 @@
 }
 
 
-#foundation #visualization #locations svg .sensors circle.child.fill {
+#foundation #visualization #locations svg .sensors circle.child.fill,
+#foundation #visualization #locations svg .radio-obs polygon.child.fill {
   stroke: #ff0000;
   fill: #ff0000;
 }
 
-#foundation #visualization #locations svg .sensors circle.teacher.fill {
+#foundation #visualization #locations svg .sensors circle.teacher.fill,
+#foundation #visualization #locations svg .radio-obs polygon.teacher.fill {
   stroke: #5b3cc1;
   fill: #5b3cc1;
 }
 
-#foundation #visualization #locations svg .sensors circle.material.fill {
+#foundation #visualization #locations svg .sensors circle.material.fill,
+#foundation #visualization #locations svg .radio-obs polygon.material.fill {
   fill: #3cc150;
   stroke: #3cc150;
 }
 
-#foundation #visualization #locations svg .sensors circle.area.fill {
+#foundation #visualization #locations svg .sensors circle.area.fill,
+#foundation #visualization #locations svg .radio-obs polygon.area.fill {
   fill: #3c97c1;
   stroke: #3c97c1;
 }
 
-#foundation #visualization #locations svg .sensors circle.fill {
+#foundation #visualization #locations svg .sensors circle.fill,
+#foundation #visualization #locations svg .radio-obs polygon.fill {
   /*fill: white;*/
   /*fill-opacity: 0;*/
   /*transform-origin: 50% 50%;*/

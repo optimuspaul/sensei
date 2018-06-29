@@ -4,7 +4,6 @@ import './CameraSegmentBuilder.css';
 import Spinner from './Spinner';
 import { Carousel, FormGroup, FormControl, ControlLabel, HelpBlock, Button, OverlayTrigger, Tooltip, Badge } from 'react-bootstrap';
 import {getSenseiToken,  baseUrl, vantagePoints} from './../constants';
-import CameraSegmentBuilderCarousel from './CameraSegmentBuilderCarousel';
 import KeyHandler, {KEYDOWN} from 'react-key-handler';
 import ProximitySegmentsEditor from './ProximitySegmentsEditor';
 import {locations} from './../visualizations';
