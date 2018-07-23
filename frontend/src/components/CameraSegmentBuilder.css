@@ -3,7 +3,6 @@ html, body {
 }
 body {
   font-family: "Raleway", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  padding-bottom: 100px;
 }
 
 .sensei {
@@ -122,7 +121,7 @@ body {
   overflow: hidden;
 }
 
-.carousel.video .carousel-inner .camera-video .item, 
+.carousel.video .carousel-inner .camera-video .item,
 .carousel.video .carousel-inner {
   overflow: visible !important;
 }
