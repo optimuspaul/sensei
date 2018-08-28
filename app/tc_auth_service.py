@@ -1,6 +1,8 @@
 import json
-import urllib2, base64
+import urllib2
+import base64
 from auth_service import AuthCheckResult
+
 
 class TCAuthService():
     def __init__(self, tc_url):

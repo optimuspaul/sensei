@@ -1,7 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 import json
-import urllib, urllib2, base64
+import urllib
+import urllib2
+import base64
 import math
 import numpy as np
 from numpy.linalg import norm
@@ -21,16 +23,18 @@ SENSEI_USER = os.environ.get("SENSEI_USER", 'super@example.com')
 SENSEI_PASSWORD = os.environ.get("SENSEI_PASSWORD", 'password')
 CLASSROOM_ID = int(os.environ.get("CLASSROOM_ID", "2"))
 
+
 def api_req(endpoint, params=None):
     url = SENSEI_SERVER + 'api/v1/' + endpoint
     if params:
         url += '?' + urllib.urlencode(params)
     req = urllib2.Request(url)
-    print "calling req: %s" % url
+    print("calling req: %s" % url)
     base64string = base64.b64encode('%s:%s' % (SENSEI_USER, SENSEI_PASSWORD))
     req.add_header("Authorization", "Basic %s" % base64string)
     req.add_header('Content-Type', 'application/json')
     return req
+
 
 class RadioObservation(object):
 
@@ -45,6 +49,7 @@ class RadioObservation(object):
         self.observed_at = observed_at
         self.rssi = RadioObservation.RSSI(rssi)
 
+
 class AccelerometerObservation(object):
 
     def __init__(self, classroom_id, sensor_id, observed_at, accelerations):
@@ -54,6 +59,7 @@ class AccelerometerObservation(object):
         self.x_acceleration = accelerations[0]
         self.y_acceleration = accelerations[1]
         self.z_acceleration = accelerations[2]
+
 
 class EntityLocation(object):
 
@@ -66,8 +72,10 @@ class EntityLocation(object):
         self.y = coords[1]
         self.yStdDev = stdDevs[1]
 
+
 def trial(prob):
     return random.random() < prob
+
 
 class Room(object):
     def __init__(self, width, length):
@@ -85,6 +93,7 @@ class Room(object):
         return np.array([
             (random.random() * self.width),
             (random.random() * self.length)])
+
 
 class Sensor(object):
     RF_COLLISION_PROB = 0.25
@@ -115,11 +124,13 @@ class Sensor(object):
     def sim_acceleration(self):
         return (np.random.uniform(-20, 20), np.random.uniform(-20, 20), np.random.uniform(-20, 20))
 
+
 class Teacher(Sensor):
     def __init__(self, room, sensor_id):
         self.room = room
         self.pos = room.random_pos()
         self.sensor_id = sensor_id
+
 
 class Child(Sensor):
     # probability in a given step while idle/observing, of deciding
@@ -130,7 +141,7 @@ class Child(Sensor):
     # to stop working
     WORKING_STOP_PROB = 0.03
 
-    SPEED = 1 # distance in meters per step
+    SPEED = 1  # distance in meters per step
     states = ['observing', 'fetching material', 'moving to workplace',
               'working', 'returning material']
 
@@ -139,7 +150,7 @@ class Child(Sensor):
         self.pos = room.random_pos()
         self.sensor_id = sensor_id
 
-        self.material = None # Material that child wants or is using
+        self.material = None  # Material that child wants or is using
         self.workplace = None  # Location child brings material to to work on
         self.work_duration = None  # Number of sim steps child engaged for
 
@@ -148,14 +159,14 @@ class Child(Sensor):
 
         # transitions
         self.machine.add_transition(trigger='wonder', source='observing',
-            dest='fetching material', conditions=['has_work_idea'], after='choose_material')
+                                    dest='fetching material', conditions=['has_work_idea'], after='choose_material')
         self.machine.add_transition(trigger='arrived_at_material', source='fetching material',
-            dest='moving to workplace', before='take_out_material', after='find_workplace')
+                                    dest='moving to workplace', before='take_out_material', after='find_workplace')
         self.machine.add_transition(trigger='arrived_at_workplace', source='moving to workplace',
-            dest='working')
+                                    dest='working')
         self.machine.add_transition(trigger='work_finished', source='working', dest='returning material')
         self.machine.add_transition(trigger='returned_to_area', source='returning material',
-            dest='observing', before='return_material')
+                                    dest='observing', before='return_material')
 
     def __str__(self):
         rval = "%d - %s, (%.02f,%.02f)" % (self.sensor_id, self.state, self.pos[0], self.pos[1])
@@ -187,7 +198,7 @@ class Child(Sensor):
         move = target - self.pos
         distance = norm(move)
         if distance > Child.SPEED:
-            move = move/norm(move) * Child.SPEED
+            move = move / norm(move) * Child.SPEED
         self.pos += move
         # Have we arrived?
         return norm(self.pos - target) < .5
@@ -229,6 +240,7 @@ class Area(Sensor):
     def remove_material(self, material):
         self.materials.remove(material)
 
+
 class Material(Sensor):
     def __init__(self, area, sensor_id):
         self.home_area = area
@@ -244,12 +256,14 @@ class Material(Sensor):
         self.home_area.add_material(self)
 
 
-r = Room(20.7,3.8)
+r = Room(20.7, 3.8)
+
 
 def get_sensor_mappings():
     req = api_req('sensor_mappings', {'classroom_id': CLASSROOM_ID})
     response = urllib2.urlopen(req)
     return json.loads(response.read())
+
 
 sensors = get_sensor_mappings()
 
@@ -257,7 +271,7 @@ children = [Child(r, s['sensor_id']) for s in sensors if s['entity_type'] == 'ch
 
 areas = [Area(r, s['sensor_id']) for s in sensors if s['entity_type'] == 'area']
 
-materials = [Material(areas[idx%len(areas)], m['sensor_id']) for idx,m in enumerate(sensors) if m['entity_type'] == 'material']
+materials = [Material(areas[idx % len(areas)], m['sensor_id']) for idx, m in enumerate(sensors) if m['entity_type'] == 'material']
 
 teachers = [Teacher(r, t['sensor_id']) for t in sensors if t['entity_type'] == 'teacher']
 
@@ -270,48 +284,51 @@ sim_time = sim_time.replace(hour=8, minute=0, second=0, microsecond=0)
 sim_end_time = sim_time + timedelta(hours=7)
 end_time = sim_time + timedelta(hours=127)
 
+
 # Example upload of sensor ob
 def upload_obs(obs):
-    print "Uploading simulated radio observations."
+    print("Uploading simulated radio observations.")
     req = api_req('radio_observations')
     start_time = time.time()
     response = urllib2.urlopen(req, json.dumps(obs))
-    print response.read()
+    print(response.read())
     elapsed_time = time.time() - start_time
-    print "Upload took %s seconds" % elapsed_time
+    print("Upload took %s seconds" % elapsed_time)
+
 
 def upload_accel_obs(obs):
-    print "Uploading simulated accelerometer observations. %s" % json.dumps(obs)
+    print("Uploading simulated accelerometer observations. %s" % json.dumps(obs))
     req = api_req('accelerometer_observations')
     start_time = time.time()
     response = urllib2.urlopen(req, json.dumps(obs))
-    print response.read()
+    print(response.read())
     elapsed_time = time.time() - start_time
-    print "Upload took %s seconds" % elapsed_time
+    print("Upload took %s seconds" % elapsed_time)
+
 
 def upload_entity_locs(obs):
-    print "Uploading simulated location observations. %s" % json.dumps(obs)
+    print("Uploading simulated location observations. %s" % json.dumps(obs))
     req = api_req('entity_locations')
     start_time = time.time()
     response = urllib2.urlopen(req, json.dumps(obs))
-    print response.read()
+    print(response.read())
     elapsed_time = time.time() - start_time
-    print "Upload took %s seconds" % elapsed_time
+    print("Upload took %s seconds" % elapsed_time)
+
 
 while sim_time < end_time:
-
     if sim_time > sim_end_time:
         sim_time = sim_end_time + timedelta(hours=16)
         sim_end_time = sim_time + timedelta(hours=7)
 
-    print "*" * 80
-    print "sim_time = %s" % sim_time
+    print("*" * 80)
+    print("sim_time = %s" % sim_time)
     for child in children:
         child.step()
 
-    # Print current state
+    # Print(current state)
     for child in children:
-        print str(child)
+        print(str(child))
 
     # Gather pings
     obs = []
@@ -326,16 +343,16 @@ while sim_time < end_time:
         entity_locs.append(loc_ob)
         for other in sensors:
             if sensor.sensor_id == other.sensor_id:
-                print "location: %s " % sensor.pos
+                print("location: %s " % sensor.pos)
                 continue
             rssi = sensor.sim_ping(other)
             if rssi is not None:
                 event = RadioObservation(CLASSROOM_ID, sensor.sensor_id,
-                            other.sensor_id, sim_time.isoformat(), rssi)
+                                         other.sensor_id, sim_time.isoformat(), rssi)
                 obs.append(event)
 
-    print "%d obs" % len(obs)
-    print "%d accel_obs" % len(accel_obs)
+    print("%d obs" % len(obs))
+    print("%d accel_obs" % len(accel_obs))
 
     # upload obs
     if len(obs) > 0:
