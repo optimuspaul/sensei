@@ -1,0 +1,51 @@
+version: '3.6'
+services:
+
+  simulator:
+    build:
+      context: .
+      dockerfile: build/local/simulator/Dockerfile
+    volumes:
+    - type: bind
+      source: .
+      target: /app
+    depends_on:
+      - backend
+    environment:
+      SENSEI_SERVER: http://backend:5000/
+
+  # frontend:
+  #   build:
+  #     context: ./
+  #     dockerfile: build/local/frontend/Dockerfile
+  #   volumes:
+  #   - type: bind
+  #     source: ./frontend
+  #     target: /app/
+
+  backend:
+    build:
+      context: .
+      dockerfile: build/local/backend/Dockerfile
+    volumes:
+    - type: bind
+      source: .
+      target: /src
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+    environment:
+      FLASK_ENV: development
+      ENV: local
+      DATABASE_URL: "postgresql://splinter:notagoodpassword@postgres:5432/sensei"
+
+  postgres:
+    image: postgres:9.6.10
+    ports:
+      - "5432:5432"
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: notagoodpassword
+      POSTGRES_USER: splinter
+      POSTGRES_DB: sensei

@@ -5,12 +5,15 @@
   "devDependencies": {
     "create-react-app": "^1.4.1",
     "gulp": "^3.9.1",
+    "gulp-rename": "^1.2.2",
     "react-scripts": "0.8.4"
   },
   "dependencies": {
     "case": "^1.4.2",
     "d3": "4.10.0",
+    "d3-force": "^1.0.6",
     "d3-tip": "^0.7.1",
+    "firebase": "^4.6.2",
     "history": "^4.6.1",
     "keyboard-shortcut": "^1.2.0",
     "lodash": "^4.17.2",
